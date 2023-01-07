@@ -21,6 +21,7 @@ import { LoginUserDto } from '../users/dto/login-user.dto';
 import { UseFilters } from '@nestjs/common/decorators';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 
+@UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @WebSocketGateway()
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
