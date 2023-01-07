@@ -3,7 +3,8 @@ import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger/dist';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { HttpExceptionFilter } from './http-exception.filter';
+import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.filter';
+import { SocketExceptionFilter } from './common/exceptionFilters/ws-exception.filter';
 
 declare const module: any;
 
@@ -12,6 +13,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, { cors: true });
     const port = process.env.PORT || 3000;
     app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalFilters(new SocketExceptionFilter());
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,

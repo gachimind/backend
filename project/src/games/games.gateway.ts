@@ -9,13 +9,18 @@ import {
     OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { UseInterceptors } from '@nestjs/common';
+import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
+import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { RoomService } from './room.service';
 import { ChatService } from './chat.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
-import { UseInterceptors } from '@nestjs/common';
+import { EnterRoomDto } from './dto/enter-room.dto';
+import { RoomInfoDto } from './dto/room.info.dto';
+import { LoginUserDto } from '../users/dto/login-user.dto';
+import { UseFilters } from '@nestjs/common/decorators';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 
-@UseInterceptors(UndefinedToNullInterceptor)
 @WebSocketGateway()
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
@@ -31,6 +36,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleConnection(@ConnectedSocket() socket: Socket): any {
         console.log('connected socket', socket.id);
+        throw new SocketException('test', 400);
     }
 
     handleDisconnect(@ConnectedSocket() socket: Socket): any {
