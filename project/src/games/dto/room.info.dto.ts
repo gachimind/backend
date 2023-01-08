@@ -9,7 +9,7 @@ export class RoomInfoDto {
         required: true,
         description: '방 생성시 서버에서 자동 생성하는 방의 고유번호',
     })
-    readonly roomId: number;
+    public roomId: number;
 
     @IsString()
     @IsEmpty()
@@ -18,7 +18,7 @@ export class RoomInfoDto {
         required: true,
         description: '게임방 제목, 유저가 입력하지 않으면, 서버에서 랜덤 방제로 자동생성',
     })
-    readonly roomTitle: string;
+    public roomTitle: string;
 
     @IsNumber()
     @IsEmpty()
@@ -27,7 +27,7 @@ export class RoomInfoDto {
         required: true,
         description: '게임 정원',
     })
-    readonly maxCount: number;
+    public maxCount: number;
 
     @IsNumber()
     @IsEmpty()
@@ -37,7 +37,7 @@ export class RoomInfoDto {
         description:
             '방정보 db에는 participants가 참여자 닉네임 배열로 되어 있고, client에 전단할때는 해당 배열의 length를 전달',
     })
-    readonly participants: number;
+    public participants: number;
 
     @IsBoolean()
     @IsEmpty()
@@ -46,5 +46,5 @@ export class RoomInfoDto {
         required: true,
         description: '비밀방 여부',
     })
-    readonly IsSecreteRoom: boolean;
+    public IsSecreteRoom: boolean;
 }
