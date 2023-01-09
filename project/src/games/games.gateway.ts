@@ -20,6 +20,34 @@ import { RoomInfoDto } from './dto/room.info.dto';
 import { LoginUserDto } from '../users/dto/login-user.dto';
 import { UseFilters } from '@nestjs/common/decorators';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { SocketAddress } from 'net';
+
+const roomList = [];
+const socketIdMap = {}; // {socket.id : {nickname, profileImg, currentRoom}}
+const authentication = { token1: 1, token2: 2, token3: 3 }; // {token : userId} in db
+const fakeDBUserTable = [
+    {
+        userId: 1,
+        email: 'test1@email.com',
+        nickname: '세현1',
+        profileImg:
+            'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
+    },
+    {
+        userId: 2,
+        email: 'test2@email.com',
+        nickname: '예나1',
+        profileImg:
+            'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
+    },
+    {
+        userId: 3,
+        email: 'test1@email.com',
+        nickname: '도영1',
+        profileImg:
+            'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
+    },
+];
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @WebSocketGateway()
@@ -37,16 +65,114 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleConnection(@ConnectedSocket() socket: Socket): any {
         console.log('connected socket', socket.id);
-        throw new SocketException('test', 400);
+        const data: RoomInfoDto[] = roomList.map((room: CreateRoomDto) => {
+            return {
+                roomId: room.roomId,
+                roomTitle: room.roomTitle,
+                maxCount: room.maxCount,
+                participants: room.participants.length,
+                IsSecreteRoom: room.IsSecreteRoom,
+            };
+        });
+        socket.emit('room-list', { data });
     }
 
     handleDisconnect(@ConnectedSocket() socket: Socket): any {
         console.log('disconnected socket', socket.id);
     }
 
-    // API 명세서대로 아래에 구현
-    @SubscribeMessage('eventName')
-    handleMessage(@ConnectedSocket() client: Socket, payload: any): string {
-        return 'Hello world!';
+    @SubscribeMessage('log-in')
+    socketIdMapToLoginUser(@ConnectedSocket() socket: Socket, @MessageBody() data): any {
+        // 넘겨받은 jwt token을 검사하고 parsing 해서 socketIdMap 테이블에 추가하는 작업
+        // 1. token에 담긴 토큰 값으로, authentication db table에서 userId를 받아 옴
+        // 2. 받아온 userId 값을 이용해서, db에 있는 회원의 정보를 받아 옴
+        // 3. 받아온 정보를 socketIdMap table에 맵핑
+
+        console.log('log-in, data', data, typeof data);
+
+        const token = data.data.authorization;
+        console.log(token);
+
+        const userId = authentication[token];
+        if (!userId) throw new SocketException('잘못된 접근입니다.', 401);
+        for (const user of fakeDBUserTable) {
+            if (user.userId === userId) {
+                socketIdMap[socket.id] = {
+                    nickname: user.nickname,
+                    profileImg: user.profileImg,
+                };
+            }
+        }
+        console.log(socketIdMap);
+    }
+
+    @SubscribeMessage('create-room')
+    createRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() room: CreateRoomDto): any {
+        console.log(room);
+
+        room.roomId = roomList.length + 1;
+        const nickname = socketIdMap[socket.id].nickname;
+        socketIdMap[socket.id].currentRoom = room.roomId;
+        room.participants = [nickname];
+        roomList.push(room);
+        const newRoom: RoomInfoDto = {
+            roomId: room.roomId,
+            roomTitle: room.roomTitle,
+            maxCount: room.maxCount,
+            participants: room.participants.length,
+            IsSecreteRoom: room.IsSecreteRoom,
+        };
+        socket.join(`${room.roomId}`);
+        return socket.broadcast.emit('create-room', { data: newRoom });
+    }
+
+    @SubscribeMessage('enter-room')
+    enterRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() room: EnterRoomDto): any {
+        for (const existRoom of roomList) {
+            if (existRoom.roomId === room.roomId) {
+                if (existRoom.maxCount > existRoom.participants.length) {
+                    if (existRoom.IsSecreteRoom) {
+                        if (existRoom.roomPassword === room.roomPassword) {
+                            const nickname = socketIdMap[socket.id].nickname;
+                            socketIdMap[socket.id].currentRoom = room.roomId;
+                            existRoom.participants.push(nickname);
+                            socket.join(`${room.roomId}`);
+                            socket.to(`${room.roomId}`).emit('welcome');
+                        } else {
+                            throw new SocketException('비밀번호가 일치하지 않습니다.', 403);
+                            // throw new SocketException이 클라이언트 쪽에 보이지 않을 때 처리
+                            socket.emit('enter-room', {
+                                errorMessage: '비밀번호가 일치하지 않습니다.',
+                                status: 403,
+                            });
+                        }
+                    } else {
+                        const nickname = socketIdMap[socket.id].nickname;
+                        socketIdMap[socket.id].currentRoom = room.roomId;
+                        existRoom.participants.push(nickname);
+                        socket.join(`${room.roomId}`);
+                        socket.to(`${room.roomId}`).emit('welcome');
+                    }
+                } else {
+                    throw new SocketException('정원초과로 방 입장에 실패했습니다.', 400);
+                    // throw new SocketException이 클라이언트 쪽에 보이지 않을 때 처리
+                    socket.emit('enter-room', {
+                        errorMessage: '정원초과로 방 입장에 실패했습니다.',
+                        status: 400,
+                    });
+                }
+            }
+        }
+    }
+
+    @SubscribeMessage('send-chat')
+    sendChatRequest(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() chat: string,
+        server: Server,
+    ): any {
+        // socketId map 테이블에서 유저 정보와 유저가 현재 들어가 있는 방 정보를 꺼내와서 사용
+        const { nickname, profileImg, currentRoom } = socketIdMap[socket.id];
+        server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, profileImg, chat } });
     }
 }
