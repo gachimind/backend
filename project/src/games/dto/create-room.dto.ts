@@ -6,6 +6,7 @@ import {
     IsNotEmpty,
     IsEmpty,
     IsArray,
+    isBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -44,7 +45,7 @@ export class CreateRoomDto {
         description:
             '방정보 db에는 participants가 참여자 닉네임 배열로 되어 있고, client에 전단할때는 해당 배열의 length를 전달',
     })
-    public participants: string[];
+    public participants: any[];
 
     @IsNumber()
     @ApiProperty({
@@ -84,7 +85,7 @@ export class CreateRoomDto {
         required: true,
         description: '비밀방 여부',
     })
-    readonly IsSecreteRoom: boolean;
+    readonly isSecreteRoom: boolean;
 
     @IsNumber()
     @IsOptional()
@@ -94,4 +95,13 @@ export class CreateRoomDto {
         description: '비밀방 비밀번호 - 숫자 4자리',
     })
     readonly roomPassword: number;
+
+    @IsBoolean()
+    @IsOptional()
+    @ApiProperty({
+        example: false,
+        required: false,
+        description: '방의 상태를 표시 - false: 대기 상태 or true: 게임 상태',
+    })
+    public isGameOn: boolean;
 }

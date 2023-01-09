@@ -1,7 +1,7 @@
 import { IsString, IsNumber, IsOptional, IsEmpty, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class RoomInfoDto {
+export class UpdateRoomListDto {
     @IsNumber()
     @ApiProperty({
         example: 1,
@@ -41,5 +41,13 @@ export class RoomInfoDto {
         required: true,
         description: '비밀방 여부',
     })
-    public IsSecreteRoom: boolean;
+    public isSecreteRoom: boolean;
+
+    @IsBoolean()
+    @ApiProperty({
+        example: false,
+        required: true,
+        description: '방의 상태를 표시 - false: 대기 상태 or true: 게임 상태',
+    })
+    public isGameOn: boolean;
 }

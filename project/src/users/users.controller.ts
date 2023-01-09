@@ -2,7 +2,7 @@ import { Controller, Get, Post, Delete, UseInterceptors, Body, Param, Query } fr
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
-import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserToSocketDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { IsEmail } from 'class-validator';

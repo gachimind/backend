@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "clean": "rimraf dist",
-    "build": "sudo cross-env NODE_ENV=production PORT=80 nest start",
+    "build": "cross-env NODE_ENV=production nest start",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev-backup": "nest start --watch",
@@ -41,6 +41,7 @@
     "@socket.io/redis-adapter": "^8.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cross-env": "^7.0.3",
     "mysql2": "^2.3.3",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
