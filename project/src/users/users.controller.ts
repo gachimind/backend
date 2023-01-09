@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Delete, UseInterceptors, Body, Param, Query } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Delete,
+    UseInterceptors,
+    Body,
+    Query,
+    Req,
+    UseGuards,
+    Param,
+} from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
@@ -6,6 +17,8 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { IsEmail } from 'class-validator';
+import { Request } from 'express';
+import { KakaoAuthGuard } from './guards.service';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -13,20 +26,29 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
     // 에러핸들링 -> throw new HttpException(message, status)
 
-    // User entity를 respository로 inject해서 사용하는 예제입니다~
-    @Get()
-    async getAllUsers() {
-        return await this.usersService.findAll();
+    @Get('login/kakao')
+    @UseGuards(KakaoAuthGuard)
+    handleLogin() {
+        return { msg: 'Kakao-Talk Authentication' };
     }
 
-    @Get(':id')
-    async getUserById(@Param() { id }) {
-        const userId = Number(id);
-        return await this.usersService.findByUserId(userId);
+    @Get('/login/kakao/redirect')
+    @UseGuards(KakaoAuthGuard)
+    handleRedirect(@Param('code') code: string) {
+        return { msg: 'OK' };
     }
-    @Post()
-    async createUser(@Body() userData: CreateUserDto) {
-        const { email, nickname, profileImg } = userData;
-        return await this.usersService.createUser({ email, nickname, profileImg });
+
+    @Get('status')
+    user(@Req() request: Request) {
+        if (request.user) {
+            return { msg: 'Authenticated' };
+        } else {
+            return { msg: 'Not Authenticated' };
+        }
+    }
+
+    @Get('/me')
+    findByUserId(@Param('userId') userId: number) {
+        return this.usersService.findByUserId(userId);
     }
 }
