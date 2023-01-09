@@ -15,7 +15,7 @@ export class CreateRoomDto {
     @ApiProperty({
         example: 1,
         required: false,
-        description: '게임방 ID, 서버에서 자동생성',
+        description: '게임방 id, 서버에서 자동 생성',
     })
     public roomId: number;
 
@@ -29,7 +29,6 @@ export class CreateRoomDto {
     readonly roomTitle: string;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 6,
         required: true,
@@ -40,7 +39,7 @@ export class CreateRoomDto {
     @IsArray()
     @IsOptional()
     @ApiProperty({
-        example: ['동석1', '혜연1', '세현1'],
+        example: ['동석1', '혜연1', '세현1', '예나1', '도영1', '경리1'],
         required: true,
         description:
             '방정보 db에는 participants가 참여자 닉네임 배열로 되어 있고, client에 전단할때는 해당 배열의 length를 전달',
@@ -48,7 +47,6 @@ export class CreateRoomDto {
     public participants: string[];
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 3,
         required: true,
@@ -57,7 +55,6 @@ export class CreateRoomDto {
     readonly round: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
@@ -65,7 +62,6 @@ export class CreateRoomDto {
     })
     readonly readyTime: number;
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
@@ -83,7 +79,6 @@ export class CreateRoomDto {
     readonly discussionTime: number;
 
     @IsBoolean()
-    @IsEmpty()
     @ApiProperty({
         example: true,
         required: true,

@@ -18,36 +18,35 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { EnterRoomDto } from './dto/enter-room.dto';
 import { RoomInfoDto } from './dto/room.info.dto';
 import { LoginUserDto } from '../users/dto/login-user.dto';
-import { UseFilters } from '@nestjs/common/decorators';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 
 const roomList = [];
-const socketIdMap = {}; // {socketID:{nickname, ProfileImg, currentRoom}}
-const authentication = { token1: 1, token2: 2, token3: 3 }; //{token:userId} in db
+const socketIdMap = {}; // {socket.id : {nickname, profileImg, currentRoom}}
+const authentication = { token1: 1, token2: 2, token3: 3 }; // {token : userId} in db
 const fakeDBUserTable = [
     {
         userId: 1,
-        email: 'test@email.com',
+        email: 'test1@email.com',
         nickname: '세현1',
         profileImg:
             'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
     },
     {
         userId: 2,
-        email: 'test@email.com',
+        email: 'test2@email.com',
         nickname: '예나1',
         profileImg:
             'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
     },
     {
         userId: 3,
-        email: 'test@email.com',
+        email: 'test1@email.com',
         nickname: '도영1',
         profileImg:
             'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
     },
 ];
+
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @WebSocketGateway()
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -64,13 +63,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     handleConnection(@ConnectedSocket() socket: Socket): any {
         console.log('connected socket', socket.id);
-        const data = roomList.map((room: CreateRoomDto) => {
+        const data: RoomInfoDto[] = roomList.map((room: CreateRoomDto) => {
             return {
                 roomId: room.roomId,
                 roomTitle: room.roomTitle,
                 maxCount: room.maxCount,
                 participants: room.participants.length,
-                IsSecretRoom: room.IsSecreteRoom,
+                IsSecreteRoom: room.IsSecreteRoom,
             };
         });
         socket.emit('room-list', { data });
@@ -161,7 +160,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         server: Server,
     ): any {
         const { nickname, profileImg, currentRoom } = socketIdMap[socket.id];
-
         server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, profileImg, chat } });
     }
 }

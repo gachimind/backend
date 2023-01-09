@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class EnterRoomDto {
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 1,
         required: true,
