@@ -1,8 +1,11 @@
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
-// Http 통신 중 throw new Error 상황에서 사용 -> throw new HttpException(message, status)
 import { HttpException } from '@nestjs/common';
+import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
+import { LoginUserDto } from './dto/login-user.dto';
 
-@UseInterceptors(UndefinedToNullInterceptor)
+@UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
-export class UsersController {}
+export class UsersController {
+    // 에러핸들링 -> throw new HttpException(message, status)
+}
