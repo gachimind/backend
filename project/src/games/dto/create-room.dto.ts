@@ -29,7 +29,6 @@ export class CreateRoomDto {
     readonly roomTitle: string;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 6,
         required: true,
@@ -48,7 +47,6 @@ export class CreateRoomDto {
     public participants: string[];
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 3,
         required: true,
@@ -57,7 +55,6 @@ export class CreateRoomDto {
     readonly round: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
@@ -65,7 +62,6 @@ export class CreateRoomDto {
     })
     readonly readyTime: number;
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
@@ -83,7 +79,6 @@ export class CreateRoomDto {
     readonly discussionTime: number;
 
     @IsBoolean()
-    @IsEmpty()
     @ApiProperty({
         example: true,
         required: true,

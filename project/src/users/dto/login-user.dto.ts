@@ -7,7 +7,6 @@ import { ApiProperty } from '@nestjs/swagger';
 // socketId, userId, nickname, profileImage (나머지 회원 정보는 CreateUserDto에서 extends)
 export class LoginUserDto extends CreateUserDto {
     @IsString()
-    @IsEmpty()
     @ApiProperty({
         example: 'U7AOqDYWr2AhwvQnAAAB',
         required: true,
@@ -16,7 +15,6 @@ export class LoginUserDto extends CreateUserDto {
     readonly socketId: string;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 1,
         required: true,

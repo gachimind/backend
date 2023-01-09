@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class RoomInfoDto {
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 1,
         required: true,
@@ -12,7 +11,6 @@ export class RoomInfoDto {
     public roomId: number;
 
     @IsString()
-    @IsEmpty()
     @ApiProperty({
         example: '같이 가치마인드 하실 초보 모집합니다!!',
         required: true,
@@ -21,7 +19,6 @@ export class RoomInfoDto {
     public roomTitle: string;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 6,
         required: true,
@@ -30,7 +27,6 @@ export class RoomInfoDto {
     public maxCount: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 3,
         required: true,
@@ -40,7 +36,6 @@ export class RoomInfoDto {
     public participants: number;
 
     @IsBoolean()
-    @IsEmpty()
     @ApiProperty({
         example: true,
         required: true,

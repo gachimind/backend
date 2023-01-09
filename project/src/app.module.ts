@@ -22,10 +22,12 @@ import { User } from './users/user.entity';
         TypeOrmModule.forRoot({
             type: 'mysql',
             host: process.env.MYSQL_HOST,
+            port: 3306,
             username: process.env.MYSQL_USERNAME,
             password: process.env.MYSQL_PASSWORD,
             database: process.env.MYSQL_DATABASE,
             entities: [User],
+            migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: false,
             logging: true,
@@ -37,7 +39,6 @@ import { User } from './users/user.entity';
     providers: [ConfigService],
 })
 export class AppModule implements NestModule {
-    constructor(private dataSource: DataSource) {}
     configure(consumer: MiddlewareConsumer): any {
         consumer.apply(LoggerMiddleware).forRoutes('*');
     }
