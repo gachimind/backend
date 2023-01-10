@@ -18,7 +18,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { IsEmail } from 'class-validator';
 import { Request } from 'express';
-import { KakaoAuthGuard } from './guards.service';
+import { KakaoAuthGuard } from './auth/kakao.guards';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
