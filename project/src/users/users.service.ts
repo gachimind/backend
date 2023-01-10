@@ -12,10 +12,10 @@ export class UsersService {
         private usersRepository: Repository<User>,
     ) {}
 
-    async findByUserId(userId: number): Promise<User> {
+    async getUserDetailsByUserId(userId: number): Promise<User> {
         const user = await this.usersRepository.findOne({ where: { userId } });
         if (!user) {
-            throw new NotFoundException(`회원 인증에 실패했습니다.`);
+            throw new NotFoundException('회원 인증에 실패했습니다.');
         }
         return user;
     }

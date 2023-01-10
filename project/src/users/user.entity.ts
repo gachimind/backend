@@ -22,10 +22,10 @@ export class User {
     profileImg: string;
 
     @CreateDateColumn()
-    createdAt: string;
+    createdAt: Date;
 
     @UpdateDateColumn()
-    updatedAt: string;
+    updatedAt: Date;
 
     @DeleteDateColumn()
     deletedAt: Date | null;

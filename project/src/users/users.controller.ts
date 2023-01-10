@@ -40,15 +40,13 @@ export class UsersController {
 
     @Get('status')
     user(@Req() request: Request) {
-        if (request.user) {
-            return { msg: 'Authenticated' };
-        } else {
-            return { msg: 'Not Authenticated' };
-        }
+        if (!request.user) throw new HttpException('Not Authenticated', 404);
+        return { message: 'Authenticated' };
     }
+    // 에러 문구, status 어떻게 할지 혜연님과 상의
 
     @Get('/me')
-    findByUserId(@Param('userId') userId: number) {
-        return this.usersService.findByUserId(userId);
+    getUserDetailsByUserId(@Param('userId') userId: number) {
+        return this.usersService.getUserDetailsByUserId(userId);
     }
 }
