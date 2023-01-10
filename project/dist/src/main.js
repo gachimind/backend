@@ -8,8 +8,9 @@ const common_1 = require("@nestjs/common");
 const http_exception_filter_1 = require("./common/exceptionFilters/http-exception.filter");
 const ws_exception_filter_1 = require("./common/exceptionFilters/ws-exception.filter");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule, { cors: true });
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
+    app.enableCors();
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalFilters(new ws_exception_filter_1.SocketExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
