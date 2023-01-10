@@ -6,6 +6,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { User } from './users/user.entity';
+import { AppController } from './app.controller';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -35,7 +36,7 @@ import { User } from './users/user.entity';
             charset: 'utf8mb4_general_ci',
         }),
     ],
-    controllers: [],
+    controllers: [AppController],
     providers: [ConfigService],
 })
 export class AppModule implements NestModule {

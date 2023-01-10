@@ -14,6 +14,7 @@ const config_1 = require("@nestjs/config");
 const logger_middleware_1 = require("./middlewares/logger.middleware");
 const typeorm_1 = require("@nestjs/typeorm");
 const user_entity_1 = require("./users/user.entity");
+const app_controller_1 = require("./app.controller");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -40,7 +41,7 @@ AppModule = __decorate([
                 charset: 'utf8mb4_general_ci',
             }),
         ],
-        controllers: [],
+        controllers: [app_controller_1.AppController],
         providers: [config_1.ConfigService],
     })
 ], AppModule);
