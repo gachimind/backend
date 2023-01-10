@@ -48,7 +48,12 @@ const fakeDBUserTable = [
 ];
 
 // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+    transports: ['websocket'],
+    cors: {
+        origin: '*',
+    },
+})
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly roomService: RoomService,

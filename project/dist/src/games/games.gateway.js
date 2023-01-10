@@ -256,7 +256,12 @@ __decorate([
     __metadata("design:returntype", Object)
 ], GamesGateway.prototype, "sendChatRequest", null);
 GamesGateway = __decorate([
-    (0, websockets_1.WebSocketGateway)({ cors: true }),
+    (0, websockets_1.WebSocketGateway)({
+        transports: ['websocket'],
+        cors: {
+            origin: '*',
+        },
+    }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         chat_service_1.ChatService])
 ], GamesGateway);
