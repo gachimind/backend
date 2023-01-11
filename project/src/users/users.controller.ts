@@ -32,7 +32,7 @@ export class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    @Get('/login/kakao/redirect')
+    @Get('login/kakao/redirect')
     @UseGuards(KakaoAuthGuard)
     handleRedirect(@Param('code') code: string) {
         return { msg: 'OK' };
@@ -45,7 +45,7 @@ export class UsersController {
     }
     // 에러 문구, status 어떻게 할지 혜연님과 상의
 
-    @Get('/me')
+    @Get(':userId')
     getUserDetailsByUserId(@Param('userId') userId: number) {
         return this.usersService.getUserDetailsByUserId(userId);
     }
