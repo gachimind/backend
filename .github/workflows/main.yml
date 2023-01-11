@@ -1,9 +1,9 @@
 name: Our CI
 on:
   push:
-    branches: [main, dev]
+    branches: [release]
   pull_request:
-    branches: [main, dev]
+    branches: [release]
 env:
   AWS_REGION: ap-northeast-2
   S3_BUCKET_NAME: tiltil
