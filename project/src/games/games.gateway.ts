@@ -120,7 +120,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const room: EnterRoomRequestDto = data;
         const updateRoomInfo = await this.roomService.getRoomInfo(room.roomId);
         if (!updateRoomInfo) {
-            socket.emit("enter-room", {errorMessage: "방이 존재하지 않습니다.", 404})
+            socket.emit('enter-room', { errorMessage: '방이 존재하지 않습니다.', status: 404 });
         }
 
         // 2. requested user를 요청에 room에 join

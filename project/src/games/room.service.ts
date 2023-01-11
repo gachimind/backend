@@ -52,6 +52,7 @@ export class RoomService {
         return newRoom.roomId;
     }
 
+    /*
     // 유저가 방에 입장하는 동작만 처리
     enterRoom(socket: Socket, room: EnterRoomRequestDto) {
         // Set을 사용해서 검색 속도를 올릴 수는 없을까??
@@ -123,4 +124,5 @@ export class RoomService {
             console.log('enter room', existRoom);
         }
     }
+    */
 }
