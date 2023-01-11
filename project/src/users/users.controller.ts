@@ -40,8 +40,8 @@ export class UsersController {
 
     @Get('status')
     user(@Req() request: Request) {
-        if (!request.user) throw new HttpException('Not Authenticated', 404);
-        return { message: 'Authenticated' };
+        if (!request.user) throw new HttpException('토큰값이 일치하지 않습니다.', 401);
+        return { message: '토큰 인증이 완료되었습니다.', status: 202 };
     }
     // 에러 문구, status 어떻게 할지 혜연님과 상의
 

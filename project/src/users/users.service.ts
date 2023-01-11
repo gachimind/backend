@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -15,7 +15,7 @@ export class UsersService {
     async getUserDetailsByUserId(userId: number): Promise<User> {
         const user = await this.usersRepository.findOne({ where: { userId } });
         if (!user) {
-            throw new NotFoundException('회원 인증에 실패했습니다.');
+            throw new HttpException('회원 인증에 실패했습니다.', 402);
         }
         return user;
     }
