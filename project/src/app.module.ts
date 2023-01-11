@@ -18,8 +18,6 @@ import { AppController } from './app.controller';
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
-        UsersModule,
-        GamesModule,
         TypeOrmModule.forRoot({
             type: 'mysql',
             host: process.env.MYSQL_HOST,
@@ -35,6 +33,8 @@ import { AppController } from './app.controller';
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
         }),
+        UsersModule,
+        GamesModule,
     ],
     controllers: [AppController],
     providers: [ConfigService],

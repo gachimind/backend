@@ -24,8 +24,6 @@ AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
-            users_module_1.UsersModule,
-            games_module_1.GamesModule,
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'mysql',
                 host: process.env.MYSQL_HOST,
@@ -40,6 +38,8 @@ AppModule = __decorate([
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
             }),
+            users_module_1.UsersModule,
+            games_module_1.GamesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [config_1.ConfigService],

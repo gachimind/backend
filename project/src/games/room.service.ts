@@ -3,35 +3,33 @@ import { Socket } from 'socket.io';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
 import { EnterRoomRequestDto } from './dto/enter-room.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
-import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import {
+    SocketException,
+    SocketExceptionStatus,
+} from 'src/common/exceptionFilters/ws-exception.filter';
 import { RoomDataDto } from './dto/room.data.dto';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
+import { LoginUserToSocketDto } from 'src/users/dto/login-user.dto';
+import { RoomParticipantsDto } from './dto/room.participants.dto';
 
 const roomList = []; // repository로 변경해야 함
 
 @Injectable()
 export class RoomService {
-    getAllRoomList(): RoomInfoToMainDto[] {
-        return roomList.map((room: RoomDataDto) => {
+    async getAllRoomList(): Promise<RoomInfoToMainDto[]> {
+        return await roomList.map((room) => {
+            const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } =
+                room;
             return {
-                roomId: room.roomId,
-                roomTitle: room.roomTitle,
-                maxCount: room.maxCount,
-                round: room.round,
-                participants: room.participants.length,
-                isSecreteRoom: room.isSecreteRoom,
-                isGameOn: room.isGameOn,
+                roomId,
+                roomTitle,
+                maxCount,
+                round,
+                participants: participants.length,
+                isSecreteRoom,
+                isGameOn,
             };
         });
-    }
-
-    async getRoomInfo(roomId: number): Promise<RoomInfoToRoomDto> {
-        const roomInfo: RoomDataDto = await roomList.find((room) => {
-            room.roomId === roomId;
-        });
-        const { roomPassword, ...roomInfoExceptRoomPassword } = roomInfo;
-
-        return roomInfoExceptRoomPassword;
     }
 
     createRoom(room: CreateRoomRequestDto): number {
@@ -47,82 +45,114 @@ export class RoomService {
         }
         // roomList에 생성된 방 정보 추가 -> db로 옮길 예정
         roomList.push(newRoom);
-
-        // retunr new roomId
         return newRoom.roomId;
     }
 
-    /*
-    // 유저가 방에 입장하는 동작만 처리
-    enterRoom(socket: Socket, room: EnterRoomRequestDto) {
-        // Set을 사용해서 검색 속도를 올릴 수는 없을까??
-        // for of 사용 vs map을 사용?? callback 자리에 아래 처럼 긴 로직을 넣는 게 맞나??
-        for (const existRoom of roomList) {
-            if (existRoom.roomId !== room.roomId) {
-                socket.emit('enter-room', {
-                    errorMessage: '방을 찾을 수 없습니다.',
-                    status: 404,
-                });
-                throw new SocketException('방을 찾을 수 없습니다.', 404);
+    async isRoomAvailable(requestUser: LoginUserToSocketDto, requestRoom: EnterRoomRequestDto) {
+        // 1. 방이 존재하는지 확인, db에서 방 정보 조회
+        const room = await roomList.find((data) => {
+            return data.roomId === requestRoom.roomId;
+        });
+        let status: SocketExceptionStatus;
+        if (!room) {
+            status = 404;
+            return { availability: false, message: '요청하신 방을 찾을 수 없습니다.', status };
+        }
+
+        // 2. 정원 초과 확인
+        if (room.maxCount == room.participants.length) {
+            status = 400;
+            return {
+                availability: false,
+                message: '정원초과로 방 입장에 실패했습니다.',
+                status,
+            };
+        }
+
+        // 3. 비밀방이라면 비밀번호 확인
+        if (room.IsSecreteRoom) {
+            if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
+                status = 404;
+                return {
+                    availability: false,
+                    message: '비밀번호가 일치하지 않습니다.',
+                    status,
+                };
             }
-            if (existRoom.maxCount === existRoom.participants.length) {
-                socket.emit('enter-room', {
-                    errorMessage: '정원초과로 방 입장에 실패했습니다.',
-                    status: 400,
-                });
-                throw new SocketException('정원초과로 방 입장에 실패했습니다.', 400);
+        }
+
+        // 4. 입장을 요청한 유저가 이미 방 안에 있는지 검사
+        const userInRoom = room.participants.find((user) => {
+            return user.userId === requestUser.userId;
+        });
+        if (userInRoom) {
+            status = 400;
+            return {
+                availability: false,
+                message: '같은 방에 중복 입장할 수 없습니다.',
+                status,
+            };
+        }
+        return { availability: true, message: '방 입장에 성공하였습니다.', room };
+    }
+
+    async updateRoomParticipants(
+        socketId: string,
+        requestUser: LoginUserToSocketDto,
+        roomInfo: RoomDataDto,
+    ): Promise<RoomInfoToRoomDto | any> {
+        let isHost: boolean;
+        if (!roomInfo.participants.length) isHost = true;
+
+        const { currentRoom, ...userInfo } = requestUser;
+        roomInfo.participants.push({
+            socketId,
+            ...userInfo,
+            isReady: false,
+            isHost,
+        });
+
+        roomList.map((room: RoomDataDto, index: number) => {
+            if (room.roomId === roomInfo.roomId) {
+                return (roomList[index] = roomInfo);
             }
-            if (existRoom.IsSecreteRoom) {
-                if (existRoom.roomPassword !== room.roomPassword) {
-                    socket.emit('enter-room', {
-                        errorMessage: '비밀번호가 일치하지 않습니다.',
-                        status: 403,
-                    });
-                    throw new SocketException('비밀번호가 일치하지 않습니다.', 403);
+        });
+
+        return roomInfo;
+    }
+
+    async leaveRoom(requestUser: LoginUserToSocketDto) {
+        // roomList에서 방 정보 가져오기
+        const targetRoom = await roomList.find((room) => {
+            return room.roomId === requestUser.currentRoom;
+        });
+
+        if (!targetRoom) throw new SocketException('bad request', 400, 'leave-room');
+        // targetRoom participants 정보 업데이트
+        // 방에 남은 인원이 2명 이상이면, 방 정보 업데이트
+        if (targetRoom.participants.length > 1) {
+            targetRoom.participants.map((user: RoomParticipantsDto, index) => {
+                if (user.userId === requestUser.userId) {
+                    // requestUser가 방장이라면, 배열의 1번째 유저를 방장으로 변경하고, requestUser 정보 삭제
+                    if (user.isHost) {
+                        targetRoom.participants[1].isHost = true;
+                    }
+                    return targetRoom.participants.splice(index, 1);
                 }
-            }
-
-            const findUserInRoom = existRoom.participants.filter((user) => {
-                return user.userId === requestedUser.userId;
-            });
-            if (findUserInRoom) {
-                socket.emit('enter-room', {
-                    errorMessage: '잘못된 요청입니다.',
-                    status: 400,
-                });
-                throw new SocketException('비밀번호가 일치하지 않습니다.', 403);
-            }
-            //모든 검사 로직을 통과하면, 사용자를 방에 입장 처리
-            // - roomList의 해당 room의 participants 정보를 갱신
-            // -
-            existRoom.participants.push({
-                userId: requestedUser.userId,
-                nickname: requestedUser.nickname,
-                profileImg: requestedUser.profileImg,
-                isHost: false,
-                isReady: false,
             });
 
-            // socketIdMap에서 해당 유저의 방 정보 갱신
-            requestedUser.currentRoom = room.roomId;
-
-            // 처리 된 데이터로 socket emit 처리 (모든 소켓에게 & 방 생성자를 방에 binding)
-            await this.server.to(`${room.roomId}`).emit('update-room', { data: existRoom });
-            socket.join(`${room.roomId}`);
-            // 이렇게 하면, 다른 방에 있는 유저에게까지 정보가 넘어감....
-            this.server.except(`${room.roomId}`).emit('update-room-list', {
-                data: {
-                    roomId: existRoom.roomId,
-                    roomTitle: existRoom.roomTitle,
-                    maxCount: existRoom.maxCount,
-                    round: existRoom.round,
-                    participants: existRoom.participants.length,
-                    isSecreteRoom: existRoom.isSecreteRoom,
-                    isGameOn: existRoom.isGameOn,
-                },
+            roomList.map((room: RoomDataDto, index: number) => {
+                if (room.roomId === targetRoom.roomId) {
+                    return (roomList[index] = targetRoom);
+                }
             });
-            console.log('enter room', existRoom);
+            return targetRoom;
+        } // 요청한 유저가 방에 남은 마지막 사람이면, 방 삭제
+        else {
+            const roomIndex = roomList.findIndex((room) => room.roomId === targetRoom.roomId);
+
+            roomList.splice(roomIndex, 1);
+            return null;
         }
     }
-    */
 }

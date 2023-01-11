@@ -20,10 +20,10 @@ import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 import { LoginUserToSocketDto } from '../users/dto/login-user.dto';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { InGameUsersService, socketIdMap } from './inGame-users.service';
+import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 
 // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @WebSocketGateway({
-    transports: ['websocket'],
     cors: {
         origin: '*',
     },
@@ -41,23 +41,20 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         console.log('webSocketServer init');
     }
 
-    async handleConnection(@ConnectedSocket() socket: Socket): Promise<any> {
+    async handleConnection(@ConnectedSocket() socket: Socket) {
         console.log('connected socket', socket.id);
         const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
-        return socket.emit('room-list', { data });
+        socket.emit('room-list', { data });
     }
 
-    async handleDisconnect(@ConnectedSocket() socket: Socket): Promise<any> {
+    async handleDisconnect(@ConnectedSocket() socket: Socket) {
         // 접속이 종료된 회원의 정보를 socketIdMap에서 삭제
         await this.inGameUsersService.handleDisconnect(socket);
-        return console.log('disconnected socket', socket.id);
+        console.log('disconnected socket', socket.id);
     }
 
     @SubscribeMessage('log-in')
-    async socketIdMapToLoginUser(
-        @ConnectedSocket() socket: Socket,
-        @MessageBody() { data }: any,
-    ): Promise<any> {
+    async socketIdMapToLoginUser(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // !!authGuard 만들어서 붙여야 함!!! -> 토큰을 들고 있는지만 검사 & 토큰 validation은 별도로!!
         if (!data.authorization) {
             socket.emit('log-in', { errorMessage: '잘못된 접근입니다.', status: 401 });
@@ -68,24 +65,48 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // 토큰 값이 유효한지는 service 레이어에서 db를 조회해서 검사
         await this.inGameUsersService.socketIdMapToLoginUser(token, socket);
         console.log('로그인 성공!');
-        return socket.emit('log-in', { message: '로그인 성공!' });
+        socket.emit('log-in', { message: '로그인 성공!' });
     }
 
     @SubscribeMessage('log-out')
-    async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket): Promise<any> {
+    async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
+        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
+        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+
+        // 방에서 로그아웃 한 경우, room update
+        if (requestUser.currentRoom) {
+            const updateRoomInfo: RoomInfoToRoomDto | any = await this.roomService.leaveRoom(
+                requestUser,
+            );
+            // request user를 leave처리
+            socket.leave(`${updateRoomInfo.roomId}`);
+            // game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
+            this.server
+                .to(`${updateRoomInfo.roomId}`)
+                .emit('update-room', { data: updateRoomInfo });
+            // main space에 room-list event emit -> !!!namespace 설정하기!!!
+            const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
+            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
+        }
+
+        // socketIdMap에서 삭제
         await this.inGameUsersService.socketIdMapToLogOutUser(socket);
         console.log('로그아웃 성공!');
-        return socket.emit('log-out', { message: '로그아웃 성공!' });
+        socket.emit('log-out', { message: '로그아웃 성공!' });
     }
 
     @SubscribeMessage('create-room')
-    async createRoomRequest(
-        @ConnectedSocket() socket: Socket,
-        @MessageBody() { data }: any,
-    ): Promise<any> {
+    async handleCreateRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestedUser: LoginUserToSocketDto = socketIdMap[socket.id];
-        if (!requestedUser) {
+        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        if (!requestUser) {
             socket.emit('create-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
                 status: 401,
@@ -97,49 +118,99 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.emit('create-room', { data: { roomId: newRoomId } });
 
         // main space에 room list를 업데이트
-        const updateRoomList = await this.roomService.getAllRoomList();
+        const updateRoomList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
         // !!! namespce 설정해줘야 함!!!
-        return this.server.emit('room-list', { data: updateRoomList });
+        this.server.emit('room-list', { data: updateRoomList });
     }
 
     @SubscribeMessage('enter-room')
-    async enterRoomRequest(
-        @ConnectedSocket() socket: Socket,
-        @MessageBody() { data }: any,
-    ): Promise<any> {
+    async handleEnterRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestedUser: LoginUserToSocketDto = socketIdMap[socket.id];
-        if (!requestedUser) {
-            socket.emit('create-room', {
+        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('enter-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
                 status: 401,
             });
-            throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
-        }
-        // 1. 요청한 방이 존재하는지 검증
-        const room: EnterRoomRequestDto = data;
-        const updateRoomInfo = await this.roomService.getRoomInfo(room.roomId);
-        if (!updateRoomInfo) {
-            socket.emit('enter-room', { errorMessage: '방이 존재하지 않습니다.', status: 404 });
+            throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'enter-room');
         }
 
-        // 2. requested user를 요청에 room에 join
-        socket.join(`${room.roomId}`);
+        // 1. 입장을 요청한 유저가 다른 방에 속해있지 않은지 확인
+        if (requestUser.currentRoom) {
+            socket.emit('enter-room', {
+                errorMessage: '잘못된 접근입니다.',
+                status: 400,
+            });
+            throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
+        }
 
-        //3.해당 방의 participants 정보를 업데이트
+        // 2. 입장을 요청한 방이 참가 가능한 상태인지 확인
+        const requestRoom: EnterRoomRequestDto = data;
+        const isRoomAvailable = await this.roomService.isRoomAvailable(requestUser, requestRoom);
+        if (!isRoomAvailable.availability) {
+            socket.emit('enter-room', {
+                errorMessage: isRoomAvailable.message,
+                status: isRoomAvailable.status,
+            });
+            throw new SocketException(
+                isRoomAvailable.message,
+                isRoomAvailable.status,
+                'enter-room',
+            );
+        }
 
-        // 4.game room 안의 사람들에게 update-room event emit
+        // 3. requestUser를 해당 방에 join & room participants 정보 갱신
+        const updateRoomInfo = await this.roomService.updateRoomParticipants(
+            socket.id,
+            requestUser,
+            isRoomAvailable.room,
+        );
+        socket.join(`${updateRoomInfo.roomId}`);
+
+        // 4.game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', { data: updateRoomInfo });
 
         // 5.main space에 room-list event emit -> !!!namespace 설정하기!!!
-        const roomInfoList: RoomInfoToMainDto[] = this.roomService.getAllRoomList();
-        this.server.emit('room-list', { data: roomInfoList });
+        const roomInfoList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
+    }
+
+    @SubscribeMessage('leave-room')
+    async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
+        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
+        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+
+        // roomList.participants update
+        const updateRoomInfo: RoomInfoToRoomDto | any = await this.roomService.leaveRoom(
+            requestUser,
+        );
+
+        // socketIdMap update
+        await this.inGameUsersService.handleLeaveRoom(socket.id);
+
+        // request user를 leave처리
+        socket.leave(`${updateRoomInfo.roomId}`);
+
+        // 4.game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
+        if (updateRoomInfo)
+            this.server
+                .to(`${updateRoomInfo.roomId}`)
+                .emit('update-room', { data: updateRoomInfo });
+
+        // 5.main space에 room-list event emit -> !!!namespace 설정하기!!!
+        const roomInfoList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
     }
 
     @SubscribeMessage('send-chat')
-    async sendChatRequest(
-        @ConnectedSocket() socket: Socket,
-        @MessageBody() { data }: any,
-    ): Promise<any> {
+    async sendChatRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         const message: string = data.message;
         const { nickname, currentRoom } = socketIdMap[socket.id];
         this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });

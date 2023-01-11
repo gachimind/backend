@@ -24,5 +24,15 @@ __decorate([
     }),
     __metadata("design:type", Number)
 ], LoginUserToSocketDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({
+        example: 1,
+        required: true,
+        description: '유저가 현재 위치한 방의 roomId',
+    }),
+    __metadata("design:type", Number)
+], LoginUserToSocketDto.prototype, "currentRoom", void 0);
 exports.LoginUserToSocketDto = LoginUserToSocketDto;
 //# sourceMappingURL=login-user.dto.js.map

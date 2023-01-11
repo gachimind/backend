@@ -39,13 +39,6 @@ const fakeDBUserTable = [
 export class InGameUsersService {
     handleDisconnect(socket: Socket) {
         socketIdMap[socket.id] = null;
-        if (socketIdMap[socket.id])
-            throw new SocketException(
-                'cannot handle disconnected user from socketIdMap',
-                500,
-                'error',
-            );
-        return;
     }
 
     async socketIdMapToLoginUser(token: string, socket: Socket) {
@@ -65,6 +58,7 @@ export class InGameUsersService {
         // socketIdMap에서 value에 회원의 userId가 있으면, 이중 로그인을 간주하고, 에러 처리
         const usersInSocketIdMap: LoginUserToSocketDto[] = Object.values(socketIdMap);
         const requestUserInSocketIdMap = usersInSocketIdMap.find((user) => {
+            if (!user) return null;
             return user.userId === userId;
         });
         if (requestUserInSocketIdMap) {
@@ -79,11 +73,16 @@ export class InGameUsersService {
             nickname: user.nickname,
             profileImg: user.profileImg,
         };
-        return;
+        return console.log(socketIdMap[socket.id]);
     }
 
     socketIdMapToLogOutUser(socket: Socket) {
         socketIdMap[socket.id] = null;
-        return;
+        return console.log(socketIdMap[socket.id]);
+    }
+
+    handleLeaveRoom(socketId) {
+        socketIdMap[socketId].currentRoom = null;
+        return console.log(socketIdMap[socketId]);
     }
 }

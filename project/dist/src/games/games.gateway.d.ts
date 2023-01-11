@@ -10,11 +10,12 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     constructor(roomService: RoomService, chatService: ChatService, inGameUsersService: InGameUsersService);
     server: Server;
     afterInit(server: Server): any;
-    handleConnection(socket: Socket): Promise<any>;
-    handleDisconnect(socket: Socket): Promise<any>;
-    socketIdMapToLoginUser(socket: Socket, { data }: any): Promise<any>;
-    socketIdMapToLogOutUser(socket: Socket): Promise<any>;
-    createRoomRequest(socket: Socket, { data }: any): Promise<any>;
-    enterRoomRequest(socket: Socket, { data }: any): Promise<any>;
-    sendChatRequest(socket: Socket, { data }: any): Promise<any>;
+    handleConnection(socket: Socket): Promise<void>;
+    handleDisconnect(socket: Socket): Promise<void>;
+    socketIdMapToLoginUser(socket: Socket, { data }: any): Promise<void>;
+    socketIdMapToLogOutUser(socket: Socket): Promise<void>;
+    handleCreateRoomRequest(socket: Socket, { data }: any): Promise<void>;
+    handleEnterRoomRequest(socket: Socket, { data }: any): Promise<void>;
+    handleLeaveRoomEvent(socket: Socket): Promise<void>;
+    sendChatRequest(socket: Socket, { data }: any): Promise<void>;
 }

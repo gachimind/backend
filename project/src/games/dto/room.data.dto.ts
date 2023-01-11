@@ -1,6 +1,7 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNumber, IsString } from 'class-validator';
 import { CreateRoomRequestDto } from './create-room.request.dto';
+import { RoomParticipantsDto } from './room.participants.dto';
 
 export class RoomDataDto extends OmitType(CreateRoomRequestDto, ['roomTitle'] as const) {
     @IsNumber()
@@ -46,5 +47,5 @@ export class RoomDataDto extends OmitType(CreateRoomRequestDto, ['roomTitle'] as
         required: true,
         description: '방의 게임 상태, false: 대기 중  / true: 게임 중',
     })
-    public participants: any[]; // participants의 dto 정의하고 여기에 넣어 주기
+    public participants: Array<RoomParticipantsDto>;
 }

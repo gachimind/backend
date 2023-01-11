@@ -31,11 +31,11 @@ let GamesGateway = class GamesGateway {
     async handleConnection(socket) {
         console.log('connected socket', socket.id);
         const data = await this.roomService.getAllRoomList();
-        return socket.emit('room-list', { data });
+        socket.emit('room-list', { data });
     }
     async handleDisconnect(socket) {
         await this.inGameUsersService.handleDisconnect(socket);
-        return console.log('disconnected socket', socket.id);
+        console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
         if (!data.authorization) {
@@ -45,16 +45,33 @@ let GamesGateway = class GamesGateway {
         const token = data.authorization;
         await this.inGameUsersService.socketIdMapToLoginUser(token, socket);
         console.log('로그인 성공!');
-        return socket.emit('log-in', { message: '로그인 성공!' });
+        socket.emit('log-in', { message: '로그인 성공!' });
     }
     async socketIdMapToLogOutUser(socket) {
+        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+        if (requestUser.currentRoom) {
+            const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
+            socket.leave(`${updateRoomInfo.roomId}`);
+            this.server
+                .to(`${updateRoomInfo.roomId}`)
+                .emit('update-room', { data: updateRoomInfo });
+            const data = await this.roomService.getAllRoomList();
+            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
+        }
         await this.inGameUsersService.socketIdMapToLogOutUser(socket);
         console.log('로그아웃 성공!');
-        return socket.emit('log-out', { message: '로그아웃 성공!' });
+        socket.emit('log-out', { message: '로그아웃 성공!' });
     }
-    async createRoomRequest(socket, { data }) {
-        const requestedUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestedUser) {
+    async handleCreateRoomRequest(socket, { data }) {
+        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
             socket.emit('create-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
                 status: 401,
@@ -64,25 +81,57 @@ let GamesGateway = class GamesGateway {
         const newRoomId = await this.roomService.createRoom(data);
         socket.emit('create-room', { data: { roomId: newRoomId } });
         const updateRoomList = await this.roomService.getAllRoomList();
-        return this.server.emit('room-list', { data: updateRoomList });
+        this.server.emit('room-list', { data: updateRoomList });
     }
-    async enterRoomRequest(socket, { data }) {
-        const requestedUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestedUser) {
-            socket.emit('create-room', {
+    async handleEnterRoomRequest(socket, { data }) {
+        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('enter-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
                 status: 401,
             });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'enter-room');
         }
-        const room = data;
-        const updateRoomInfo = await this.roomService.getRoomInfo(room.roomId);
-        if (!updateRoomInfo) {
-            socket.emit('enter-room', { errorMessage: '방이 존재하지 않습니다.', status: 404 });
+        if (requestUser.currentRoom) {
+            socket.emit('enter-room', {
+                errorMessage: '잘못된 접근입니다.',
+                status: 400,
+            });
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
-        socket.join(`${room.roomId}`);
-        const roomInfoList = this.roomService.getAllRoomList();
-        this.server.emit('room-list', { data: roomInfoList });
+        const requestRoom = data;
+        const isRoomAvailable = await this.roomService.isRoomAvailable(requestUser, requestRoom);
+        if (!isRoomAvailable.availability) {
+            socket.emit('enter-room', {
+                errorMessage: isRoomAvailable.message,
+                status: isRoomAvailable.status,
+            });
+            throw new ws_exception_filter_1.SocketException(isRoomAvailable.message, isRoomAvailable.status, 'enter-room');
+        }
+        const updateRoomInfo = await this.roomService.updateRoomParticipants(socket.id, requestUser, isRoomAvailable.room);
+        socket.join(`${updateRoomInfo.roomId}`);
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', { data: updateRoomInfo });
+        const roomInfoList = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
+    }
+    async handleLeaveRoomEvent(socket) {
+        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+        const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
+        await this.inGameUsersService.handleLeaveRoom(socket.id);
+        socket.leave(`${updateRoomInfo.roomId}`);
+        if (updateRoomInfo)
+            this.server
+                .to(`${updateRoomInfo.roomId}`)
+                .emit('update-room', { data: updateRoomInfo });
+        const roomInfoList = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
     }
     async sendChatRequest(socket, { data }) {
         const message = data.message;
@@ -128,7 +177,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "createRoomRequest", null);
+], GamesGateway.prototype, "handleCreateRoomRequest", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('enter-room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
@@ -136,7 +185,14 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "enterRoomRequest", null);
+], GamesGateway.prototype, "handleEnterRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('leave-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleLeaveRoomEvent", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('send-chat'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
@@ -147,7 +203,6 @@ __decorate([
 ], GamesGateway.prototype, "sendChatRequest", null);
 GamesGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
-        transports: ['websocket'],
         cors: {
             origin: '*',
         },

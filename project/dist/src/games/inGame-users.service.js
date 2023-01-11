@@ -34,9 +34,6 @@ const fakeDBUserTable = [
 let InGameUsersService = class InGameUsersService {
     handleDisconnect(socket) {
         exports.socketIdMap[socket.id] = null;
-        if (exports.socketIdMap[socket.id])
-            throw new ws_exception_filter_1.SocketException('cannot handle disconnected user from socketIdMap', 500, 'error');
-        return;
     }
     async socketIdMapToLoginUser(token, socket) {
         const userId = authentication[token];
@@ -50,6 +47,8 @@ let InGameUsersService = class InGameUsersService {
         }
         const usersInSocketIdMap = Object.values(exports.socketIdMap);
         const requestUserInSocketIdMap = usersInSocketIdMap.find((user) => {
+            if (!user)
+                return null;
             return user.userId === userId;
         });
         if (requestUserInSocketIdMap) {
@@ -62,11 +61,15 @@ let InGameUsersService = class InGameUsersService {
             nickname: user.nickname,
             profileImg: user.profileImg,
         };
-        return;
+        return console.log(exports.socketIdMap[socket.id]);
     }
     socketIdMapToLogOutUser(socket) {
         exports.socketIdMap[socket.id] = null;
-        return;
+        return console.log(exports.socketIdMap[socket.id]);
+    }
+    handleLeaveRoom(socketId) {
+        exports.socketIdMap[socketId].currentRoom = null;
+        return console.log(exports.socketIdMap[socketId]);
     }
 };
 InGameUsersService = __decorate([

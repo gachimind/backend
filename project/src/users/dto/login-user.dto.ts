@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsEmpty } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 
@@ -13,4 +13,13 @@ export class LoginUserToSocketDto extends OmitType(CreateUserDto, ['email'] as c
         description: 'userId',
     })
     public userId: number;
+
+    @IsNumber()
+    @IsOptional()
+    @ApiProperty({
+        example: 1,
+        required: true,
+        description: '유저가 현재 위치한 방의 roomId',
+    })
+    public currentRoom: number;
 }
