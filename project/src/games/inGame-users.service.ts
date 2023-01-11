@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { LoginUserToSocketDto } from 'src/users/dto/login-user.dto';
-import { CreateRoomDto } from './dto/create-room.request.dto';
-import { EnterRoomDto } from './dto/enter-room.dto';
-import { UpdateRoomListDto } from './dto/roomInfoToMain.dto';
+import { CreateRoomRequestDto } from './dto/create-room.request.dto';
+import { EnterRoomRequestDto } from './dto/enter-room.dto';
+import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 
 export const socketIdMap = {}; // {socket.id : {nickname, profileImg, currentRoom}} -> repository로 변경해야 함
 
