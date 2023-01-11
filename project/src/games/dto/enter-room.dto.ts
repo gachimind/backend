@@ -1,7 +1,7 @@
-import { IsString, IsNumber, IsOptional, IsEmpty, IsBoolean } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class EnterRoomDto {
+export class EnterRoomRequestDto {
     @IsNumber()
     @ApiProperty({
         example: 1,
