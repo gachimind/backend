@@ -4,7 +4,9 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
+    OneToMany,
 } from 'typeorm';
+import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Room {
@@ -40,6 +42,11 @@ export class Room {
 
     @Column()
     isGameReadyToStart: boolean;
+
+    @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom, {
+        cascade: ['insert', 'update', 'remove'],
+    })
+    socket: SocketIdMap[];
 
     @CreateDateColumn()
     createdAt: Date;
