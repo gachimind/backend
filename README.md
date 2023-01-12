@@ -11,9 +11,9 @@
 
 
 ## package.json & package-lock.json
-- 두개 패키지 매니저 파일은 필요한 부분만 남겨 정리하였습니다.
-- .gitignore에 추가해서 더이상 푸쉬가 되지 않도록 처리 하였으니, 혹시나 패키지 설치가 필요하시다면, 설치 후 .gitignore에서 삭제하고 push해주세요.
-- README를 작성한 버전이 머지된 dev 브랜치를 pull 받으시기 전, 로컬 프로젝트 폴더에 있는 node_module폴더와 package.json, 그리고 package-lock.json 파일을 삭제하시고, pull을 받으세요. 그리고 `npm i`로 새로 당겨받은 package.json 파일에 정의된 모듈만 세팅 되도록 하면 깔끔해질 것 같습니다. 
+- 두 개 패키지 매니저 파일은 필요한 부분만 남겨 정리하였습니다.
+- 현재 PR이 머지되고, dev에서 pull을 받으신 후 `npm ci` 명령을 해주시면, 기존에 깔려 있는 node_module을 싹 밀고, 현재 정의되어 있는 package-lock.json대로 새로 설치해줍니다.
+- 새로 패키지를 설치하거나, 삭제를 한다면, PR 메세지에 꼭 남겨주세요.
 
 
 ## 항상 작업을 시작하기 전 지켜주셨으면 하는 루틴이 있습니다.

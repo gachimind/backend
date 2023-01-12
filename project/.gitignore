@@ -1,6 +1,4 @@
 .env
-package-lock.json
-package.json
 
 # compiled output
 /node_modules
