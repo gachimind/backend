@@ -1,5 +1,6 @@
 .env
-README_dyp.md
+package-lock.json
+package.json
 
 # compiled output
 /node_modules
