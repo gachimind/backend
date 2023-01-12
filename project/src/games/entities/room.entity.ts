@@ -11,7 +11,7 @@ import { SocketIdMap } from './socketIdMap.entity';
 @Entity()
 export class Room {
     @PrimaryGeneratedColumn()
-    roomId: number;
+    id: number;
 
     @Column({ length: 100 })
     roomTitle: string;
@@ -46,7 +46,7 @@ export class Room {
     @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom, {
         cascade: ['insert', 'update', 'remove'],
     })
-    socket: SocketIdMap[];
+    participants: SocketIdMap[];
 
     @CreateDateColumn()
     createdAt: Date;

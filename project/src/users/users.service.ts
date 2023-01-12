@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './user.entity';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -12,8 +12,8 @@ export class UsersService {
         private usersRepository: Repository<User>,
     ) {}
 
-    async getUserDetailsByUserId(userId: number): Promise<User> {
-        const user = await this.usersRepository.findOne({ where: { userId } });
+    async getUserDetailsByUserId(id: number): Promise<User> {
+        const user = await this.usersRepository.findOne({ where: { id } });
         if (!user) {
             throw new HttpException('회원 인증에 실패했습니다.', 402);
         }

@@ -3,10 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { SessionSerializer } from './auth/kakao.serializer';
-import { User } from './user.entity';
+import { User } from './entities/user.entity';
+import { TokenMap } from './entities/token-map.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([User])],
+    imports: [TypeOrmModule.forFeature([User, TokenMap])],
     controllers: [UsersController],
     providers: [
         UsersService,

@@ -1,28 +1,25 @@
 import {
     Column,
+    JoinColumn,
     CreateDateColumn,
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
     OneToOne,
-    JoinColumn,
 } from 'typeorm';
-import { SocketIdMap } from './socketIdMap.entity';
+import { User } from './user.entity';
 
 @Entity()
-export class Player {
+export class TokenMap {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @OneToOne(() => SocketIdMap)
+    @Column()
+    token: string;
+
+    @OneToOne(() => User)
     @JoinColumn()
-    socket: SocketIdMap;
-
-    @Column()
-    isGameOn: boolean;
-
-    @Column()
-    isGameReadyToStart: boolean;
+    user: User;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -1,4 +1,4 @@
-import { User } from 'src/users/user.entity';
+import { User } from '../../users/entities/user.entity';
 import {
     JoinColumn,
     CreateDateColumn,
@@ -13,7 +13,7 @@ import { Room } from './room.entity';
 @Entity()
 export class SocketIdMap {
     @PrimaryColumn('varchar')
-    socketId: string;
+    id: string;
 
     @OneToOne(() => User)
     @JoinColumn()
@@ -25,7 +25,7 @@ export class SocketIdMap {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @ManyToOne(() => Room, (room) => room.roomId, {
+    @ManyToOne(() => Room, (room) => room.id, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
     })

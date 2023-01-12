@@ -3,10 +3,11 @@ import { UsersModule } from './users/users.module';
 import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { AppController } from './app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { User } from './users/user.entity';
-import { AppController } from './app.controller';
+import { User } from './users/entities/user.entity';
+import { TokenMap } from './users/entities/token-map.entity';
 import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
@@ -28,8 +29,8 @@ import { SocketIdMap } from './games/entities/socketIdMap.entity';
             username: process.env.MYSQL_USERNAME,
             password: process.env.MYSQL_PASSWORD,
             database: process.env.MYSQL_DATABASE,
-            entities: [User, Room, Player, SocketIdMap],
-            migrations: [__dirname + '/migrations/*.ts'],
+            entities: [User, TokenMap, Room, Player, SocketIdMap],
+            //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: false,
             logging: true,
