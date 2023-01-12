@@ -4,6 +4,8 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { SessionSerializer } from './auth/kakao.serializer';
 import { User } from './user.entity';
+import { KakaoAuthGuard } from './auth/kakao.guards';
+import { KakaoStrategy } from './auth/kakao.strategy';
 
 @Module({
     imports: [TypeOrmModule.forFeature([User])],
@@ -11,8 +13,10 @@ import { User } from './user.entity';
     providers: [
         UsersService,
         SessionSerializer,
+        KakaoAuthGuard,
+        KakaoStrategy,
         {
-            provide: 'AUTH_SERVICE',
+            provide: 'USER_SERVICE',
             useClass: UsersService,
         },
     ],
