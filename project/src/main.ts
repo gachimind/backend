@@ -8,10 +8,10 @@ import { SocketExceptionFilter } from './common/exceptionFilters/ws-exception.fi
 
 declare const module: any;
 
-// CORS 설정 추가해야 함!!
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule, { cors: true });
+    const app = await NestFactory.create(AppModule);
     const port = process.env.PORT || 3000;
+    app.enableCors();
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalFilters(new SocketExceptionFilter());
     app.useGlobalPipes(

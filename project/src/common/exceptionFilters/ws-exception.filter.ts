@@ -7,9 +7,9 @@ export type SocketExceptionStatus = 400 | 401 | 403 | 404 | 500;
 
 export class SocketException extends WsException {
     status;
-    constructor(message: string, status: SocketExceptionStatus) {
-        super({ message, status });
-        this.status = status;
+    eventName;
+    constructor(message: string, status: SocketExceptionStatus, eventName: string) {
+        super({ message, status, eventName });
     }
 }
 
@@ -20,12 +20,11 @@ export class SocketExceptionFilter extends BaseWsExceptionFilter {
 
         // client에 어떻게 메세지 내려가는지 확인 해야 함
         // const ctx = host.switchToWs();
-        // const response = ctx.getData();
-        // const status = exception.status;
+        // const response = ctx.getClient();
+        // console.log('ws-exception response', response.id);
         // const errorMessage = exception.message;
-
-        // return { errorMessage, status };
-        // const ackCallback = host.getArgByIndex(2);
-        // ackCallback(exception);
+        // const status = exception.status;
+        // const eventName = exception.eventName;
+        // response.emit(`${eventName}`, { errorMessage, status });
     }
 }

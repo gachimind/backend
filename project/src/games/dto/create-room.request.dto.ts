@@ -6,19 +6,11 @@ import {
     IsNotEmpty,
     IsEmpty,
     IsArray,
+    isBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateRoomDto {
-    @IsNumber()
-    @IsOptional()
-    @ApiProperty({
-        example: 1,
-        required: false,
-        description: '게임방 id, 서버에서 자동 생성',
-    })
-    public roomId: number;
-
+export class CreateRoomRequestDto {
     @IsString()
     @IsOptional()
     @ApiProperty({
@@ -36,16 +28,6 @@ export class CreateRoomDto {
     })
     readonly maxCount: number;
 
-    @IsArray()
-    @IsOptional()
-    @ApiProperty({
-        example: ['동석1', '혜연1', '세현1', '예나1', '도영1', '경리1'],
-        required: true,
-        description:
-            '방정보 db에는 participants가 참여자 닉네임 배열로 되어 있고, client에 전단할때는 해당 배열의 length를 전달',
-    })
-    public participants: string[];
-
     @IsNumber()
     @ApiProperty({
         example: 3,
@@ -61,6 +43,7 @@ export class CreateRoomDto {
         description: '발표 준비 타이머, milliseconds 단위',
     })
     readonly readyTime: number;
+
     @IsNumber()
     @ApiProperty({
         example: 30000,
@@ -70,7 +53,6 @@ export class CreateRoomDto {
     readonly speechTime: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 60000,
         required: true,
@@ -84,7 +66,7 @@ export class CreateRoomDto {
         required: true,
         description: '비밀방 여부',
     })
-    readonly IsSecreteRoom: boolean;
+    readonly isSecreteRoom: boolean;
 
     @IsNumber()
     @IsOptional()

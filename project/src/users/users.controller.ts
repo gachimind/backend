@@ -13,7 +13,7 @@ import {
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
-import { LoginUserDto } from './dto/login-user.dto';
+import { LoginUserToSocketDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { IsEmail } from 'class-validator';
@@ -32,7 +32,7 @@ export class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    @Get('/login/kakao/redirect')
+    @Get('login/kakao/redirect')
     @UseGuards(KakaoAuthGuard)
     handleRedirect(@Param('code') code: string) {
         return { msg: 'OK' };
@@ -45,7 +45,7 @@ export class UsersController {
     }
     // 에러 문구, status 어떻게 할지 혜연님과 상의
 
-    @Get('/me')
+    @Get(':userId')
     getUserDetailsByUserId(@Param('userId') userId: number) {
         return this.usersService.getUserDetailsByUserId(userId);
     }
