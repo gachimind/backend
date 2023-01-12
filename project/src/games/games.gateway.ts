@@ -19,7 +19,7 @@ import { EnterRoomRequestDto } from './dto/enter-room.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 import { LoginUserToSocketDto } from '../users/dto/login-user.dto';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { InGameUsersService, socketIdMap } from './inGame-users.service';
+import { PlayersService, socketIdMap } from './players.service';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 
 // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
@@ -32,7 +32,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     constructor(
         private readonly roomService: RoomService,
         private readonly chatService: ChatService,
-        private readonly inGameUsersService: InGameUsersService,
+        private readonly playersService: PlayersService,
     ) {}
     @WebSocketServer()
     public server: Server;
@@ -49,7 +49,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async handleDisconnect(@ConnectedSocket() socket: Socket) {
         // 접속이 종료된 회원의 정보를 socketIdMap에서 삭제
-        await this.inGameUsersService.handleDisconnect(socket);
+        await this.playersService.handleDisconnect(socket);
         console.log('disconnected socket', socket.id);
     }
 
@@ -63,7 +63,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const token: string = data.authorization;
 
         // 토큰 값이 유효한지는 service 레이어에서 db를 조회해서 검사
-        await this.inGameUsersService.socketIdMapToLoginUser(token, socket);
+        await this.playersService.socketIdMapToLoginUser(token, socket);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
@@ -98,7 +98,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         }
 
         // socketIdMap에서 삭제
-        await this.inGameUsersService.socketIdMapToLogOutUser(socket);
+        await this.playersService.socketIdMapToLogOutUser(socket);
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
@@ -197,7 +197,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         );
 
         // socketIdMap update
-        await this.inGameUsersService.handleLeaveRoom(socket.id);
+        await this.playersService.handleLeaveRoom(socket.id);
 
         // request user를 leave처리
         socket.leave(`${updateRoomInfo.roomId}`);

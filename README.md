@@ -6,8 +6,8 @@
 - 만약, DB가 있다면, app.module 파일에서 typeormModule 설정을 세팅하는 부분에서 synchronize option을 true로 하시고 앱을 실행하시면, 자동으로 table들이 동기화 됩니다. 다만, 이 방법은 기존에 있던 데이터를 모두 날리기때문에 원치 않으신다면, false로 바꾸고 앱을 켜세요.
 
 ## DB가 있는 상태에서 table만 생성/삭제
-- DB가 존재하고, 기존의 데이터는 날리기 싫고, 신규 테이블만 생성하고 싶다면, `npm run db:table:sync` 명령어를 사용하시면 테이블이 생성됩니다.
-- 드롭하고 싶은 테이블은 `npm run db:table:drop`을 사용하시면 됩니다.
+- DB가 존재하고, 기존의 데이터는 날리기 싫고, 신규 테이블만 생성하고 싶다면, `npm run db:table:sync` 명령어를 사용하시면 신규 테이블이 생성됩니다.
+- 모든 테이블을 드롭하고 싶다면, `npm run db:table:drop`을 사용하시면 됩니다.
 
 
 ## package.json & package-lock.json

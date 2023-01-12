@@ -22,12 +22,12 @@
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
+        "uninstall:all": "npm uninstall `ls -1 node_modules | tr '/\n' ' '`",
         "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
-        "db:create": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js db:create -d ./src/dataSource/dataSource.ts",
-        "db:drop": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js db:drop -d ./src/dataSource/dataSource.ts",
-        "seed": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js seed",
-        "db:table:drop": "ts-node ./node_modules/typeorm/cli.js schema:drop",
-        "db:table:sync": "ts-node ./node_modules/typeorm/cli.js schema:sync"
+        "db:create": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js db:create -d ./src/dataSource.ts",
+        "db:drop": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js db:drop -d ./src/dataSource.ts",
+        "db:table:drop": "ts-node ./node_modules/typeorm/cli.js schema:drop -d ./src/dataSource.ts",
+        "db:table:sync": "ts-node ./node_modules/typeorm/cli.js schema:sync -d ./src/dataSource.ts"
     },
     "dependencies": {
         "@nestjs/common": "^9.0.0",
