@@ -6,19 +6,18 @@ import {
     PrimaryColumn,
     UpdateDateColumn,
     OneToOne,
-    ManyToOne,
-    Column,
 } from 'typeorm';
 import { Room } from './room.entity';
+import { Player } from './player.entity';
 
 @Entity()
 export class SocketIdMap {
-    @PrimaryColumn()
+    @PrimaryColumn('varchar')
     socketId: string;
 
-    @OneToOne(() => User)
+    @OneToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
-    userId: User;
+    userId: User | number;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -26,10 +25,7 @@ export class SocketIdMap {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @ManyToOne(() => Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
+    @OneToOne(() => Player, (player) => player.roomId, { cascade: ['insert', 'update', 'remove'] })
     @JoinColumn({ name: 'currentRoom' })
-    currentRoom: Room;
+    currentRoom: Player | number;
 }

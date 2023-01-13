@@ -6,7 +6,6 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
-import { socketIdMap } from '../players.service';
 import { Player } from './player.entity';
 import { SocketIdMap } from './socketIdMap.entity';
 
@@ -51,9 +50,6 @@ export class Room {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom)
-    socketId: SocketIdMap[];
-
     @OneToMany(() => Player, (player) => player.roomId)
-    playerId: Player[];
+    player: Player[];
 }

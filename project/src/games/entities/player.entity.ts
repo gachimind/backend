@@ -1,3 +1,4 @@
+import { User } from 'src/users/entities/user.entity';
 import {
     Column,
     CreateDateColumn,
@@ -13,19 +14,20 @@ import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Player {
+    @OneToOne(() => User, (user) => user.userId, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userId' })
     @PrimaryColumn()
-    userId: number;
+    userId: User | number;
 
-    @OneToOne(() => SocketIdMap)
+    @OneToOne(() => SocketIdMap, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'socketId' })
-    socketId: SocketIdMap;
+    socketId: SocketIdMap | number;
 
     @ManyToOne(() => Room, (room) => room.roomId, {
         onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
     })
     @JoinColumn({ name: 'roomId' })
-    roomId: Room;
+    roomId: Room | number;
 
     @Column()
     isGameOn: boolean;

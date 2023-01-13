@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Room } from './entities/room.entity';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
-import { EnterRoomRequestDto } from './dto/enter-room.dto';
+import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 import {
     SocketException,
@@ -9,15 +11,21 @@ import {
 } from 'src/common/exceptionFilters/ws-exception.filter';
 import { RoomDataDto } from './dto/room.data.dto';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
-import { LoginUserToSocketDto } from 'src/users/dto/login-user.dto';
+import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { RoomParticipantsDto } from './dto/room.participants.dto';
-
-const roomList = []; // repository로 변경해야 함
 
 @Injectable()
 export class RoomService {
+    constructor(
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
+    ) {}
+
     async getAllRoomList(): Promise<RoomInfoToMainDto[]> {
-        return await roomList.map((room) => {
+        const roomList = await this.roomRepository.find();
+        console.log(roomList);
+
+        return roomList.map((room) => {
             const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } =
                 room;
             return {
@@ -48,7 +56,10 @@ export class RoomService {
         return newRoom.roomId;
     }
 
-    async isRoomAvailable(requestUser: LoginUserToSocketDto, requestRoom: EnterRoomRequestDto) {
+    async isRoomAvailable(
+        requestUser: LoginUserToSocketIdMapDto,
+        requestRoom: EnterRoomRequestDto,
+    ) {
         // 1. 방이 존재하는지 확인, db에서 방 정보 조회
         const room = await roomList.find((data) => {
             return data.roomId === requestRoom.roomId;
@@ -98,7 +109,7 @@ export class RoomService {
 
     async updateRoomParticipants(
         socketId: string,
-        requestUser: LoginUserToSocketDto,
+        requestUser: LoginUserToSocketIdMapDto,
         roomInfo: RoomDataDto,
     ): Promise<RoomInfoToRoomDto | any> {
         let isHost: boolean;
@@ -121,7 +132,7 @@ export class RoomService {
         return roomInfo;
     }
 
-    async leaveRoom(requestUser: LoginUserToSocketDto) {
+    async leaveRoom(requestUser: LoginUserToSocketIdMapDto) {
         // roomList에서 방 정보 가져오기
         const targetRoom = await roomList.find((room) => {
             return room.roomId === requestUser.currentRoom;

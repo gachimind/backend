@@ -9,20 +9,18 @@ import {
     OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseInterceptors } from '@nestjs/common';
-import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
-import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { RoomService } from './room.service';
 import { ChatService } from './chat.service';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
-import { EnterRoomRequestDto } from './dto/enter-room.dto';
+import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
-import { LoginUserToSocketDto } from '../users/dto/login-user.dto';
+import { LoginUserToSocketIdMapDto } from './dto/socketId-map.request.dto';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { PlayersService, socketIdMap } from './players.service';
+import { PlayersService } from './players.service';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
+import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
+import { SocketIdMap } from './entities/socketIdMap.entity';
 
-// @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @WebSocketGateway({
     cors: {
         origin: '*',
@@ -34,6 +32,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         private readonly chatService: ChatService,
         private readonly playersService: PlayersService,
     ) {}
+
+    // !!token 검사하는 auth-guard로 따로 빼기!!
+    getToken(token) {
+        if (!token) {
+            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+        }
+        // validation 로직 추가
+        return token;
+    }
+
     @WebSocketServer()
     public server: Server;
 
@@ -49,37 +57,38 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async handleDisconnect(@ConnectedSocket() socket: Socket) {
         // 접속이 종료된 회원의 정보를 socketIdMap에서 삭제
-        await this.playersService.handleDisconnect(socket);
+        await this.playersService.removeSocketBySocketId({ socketId: socket.id });
         console.log('disconnected socket', socket.id);
     }
 
     @SubscribeMessage('log-in')
-    async socketIdMapToLoginUser(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
-        // !!authGuard 만들어서 붙여야 함!!! -> 토큰을 들고 있는지만 검사 & 토큰 validation은 별도로!!
-        if (!data.authorization) {
-            socket.emit('log-in', { errorMessage: '잘못된 접근입니다.', status: 401 });
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
-        }
-        const token: string = data.authorization;
+    async socketIdMapToLoginUser(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() { data }: { data: AuthorizationRequestDto },
+    ) {
+        const token = this.getToken(data.authorization);
 
         // 토큰 값이 유효한지는 service 레이어에서 db를 조회해서 검사
-        await this.playersService.socketIdMapToLoginUser(token, socket);
+        await this.playersService.socketIdMapToLoginUser(token, socket.id);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
 
     @SubscribeMessage('log-out')
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
-        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        const requestUser: SocketIdMap = await this.playersService.getUserBySocketId({
+            socketId: socket.id,
+        });
         if (!requestUser) {
-            socket.emit('leave-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
         }
 
+        // socketIdMap에서 삭제
+        await this.playersService.removeSocketBySocketId({ socketId: socket.id });
+        console.log('로그아웃 성공!');
+        socket.emit('log-out', { message: '로그아웃 성공!' });
+
+        /*
         // 방에서 로그아웃 한 경우, room update
         if (requestUser.currentRoom) {
             const updateRoomInfo: RoomInfoToRoomDto | any = await this.roomService.leaveRoom(
@@ -96,17 +105,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
             this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
         }
-
-        // socketIdMap에서 삭제
-        await this.playersService.socketIdMapToLogOutUser(socket);
-        console.log('로그아웃 성공!');
-        socket.emit('log-out', { message: '로그아웃 성공!' });
+        */
     }
 
     @SubscribeMessage('create-room')
     async handleCreateRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        const requestUser: LoginUserToSocketIdMapDto = socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('create-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -127,7 +132,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('enter-room')
     async handleEnterRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        const requestUser: LoginUserToSocketIdMapDto = socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('enter-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -182,7 +187,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('leave-room')
     async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: LoginUserToSocketDto = socketIdMap[socket.id];
+        const requestUser: LoginUserToSocketIdMapDto = socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('leave-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -221,4 +226,5 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const { nickname, currentRoom } = socketIdMap[socket.id];
         this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
     }
+    */
 }
