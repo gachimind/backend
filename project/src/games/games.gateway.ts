@@ -88,9 +88,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // request user를 leave처리
             socket.leave(`${updateRoomInfo.roomId}`);
             // game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
-            this.server
-                .to(`${updateRoomInfo.roomId}`)
-                .emit('update-room', { data: updateRoomInfo });
+            const { currentRoom, ...restUserInfo } = requestUser;
+            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            });
             // main space에 room-list event emit -> !!!namespace 설정하기!!!
             const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
             this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
@@ -159,7 +160,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             );
         }
 
-        // 3. requestUser를 해당 방에 join & room participants 정보 갱신
+        // 3. room participants 정보 갱신 & requestUser를 해당 방에 join
         const updateRoomInfo = await this.roomService.updateRoomParticipants(
             socket.id,
             requestUser,
@@ -168,7 +169,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.join(`${updateRoomInfo.roomId}`);
 
         // 4.game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
-        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', { data: updateRoomInfo });
+        const { currentRoom, ...restUserInfo } = requestUser;
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+            data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'enter' },
+        });
 
         // 5.main space에 room-list event emit -> !!!namespace 설정하기!!!
         const roomInfoList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
@@ -199,10 +203,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.leave(`${updateRoomInfo.roomId}`);
 
         // 4.game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
-        if (updateRoomInfo)
-            this.server
-                .to(`${updateRoomInfo.roomId}`)
-                .emit('update-room', { data: updateRoomInfo });
+        if (updateRoomInfo) {
+            const { currentRoom, ...restUserInfo } = requestUser;
+            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            });
+        }
 
         // 5.main space에 room-list event emit -> !!!namespace 설정하기!!!
         const roomInfoList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
