@@ -19,7 +19,6 @@ export class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    // 카카오 로그인 리다이렉트
     @Get('login/kakao/redirect')
     @UseGuards(KakaoAuthGuard)
     handleRedirect(@Param('code') code: string) {
@@ -32,7 +31,7 @@ export class UsersController {
         return { message: '토큰 인증이 완료되었습니다.', status: 202 };
     }
 
-    // 유저 정보 조회
+    // 회원 정보 상세 조회
     @Get(':userId')
     getUserDetailsByUserId(@Param('userId') userId: number) {
         return this.usersService.getUserDetailsByUserId(userId);

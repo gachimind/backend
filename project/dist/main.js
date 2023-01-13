@@ -521,13 +521,6 @@ let UsersService = class UsersService {
     constructor(usersRepository) {
         this.usersRepository = usersRepository;
     }
-    async getUserDetailsByUserId(id) {
-        const user = await this.usersRepository.findOne({ where: { id } });
-        if (!user) {
-            throw new common_2.HttpException('회원 인증에 실패했습니다.', 402);
-        }
-        return user;
-    }
     async validateUser(details) {
         const user = await this.usersRepository.findOneBy({
             email: details.email,
@@ -539,6 +532,13 @@ let UsersService = class UsersService {
     }
     async findUserById(id) {
         const user = await this.usersRepository.findOneBy({ id });
+        return user;
+    }
+    async getUserDetailsByUserId(id) {
+        const user = await this.usersRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new common_2.HttpException('회원 인증에 실패했습니다.', 402);
+        }
         return user;
     }
 };
@@ -736,10 +736,16 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
         this.usersService = usersService;
     }
     async validate(accessToken, refreshToken, profile, done) {
+        const id = profile._json.id;
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.validateUser(email);
+        const user = await this.usersService.validateUser({
+            id,
+            email,
+            nickname,
+            profileImg,
+        });
         return user || null;
     }
 };
@@ -1499,7 +1505,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("19312eb5363ff7a09189")
+/******/ 		__webpack_require__.h = () => ("aaeeec436bd04834d066")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
