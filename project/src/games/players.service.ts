@@ -29,8 +29,8 @@ export class PlayersService {
     }
 
     async getCurrentRoomBySocketId(socketId: { socketId: string }) {
-        const user = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.currentRoom : null;
+        const user: SocketIdMap = await this.socketIdMapRepository.findOneBy(socketId);
+        return user ? user.player.roomId : null;
     }
 
     async removeSocketBySocketId(socketId: { socketId: string }) {
@@ -38,28 +38,33 @@ export class PlayersService {
     }
 
     async socketIdMapToLoginUser(token: string, socketId: string) {
-        // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
-        const requestUser: TokenMap = await this.tokenMapRepository.findOneOrFail({
-            where: { token },
-            select: { userId: true },
-        });
-        const userId: number = requestUser.userId;
-        if (!requestUser.userId) {
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
-        }
+        try {
+            // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
+            const requestUser: TokenMap = await this.tokenMapRepository.findOneOrFail({
+                where: { token },
+                select: { userId: true },
+            });
+            const userId: number = requestUser.userId;
+            if (!requestUser.userId) {
+                throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+            }
 
-        // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
-        if (await this.getUserIdBySocketId({ socketId })) {
-            throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-        }
+            // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
+            if (await this.getUserIdBySocketId({ socketId })) {
+                throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            }
 
-        // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
-        if (await this.socketIdMapRepository.findOneBy({ userId })) {
-            throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-        }
+            // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
+            if (await this.socketIdMapRepository.findOneBy({ userId })) {
+                throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            }
 
-        // 위의 검사를 통과했다면, socketIdMap에 매핑
-        const user: LoginUserToSocketIdMapDto = { socketId, userId, currentRoom: null };
-        return await this.socketIdMapRepository.insert(user);
+            // 위의 검사를 통과했다면, socketIdMap에 매핑
+            const user: LoginUserToSocketIdMapDto = { socketId, userId };
+            return await this.socketIdMapRepository.insert(user);
+        } catch (err) {
+            console.error(err);
+            throw new SocketException(err.message, 400, 'log-in');
+        }
     }
 }

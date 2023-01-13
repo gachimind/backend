@@ -7,7 +7,6 @@ import {
     OneToMany,
 } from 'typeorm';
 import { Player } from './player.entity';
-import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Room {
@@ -50,6 +49,6 @@ export class Room {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => Player, (player) => player.roomId)
+    @OneToMany(() => Player, (player) => player.roomId, { eager: true })
     player: Player[];
 }

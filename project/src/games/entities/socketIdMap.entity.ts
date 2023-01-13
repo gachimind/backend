@@ -7,7 +7,6 @@ import {
     UpdateDateColumn,
     OneToOne,
 } from 'typeorm';
-import { Room } from './room.entity';
 import { Player } from './player.entity';
 
 @Entity()
@@ -22,10 +21,6 @@ export class SocketIdMap {
     @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
-
-    @OneToOne(() => Player, (player) => player.roomId, { cascade: ['insert', 'update', 'remove'] })
-    @JoinColumn({ name: 'currentRoom' })
-    currentRoom: Player | number;
+    @OneToOne(() => Player, (player) => player.socketId, { eager: true })
+    player: Player;
 }

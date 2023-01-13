@@ -20,13 +20,4 @@ export class LoginUserToSocketIdMapDto {
         description: 'userId',
     })
     public userId: number;
-
-    @IsNumber()
-    @IsOptional()
-    @ApiProperty({
-        example: 1,
-        required: true,
-        description: '유저가 현재 위치한 방의 roomId',
-    })
-    public currentRoom: number;
 }

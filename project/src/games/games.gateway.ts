@@ -88,9 +88,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
 
-        /*
         // 방에서 로그아웃 한 경우, room update
-        if (requestUser.currentRoom) {
+        if (requestUser.player.roomId) {
             const updateRoomInfo: RoomInfoToRoomDto | any = await this.roomService.leaveRoom(
                 requestUser,
             );
@@ -105,30 +104,28 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
             this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
         }
-        */
     }
 
     @SubscribeMessage('create-room')
     async handleCreateRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
-        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: LoginUserToSocketIdMapDto = socketIdMap[socket.id];
+        const requestUser: SocketIdMap = await this.playersService.getUserBySocketId({
+            socketId: socket.id,
+        });
         if (!requestUser) {
-            socket.emit('create-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
         }
+    
         // 방을 생성한 유저에게 새로 생성된 roomId 전달
-        const newRoomId = await this.roomService.createRoom(data);
-        socket.emit('create-room', { data: { roomId: newRoomId } });
-
+        const newRoomId: number|void = await this.roomService.createRoom(data);
+        //socket.emit('create-room', { data: { roomId: newRoomId } });
+        /*
         // main space에 room list를 업데이트
         const updateRoomList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
         // !!! namespce 설정해줘야 함!!!
         this.server.emit('room-list', { data: updateRoomList });
     }
 
+    /*
     @SubscribeMessage('enter-room')
     async handleEnterRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!

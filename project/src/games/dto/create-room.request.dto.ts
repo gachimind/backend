@@ -9,7 +9,7 @@ export class CreateRoomRequestDto {
         required: false,
         description: '게임방 제목, 유저가 입력하지 않으면, 서버에서 랜덤 방제로 자동생성',
     })
-    readonly roomTitle: string;
+    public roomTitle: string;
 
     @IsNumber()
     @ApiProperty({

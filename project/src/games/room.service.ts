@@ -9,16 +9,19 @@ import {
     SocketException,
     SocketExceptionStatus,
 } from 'src/common/exceptionFilters/ws-exception.filter';
-import { RoomDataDto } from './dto/room.data.dto';
+import { RoomDataInsertDto } from './dto/room.data.dto';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { RoomParticipantsDto } from './dto/room.participants.dto';
+import { Player } from './entities/player.entity';
 
 @Injectable()
 export class RoomService {
     constructor(
         @InjectRepository(Room)
         private readonly roomRepository: Repository<Room>,
+        @InjectRepository(Player)
+        private readonly playerRepository: Repository<Player>,
     ) {}
 
     async getAllRoomList(): Promise<RoomInfoToMainDto[]> {
@@ -26,36 +29,35 @@ export class RoomService {
         console.log(roomList);
 
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } =
-                room;
+            const { roomId, roomTitle, maxCount, round, player, isSecreteRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
                 round,
-                participants: participants.length,
+                participants: player.length,
                 isSecreteRoom,
                 isGameOn,
             };
         });
     }
 
-    createRoom(room: CreateRoomRequestDto): number {
-        const newRoom: RoomDataDto = {
-            roomId: roomList.length + 1,
+    async createRoom(room: CreateRoomRequestDto): Promise<number | void> {
+        if (!room.roomTitle) {
+            room.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
+        }
+        const newRoom: RoomDataInsertDto = {
             ...room,
             isGameOn: false,
-            participants: [],
             isGameReadyToStart: false,
         };
-        if (!room.roomTitle) {
-            newRoom.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
-        }
-        // roomList에 생성된 방 정보 추가 -> db로 옮길 예정
-        roomList.push(newRoom);
-        return newRoom.roomId;
-    }
 
+        const roomInsert = await this.roomRepository.insert(newRoom);
+        console.log(roomInsert);
+
+        //return await this.roomRepository.findOne({where: });
+    }
+    /*
     async isRoomAvailable(
         requestUser: LoginUserToSocketIdMapDto,
         requestRoom: EnterRoomRequestDto,
@@ -166,4 +168,5 @@ export class RoomService {
             return null;
         }
     }
+    */
 }

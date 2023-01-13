@@ -4,10 +4,10 @@ import { User } from './user.entity';
 @Entity()
 export class TokenMap {
     @PrimaryColumn()
-    token: string;
+    userId: number;
 
     @Column()
-    userId: number;
+    token: string;
 
     @CreateDateColumn()
     createdAt: Date;

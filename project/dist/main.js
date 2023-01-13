@@ -168,7 +168,7 @@ const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
 const http_exception_filter_1 = __webpack_require__(39);
-const ws_exception_filter_1 = __webpack_require__(29);
+const ws_exception_filter_1 = __webpack_require__(33);
 const session = __webpack_require__(40);
 const passport = __webpack_require__(41);
 async function bootstrap() {
@@ -248,9 +248,9 @@ const passport_1 = __webpack_require__(20);
 const typeorm_1 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(16);
 const token_map_entity_1 = __webpack_require__(17);
-const room_entity_1 = __webpack_require__(34);
-const player_entity_1 = __webpack_require__(35);
-const socketIdMap_entity_1 = __webpack_require__(33);
+const room_entity_1 = __webpack_require__(29);
+const player_entity_1 = __webpack_require__(30);
+const socketIdMap_entity_1 = __webpack_require__(31);
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -268,7 +268,7 @@ AppModule = __decorate([
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
                 entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap],
-                synchronize: false,
+                synchronize: true,
                 logging: true,
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
@@ -638,12 +638,12 @@ let TokenMap = class TokenMap {
 };
 __decorate([
     (0, typeorm_1.PrimaryColumn)(),
-    __metadata("design:type", String)
-], TokenMap.prototype, "token", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
 ], TokenMap.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], TokenMap.prototype, "token", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
@@ -828,12 +828,12 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const games_gateway_1 = __webpack_require__(25);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(31);
+const chat_service_1 = __webpack_require__(32);
 const users_module_1 = __webpack_require__(8);
-const players_service_1 = __webpack_require__(32);
-const room_entity_1 = __webpack_require__(34);
-const player_entity_1 = __webpack_require__(35);
-const socketIdMap_entity_1 = __webpack_require__(33);
+const players_service_1 = __webpack_require__(35);
+const room_entity_1 = __webpack_require__(29);
+const player_entity_1 = __webpack_require__(30);
+const socketIdMap_entity_1 = __webpack_require__(31);
 let GamesModule = class GamesModule {
 };
 GamesModule = __decorate([
@@ -864,15 +864,26 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h;
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var _a, _b, _c, _d, _e, _f, _g, _h, _j;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesGateway = void 0;
 const websockets_1 = __webpack_require__(26);
 const socket_io_1 = __webpack_require__(27);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(31);
-const ws_exception_filter_1 = __webpack_require__(29);
-const players_service_1 = __webpack_require__(32);
+const chat_service_1 = __webpack_require__(32);
+const ws_exception_filter_1 = __webpack_require__(33);
+const players_service_1 = __webpack_require__(35);
 let GamesGateway = class GamesGateway {
     constructor(roomService, chatService, playersService) {
         this.roomService = roomService;
@@ -913,6 +924,25 @@ let GamesGateway = class GamesGateway {
         await this.playersService.removeSocketBySocketId({ socketId: socket.id });
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
+        if (requestUser.player.roomId) {
+            const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
+            socket.leave(`${updateRoomInfo.roomId}`);
+            const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
+            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            });
+            const data = await this.roomService.getAllRoomList();
+            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
+        }
+    }
+    async handleCreateRoomRequest(socket, { data }) {
+        const requestUser = await this.playersService.getUserBySocketId({
+            socketId: socket.id,
+        });
+        if (!requestUser) {
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+        }
+        const newRoomId = await this.roomService.createRoom(data);
     }
 };
 __decorate([
@@ -946,6 +976,14 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_h = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _h : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "socketIdMapToLogOutUser", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('create-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_j = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _j : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleCreateRoomRequest", null);
 GamesGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
@@ -983,329 +1021,61 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RoomService = void 0;
-const common_1 = __webpack_require__(7);
-const ws_exception_filter_1 = __webpack_require__(29);
-const roomList = [];
-let RoomService = class RoomService {
-    async getAllRoomList() {
-        return await roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } = room;
-            return {
-                roomId,
-                roomTitle,
-                maxCount,
-                round,
-                participants: participants.length,
-                isSecreteRoom,
-                isGameOn,
-            };
-        });
-    }
-    createRoom(room) {
-        const newRoom = Object.assign(Object.assign({ roomId: roomList.length + 1 }, room), { isGameOn: false, participants: [], isGameReadyToStart: false });
-        if (!room.roomTitle) {
-            newRoom.roomTitle = '같이 가치마인드 한 판 해요!';
-        }
-        roomList.push(newRoom);
-        return newRoom.roomId;
-    }
-    async isRoomAvailable(requestUser, requestRoom) {
-        const room = await roomList.find((data) => {
-            return data.roomId === requestRoom.roomId;
-        });
-        let status;
-        if (!room) {
-            status = 404;
-            return { availability: false, message: '요청하신 방을 찾을 수 없습니다.', status };
-        }
-        if (room.maxCount == room.participants.length) {
-            status = 400;
-            return {
-                availability: false,
-                message: '정원초과로 방 입장에 실패했습니다.',
-                status,
-            };
-        }
-        if (room.IsSecreteRoom) {
-            if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
-                status = 404;
-                return {
-                    availability: false,
-                    message: '비밀번호가 일치하지 않습니다.',
-                    status,
-                };
-            }
-        }
-        const userInRoom = room.participants.find((user) => {
-            return user.userId === requestUser.userId;
-        });
-        if (userInRoom) {
-            status = 400;
-            return {
-                availability: false,
-                message: '같은 방에 중복 입장할 수 없습니다.',
-                status,
-            };
-        }
-        return { availability: true, message: '방 입장에 성공하였습니다.', room };
-    }
-    async updateRoomParticipants(socketId, requestUser, roomInfo) {
-        let isHost;
-        if (!roomInfo.participants.length)
-            isHost = true;
-        const { currentRoom } = requestUser, userInfo = __rest(requestUser, ["currentRoom"]);
-        roomInfo.participants.push(Object.assign(Object.assign({ socketId }, userInfo), { isReady: false, isHost }));
-        roomList.map((room, index) => {
-            if (room.roomId === roomInfo.roomId) {
-                return (roomList[index] = roomInfo);
-            }
-        });
-        return roomInfo;
-    }
-    async leaveRoom(requestUser) {
-        const targetRoom = await roomList.find((room) => {
-            return room.roomId === requestUser.currentRoom;
-        });
-        if (!targetRoom)
-            throw new ws_exception_filter_1.SocketException('bad request', 400, 'leave-room');
-        if (targetRoom.participants.length > 1) {
-            targetRoom.participants.map((user, index) => {
-                if (user.userId === requestUser.userId) {
-                    if (user.isHost) {
-                        targetRoom.participants[1].isHost = true;
-                    }
-                    return targetRoom.participants.splice(index, 1);
-                }
-            });
-            roomList.map((room, index) => {
-                if (room.roomId === targetRoom.roomId) {
-                    return (roomList[index] = targetRoom);
-                }
-            });
-            return targetRoom;
-        }
-        else {
-            const roomIndex = roomList.findIndex((room) => room.roomId === targetRoom.roomId);
-            roomList.splice(roomIndex, 1);
-            return null;
-        }
-    }
-};
-RoomService = __decorate([
-    (0, common_1.Injectable)()
-], RoomService);
-exports.RoomService = RoomService;
-
-
-/***/ }),
-/* 29 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SocketExceptionFilter = exports.SocketException = void 0;
-const common_1 = __webpack_require__(7);
-const websockets_1 = __webpack_require__(26);
-const errors_1 = __webpack_require__(30);
-class SocketException extends errors_1.WsException {
-    constructor(message, status, eventName) {
-        super({ message, status, eventName });
-    }
-}
-exports.SocketException = SocketException;
-let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
-    catch(exception, host) {
-        super.catch(exception, host);
-    }
-};
-SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
-], SocketExceptionFilter);
-exports.SocketExceptionFilter = SocketExceptionFilter;
-
-
-/***/ }),
-/* 30 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/websockets/errors");
-
-/***/ }),
-/* 31 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ChatService = void 0;
-const common_1 = __webpack_require__(7);
-let ChatService = class ChatService {
-};
-ChatService = __decorate([
-    (0, common_1.Injectable)()
-], ChatService);
-exports.ChatService = ChatService;
-
-
-/***/ }),
-/* 32 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PlayersService = void 0;
+exports.RoomService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(15);
-const ws_exception_filter_1 = __webpack_require__(29);
-const token_map_entity_1 = __webpack_require__(17);
-const socketIdMap_entity_1 = __webpack_require__(33);
-const player_entity_1 = __webpack_require__(35);
-let PlayersService = class PlayersService {
-    constructor(tokenMapRepository, socketIdMapRepository, playerRepository) {
-        this.tokenMapRepository = tokenMapRepository;
-        this.socketIdMapRepository = socketIdMapRepository;
+const room_entity_1 = __webpack_require__(29);
+const player_entity_1 = __webpack_require__(30);
+let RoomService = class RoomService {
+    constructor(roomRepository, playerRepository) {
+        this.roomRepository = roomRepository;
         this.playerRepository = playerRepository;
     }
-    async getUserBySocketId(socketId) {
-        return await this.socketIdMapRepository.findOneBy(socketId);
-    }
-    async getUserIdBySocketId(socketId) {
-        const user = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.userId : null;
-    }
-    async getCurrentRoomBySocketId(socketId) {
-        const user = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.currentRoom : null;
-    }
-    async removeSocketBySocketId(socketId) {
-        return await this.socketIdMapRepository.remove(socketId);
-    }
-    async socketIdMapToLoginUser(token, socketId) {
-        const requestUser = await this.tokenMapRepository.findOneOrFail({
-            where: { token },
-            select: { userId: true },
+    async getAllRoomList() {
+        const roomList = await this.roomRepository.find();
+        console.log(roomList);
+        return roomList.map((room) => {
+            const { roomId, roomTitle, maxCount, round, player, isSecreteRoom, isGameOn } = room;
+            return {
+                roomId,
+                roomTitle,
+                maxCount,
+                round,
+                participants: player.length,
+                isSecreteRoom,
+                isGameOn,
+            };
         });
-        const userId = requestUser.userId;
-        if (!requestUser.userId) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
-        }
-        if (await this.getUserIdBySocketId({ socketId })) {
-            throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-        }
-        if (await this.socketIdMapRepository.findOneBy({ userId })) {
-            console.log('중복 로그인!!');
-            throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-        }
-        const user = { socketId, userId, currentRoom: null };
-        return await this.socketIdMapRepository.insert(user);
     }
-    handleLeaveRoom(socketId) { }
+    async createRoom(room) {
+        if (!room.roomTitle) {
+            room.roomTitle = '같이 가치마인드 한 판 해요!';
+        }
+        const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
+        const roomInsert = await this.roomRepository.insert(newRoom);
+        console.log(roomInsert);
+    }
 };
-PlayersService = __decorate([
+RoomService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
-    __param(1, (0, typeorm_1.InjectRepository)(socketIdMap_entity_1.SocketIdMap)),
-    __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
-], PlayersService);
-exports.PlayersService = PlayersService;
+    __param(0, (0, typeorm_1.InjectRepository)(room_entity_1.Room)),
+    __param(1, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object])
+], RoomService);
+exports.RoomService = RoomService;
 
 
 /***/ }),
-/* 33 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b, _c, _d;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SocketIdMap = void 0;
-const user_entity_1 = __webpack_require__(16);
-const typeorm_1 = __webpack_require__(15);
-const room_entity_1 = __webpack_require__(34);
-let SocketIdMap = class SocketIdMap {
-};
-__decorate([
-    (0, typeorm_1.PrimaryColumn)('varchar'),
-    __metadata("design:type", String)
-], SocketIdMap.prototype, "socketId", void 0);
-__decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
-    __metadata("design:type", Object)
-], SocketIdMap.prototype, "userId", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
-], SocketIdMap.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
-], SocketIdMap.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId),
-    (0, typeorm_1.JoinColumn)({ name: 'currentRoom' }),
-    __metadata("design:type", Object)
-], SocketIdMap.prototype, "currentRoom", void 0);
-SocketIdMap = __decorate([
-    (0, typeorm_1.Entity)()
-], SocketIdMap);
-exports.SocketIdMap = SocketIdMap;
-
-
-/***/ }),
-/* 34 */
+/* 29 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1323,8 +1093,7 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Room = void 0;
 const typeorm_1 = __webpack_require__(15);
-const player_entity_1 = __webpack_require__(35);
-const socketIdMap_entity_1 = __webpack_require__(33);
+const player_entity_1 = __webpack_require__(30);
 let Room = class Room {
 };
 __decorate([
@@ -1380,13 +1149,9 @@ __decorate([
     __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
 ], Room.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => socketIdMap_entity_1.SocketIdMap, (socket) => socket.currentRoom),
+    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomId, { eager: true }),
     __metadata("design:type", Array)
-], Room.prototype, "socketId", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomId),
-    __metadata("design:type", Array)
-], Room.prototype, "playerId", void 0);
+], Room.prototype, "player", void 0);
 Room = __decorate([
     (0, typeorm_1.Entity)()
 ], Room);
@@ -1394,7 +1159,7 @@ exports.Room = Room;
 
 
 /***/ }),
-/* 35 */
+/* 30 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1413,8 +1178,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Player = void 0;
 const user_entity_1 = __webpack_require__(16);
 const typeorm_1 = __webpack_require__(15);
-const room_entity_1 = __webpack_require__(34);
-const socketIdMap_entity_1 = __webpack_require__(33);
+const room_entity_1 = __webpack_require__(29);
+const socketIdMap_entity_1 = __webpack_require__(31);
 let Player = class Player {
 };
 __decorate([
@@ -1455,6 +1220,199 @@ Player = __decorate([
     (0, typeorm_1.Entity)()
 ], Player);
 exports.Player = Player;
+
+
+/***/ }),
+/* 31 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SocketIdMap = void 0;
+const user_entity_1 = __webpack_require__(16);
+const typeorm_1 = __webpack_require__(15);
+const player_entity_1 = __webpack_require__(30);
+let SocketIdMap = class SocketIdMap {
+};
+__decorate([
+    (0, typeorm_1.PrimaryColumn)('varchar'),
+    __metadata("design:type", String)
+], SocketIdMap.prototype, "socketId", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    __metadata("design:type", Object)
+], SocketIdMap.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], SocketIdMap.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => player_entity_1.Player, (player) => player.socketId, { eager: true }),
+    __metadata("design:type", typeof (_c = typeof player_entity_1.Player !== "undefined" && player_entity_1.Player) === "function" ? _c : Object)
+], SocketIdMap.prototype, "player", void 0);
+SocketIdMap = __decorate([
+    (0, typeorm_1.Entity)()
+], SocketIdMap);
+exports.SocketIdMap = SocketIdMap;
+
+
+/***/ }),
+/* 32 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatService = void 0;
+const common_1 = __webpack_require__(7);
+let ChatService = class ChatService {
+};
+ChatService = __decorate([
+    (0, common_1.Injectable)()
+], ChatService);
+exports.ChatService = ChatService;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SocketExceptionFilter = exports.SocketException = void 0;
+const common_1 = __webpack_require__(7);
+const websockets_1 = __webpack_require__(26);
+const errors_1 = __webpack_require__(34);
+class SocketException extends errors_1.WsException {
+    constructor(message, status, eventName) {
+        super({ message, status, eventName });
+    }
+}
+exports.SocketException = SocketException;
+let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
+    catch(exception, host) {
+        super.catch(exception, host);
+    }
+};
+SocketExceptionFilter = __decorate([
+    (0, common_1.Catch)(SocketException)
+], SocketExceptionFilter);
+exports.SocketExceptionFilter = SocketExceptionFilter;
+
+
+/***/ }),
+/* 34 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/websockets/errors");
+
+/***/ }),
+/* 35 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PlayersService = void 0;
+const common_1 = __webpack_require__(7);
+const typeorm_1 = __webpack_require__(9);
+const typeorm_2 = __webpack_require__(15);
+const ws_exception_filter_1 = __webpack_require__(33);
+const token_map_entity_1 = __webpack_require__(17);
+const socketIdMap_entity_1 = __webpack_require__(31);
+const player_entity_1 = __webpack_require__(30);
+let PlayersService = class PlayersService {
+    constructor(tokenMapRepository, socketIdMapRepository, playerRepository) {
+        this.tokenMapRepository = tokenMapRepository;
+        this.socketIdMapRepository = socketIdMapRepository;
+        this.playerRepository = playerRepository;
+    }
+    async getUserBySocketId(socketId) {
+        return await this.socketIdMapRepository.findOneBy(socketId);
+    }
+    async getUserIdBySocketId(socketId) {
+        const user = await this.socketIdMapRepository.findOneBy(socketId);
+        return user ? user.userId : null;
+    }
+    async getCurrentRoomBySocketId(socketId) {
+        const user = await this.socketIdMapRepository.findOneBy(socketId);
+        return user ? user.player.roomId : null;
+    }
+    async removeSocketBySocketId(socketId) {
+        return await this.socketIdMapRepository.remove(socketId);
+    }
+    async socketIdMapToLoginUser(token, socketId) {
+        try {
+            const requestUser = await this.tokenMapRepository.findOneOrFail({
+                where: { token },
+                select: { userId: true },
+            });
+            const userId = requestUser.userId;
+            if (!requestUser.userId) {
+                throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
+            }
+            if (await this.getUserIdBySocketId({ socketId })) {
+                throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            }
+            if (await this.socketIdMapRepository.findOneBy({ userId })) {
+                throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            }
+            const user = { socketId, userId };
+            return await this.socketIdMapRepository.insert(user);
+        }
+        catch (err) {
+            console.error(err);
+            throw new ws_exception_filter_1.SocketException(err.message, 400, 'log-in');
+        }
+    }
+};
+PlayersService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
+    __param(1, (0, typeorm_1.InjectRepository)(socketIdMap_entity_1.SocketIdMap)),
+    __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
+], PlayersService);
+exports.PlayersService = PlayersService;
 
 
 /***/ }),
@@ -1644,7 +1602,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("c491b5422f9a61ff03ed")
+/******/ 		__webpack_require__.h = () => ("d6d0cd84b779a91dffd3")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

@@ -1,11 +1,10 @@
 import { DataSource } from 'typeorm';
 import { User } from './src/users/entities/user.entity';
-import 'dotenv/config';
 import { TokenMap } from './src/users/entities/token-map.entity';
 import { Room } from './src/games/entities/room.entity';
 import { Player } from './src/games/entities/player.entity';
 import { SocketIdMap } from './src/games/entities/socketIdMap.entity';
-import { truncate } from 'fs/promises';
+import 'dotenv/config';
 
 const dataSource = new DataSource({
     type: 'mysql',
