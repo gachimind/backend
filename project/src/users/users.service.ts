@@ -11,6 +11,7 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
     ) {}
 
+    // 회원 정보 조회
     async getUserDetailsByUserId(id: number): Promise<User> {
         const user = await this.usersRepository.findOne({ where: { id } });
         if (!user) {
@@ -19,6 +20,7 @@ export class UsersService {
         return user;
     }
 
+    // 카카오 검증
     async validateUser(details: User) {
         const user = await this.usersRepository.findOneBy({
             email: details.email,
@@ -28,6 +30,7 @@ export class UsersService {
         return this.usersRepository.save(newUser);
     }
 
+    // 카카오 아이디 확인
     async findUserById(id: number) {
         const user = await this.usersRepository.findOneBy({ id });
         return user;
