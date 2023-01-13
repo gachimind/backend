@@ -1,4 +1,4 @@
-import { Controller, Get, UseInterceptors, Req, UseGuards, Param } from '@nestjs/common';
+import { Controller, Get, Post, UseInterceptors, Req, Res, UseGuards, Param } from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
@@ -29,6 +29,16 @@ export class UsersController {
     user(@Req() request: Request) {
         if (!request.user) throw new HttpException('토큰값이 일치하지 않습니다.', 401);
         return { message: '토큰 인증이 완료되었습니다.', status: 202 };
+    }
+
+    // 카카오 로그인 토큰 발급
+    @Post('login/kakao')
+    async kakaoLogin(@Req() req, @Res() res) {
+        const { accessToken, refreshToken } = await this.usersService.kakaoLogin(
+            req.headers.authorization,
+        );
+        res.cookie('accessToken', accessToken);
+        res.cookie('refreshToken', refreshToken);
     }
 
     // 회원 정보 상세 조회

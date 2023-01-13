@@ -9,17 +9,20 @@ import {
 
 @Entity({ name: 'User' })
 export class User {
-    @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
-    id: number;
+    @PrimaryGeneratedColumn({ name: 'id' })
+    userId: number;
 
-    @Column('varchar', { name: 'email', unique: true, length: 50 })
+    @Column('varchar', { unique: true, length: 50 })
     email: string;
 
-    @Column('varchar', { name: 'name', unique: true, length: 30 })
+    @Column('varchar')
     nickname: string;
 
     @Column('text')
     profileImg: string;
+
+    @Column({ nullable: true })
+    currentHashedRefreshToken: string;
 
     @CreateDateColumn()
     createdAt: Date;
