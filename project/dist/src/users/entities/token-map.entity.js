@@ -9,40 +9,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.TokenMap = void 0;
 const typeorm_1 = require("typeorm");
-let User = class User {
+let TokenMap = class TokenMap {
 };
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)({ type: 'int', name: 'id' }),
+    (0, typeorm_1.PrimaryColumn)(),
+    __metadata("design:type", String)
+], TokenMap.prototype, "token", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
     __metadata("design:type", Number)
-], User.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)('varchar', { name: 'email', unique: true, length: 50 }),
-    __metadata("design:type", String)
-], User.prototype, "email", void 0);
-__decorate([
-    (0, typeorm_1.Column)('varchar', { name: 'name', unique: true, length: 30 }),
-    __metadata("design:type", String)
-], User.prototype, "nickname", void 0);
-__decorate([
-    (0, typeorm_1.Column)('text'),
-    __metadata("design:type", String)
-], User.prototype, "profileImg", void 0);
+], TokenMap.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], User.prototype, "createdAt", void 0);
+], TokenMap.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
-], User.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.DeleteDateColumn)(),
-    __metadata("design:type", Date)
-], User.prototype, "deletedAt", void 0);
-User = __decorate([
-    (0, typeorm_1.Entity)({ name: 'User' })
-], User);
-exports.User = User;
-//# sourceMappingURL=user.entity.js.map
+], TokenMap.prototype, "updatedAt", void 0);
+TokenMap = __decorate([
+    (0, typeorm_1.Entity)()
+], TokenMap);
+exports.TokenMap = TokenMap;
+//# sourceMappingURL=token-map.entity.js.map

@@ -27,12 +27,12 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
         this.usersService = usersService;
     }
     async validate(accessToken, refreshToken, profile, done) {
-        const id = profile._json.id;
+        const userId = profile._json.id;
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
         const user = await this.usersService.validateUser({
-            id,
+            userId,
             email,
             nickname,
             profileImg,

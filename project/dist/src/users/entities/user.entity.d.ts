@@ -1,5 +1,5 @@
 export declare class User {
-    id: number;
+    userId: number;
     email: string;
     nickname: string;
     profileImg: string;
