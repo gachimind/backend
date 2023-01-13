@@ -4,6 +4,7 @@ import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppController } from './app.controller';
+import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/entities/user.entity';
 import { TokenMap } from './users/entities/token-map.entity';
@@ -38,6 +39,7 @@ import { SocketIdMap } from './games/entities/socketIdMap.entity';
         }),
         UsersModule,
         GamesModule,
+        PassportModule.register({ session: true }),
     ],
     controllers: [AppController],
     providers: [ConfigService],

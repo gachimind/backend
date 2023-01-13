@@ -4,6 +4,8 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { SessionSerializer } from './auth/kakao.serializer';
 import { User } from './entities/user.entity';
+import { KakaoAuthGuard } from './auth/kakao.guards';
+import { KakaoStrategy } from './auth/kakao.strategy';
 import { TokenMap } from './entities/token-map.entity';
 
 @Module({
@@ -12,8 +14,10 @@ import { TokenMap } from './entities/token-map.entity';
     providers: [
         UsersService,
         SessionSerializer,
+        KakaoAuthGuard,
+        KakaoStrategy,
         {
-            provide: 'AUTH_SERVICE',
+            provide: 'USER_SERVICE',
             useClass: UsersService,
         },
     ],
