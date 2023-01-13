@@ -535,7 +535,10 @@ let UsersService = class UsersService {
         return user;
     }
     async getUserDetailsByUserId(id) {
-        const user = await this.usersRepository.findOne({ where: { id } });
+        const user = await this.usersRepository.findOne({
+            select: { id: true, email: true, nickname: true, profileImg: true },
+            where: { id },
+        });
         if (!user) {
             throw new common_2.HttpException('회원 인증에 실패했습니다.', 402);
         }
@@ -1505,7 +1508,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("aaeeec436bd04834d066")
+/******/ 		__webpack_require__.h = () => ("eaef726bf55d92f12aaf")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

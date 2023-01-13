@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Res } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { UserDetails } from './auth/kakao.data';
+import { filter } from 'rxjs';
+import { IsEmail } from 'class-validator';
+import { All } from '@nestjs/common/decorators';
+import { truncate } from 'fs';
 
 @Injectable()
 export class UsersService {
@@ -28,8 +32,18 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회
+    // async getUserDetailsByUserId(id: number): Promise<User> {
+    //     const user = await this.usersRepository.findOne({ where: { id } });
+    //     if (!user) {
+    //         throw new HttpException('회원 인증에 실패했습니다.', 402);
+    //     }
+    //     return user;
+    // }
     async getUserDetailsByUserId(id: number): Promise<User> {
-        const user = await this.usersRepository.findOne({ where: { id } });
+        const user = await this.usersRepository.findOne({
+            select: { id: true, email: true, nickname: true, profileImg: true },
+            where: { id },
+        });
         if (!user) {
             throw new HttpException('회원 인증에 실패했습니다.', 402);
         }
