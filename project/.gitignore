@@ -1,6 +1,7 @@
 .env
+README_dyp.md
+
 # compiled output
-/dist
 /node_modules
 
 # Logs

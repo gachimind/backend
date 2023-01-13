@@ -1,7 +1,16 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, IsEmpty } from 'class-validator';
+import {
+    IsString,
+    IsNumber,
+    IsOptional,
+    IsBoolean,
+    IsNotEmpty,
+    IsEmpty,
+    IsArray,
+    isBoolean,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateRoomDto {
+export class CreateRoomRequestDto {
     @IsString()
     @IsOptional()
     @ApiProperty({
@@ -12,7 +21,6 @@ export class CreateRoomDto {
     readonly roomTitle: string;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 6,
         required: true,
@@ -21,7 +29,6 @@ export class CreateRoomDto {
     readonly maxCount: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 3,
         required: true,
@@ -30,15 +37,14 @@ export class CreateRoomDto {
     readonly round: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
         description: '발표 준비 타이머, milliseconds 단위',
     })
     readonly readyTime: number;
+
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 30000,
         required: true,
@@ -47,7 +53,6 @@ export class CreateRoomDto {
     readonly speechTime: number;
 
     @IsNumber()
-    @IsEmpty()
     @ApiProperty({
         example: 60000,
         required: true,
@@ -56,13 +61,12 @@ export class CreateRoomDto {
     readonly discussionTime: number;
 
     @IsBoolean()
-    @IsEmpty()
     @ApiProperty({
         example: true,
         required: true,
         description: '비밀방 여부',
     })
-    readonly IsSecreteRoom: boolean;
+    readonly isSecreteRoom: boolean;
 
     @IsNumber()
     @IsOptional()
