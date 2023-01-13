@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsEmpty, IsBoolean } from 'class-validator';
+import { IsNumber } from 'class-validator';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { RoomDataDto } from './room.data.dto';
 

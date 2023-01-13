@@ -13,5 +13,5 @@ export declare class UsersController {
         message: string;
         status: number;
     };
-    getUserDetailsByUserId(userId: number): Promise<import("./user.entity").User>;
+    getUserDetailsByUserId(userId: number): Promise<import("./entities/user.entity").User>;
 }

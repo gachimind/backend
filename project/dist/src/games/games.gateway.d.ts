@@ -2,12 +2,12 @@ import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit } from '@nestjs
 import { Server, Socket } from 'socket.io';
 import { RoomService } from './room.service';
 import { ChatService } from './chat.service';
-import { InGameUsersService } from './inGame-users.service';
+import { PlayersService } from './players.service';
 export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomService;
     private readonly chatService;
-    private readonly inGameUsersService;
-    constructor(roomService: RoomService, chatService: ChatService, inGameUsersService: InGameUsersService);
+    private readonly playersService;
+    constructor(roomService: RoomService, chatService: ChatService, playersService: PlayersService);
     server: Server;
     afterInit(server: Server): any;
     handleConnection(socket: Socket): Promise<void>;

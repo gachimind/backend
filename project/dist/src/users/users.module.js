@@ -12,14 +12,15 @@ const typeorm_1 = require("@nestjs/typeorm");
 const users_controller_1 = require("./users.controller");
 const users_service_1 = require("./users.service");
 const kakao_serializer_1 = require("./auth/kakao.serializer");
-const user_entity_1 = require("./user.entity");
+const user_entity_1 = require("./entities/user.entity");
 const kakao_guards_1 = require("./auth/kakao.guards");
 const kakao_strategy_1 = require("./auth/kakao.strategy");
+const token_map_entity_1 = require("./entities/token-map.entity");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap])],
         controllers: [users_controller_1.UsersController],
         providers: [
             users_service_1.UsersService,

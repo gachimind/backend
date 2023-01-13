@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const common_2 = require("@nestjs/common");
 const typeorm_2 = require("typeorm");
-const user_entity_1 = require("./user.entity");
+const user_entity_1 = require("./entities/user.entity");
 let UsersService = class UsersService {
     constructor(usersRepository) {
         this.usersRepository = usersRepository;
@@ -31,14 +31,14 @@ let UsersService = class UsersService {
         const newUser = this.usersRepository.create(details);
         return this.usersRepository.save(newUser);
     }
-    async findUserById(id) {
-        const user = await this.usersRepository.findOneBy({ id });
+    async findUserById(userId) {
+        const user = await this.usersRepository.findOneBy({ userId });
         return user;
     }
-    async getUserDetailsByUserId(id) {
+    async getUserDetailsByUserId(userId) {
         const user = await this.usersRepository.findOne({
-            select: { id: true, email: true, nickname: true, profileImg: true },
-            where: { id },
+            select: { userId: true, email: true, nickname: true, profileImg: true },
+            where: { userId },
         });
         if (!user) {
             throw new common_2.HttpException('회원 인증에 실패했습니다.', 402);
