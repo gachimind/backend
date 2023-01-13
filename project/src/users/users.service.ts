@@ -32,13 +32,6 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회
-    // async getUserDetailsByUserId(id: number): Promise<User> {
-    //     const user = await this.usersRepository.findOne({ where: { id } });
-    //     if (!user) {
-    //         throw new HttpException('회원 인증에 실패했습니다.', 402);
-    //     }
-    //     return user;
-    // }
     async getUserDetailsByUserId(id: number): Promise<User> {
         const user = await this.usersRepository.findOne({
             select: { id: true, email: true, nickname: true, profileImg: true },

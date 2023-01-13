@@ -3,7 +3,6 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao-oauth2';
 import { UsersService } from '../users.service';
 
-// kakao-strategy
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy) {
     constructor(@Inject('USER_SERVICE') private readonly usersService: UsersService) {
