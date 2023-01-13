@@ -4,9 +4,9 @@ import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import { User } from './users/user.entity';
 import { AppController } from './app.controller';
+import { PassportModule } from '@nestjs/passport';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -26,7 +26,7 @@ import { AppController } from './app.controller';
             password: process.env.MYSQL_PASSWORD,
             database: process.env.MYSQL_DATABASE,
             entities: [User],
-            migrations: [__dirname + '/migrations/*.ts'],
+            // migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: false,
             logging: true,
@@ -35,6 +35,7 @@ import { AppController } from './app.controller';
         }),
         UsersModule,
         GamesModule,
+        PassportModule.register({ session: true }),
     ],
     controllers: [AppController],
     providers: [ConfigService],
