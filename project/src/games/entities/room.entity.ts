@@ -6,12 +6,14 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
+import { socketIdMap } from '../players.service';
+import { Player } from './player.entity';
 import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Room {
     @PrimaryGeneratedColumn()
-    id: number;
+    roomId: number;
 
     @Column({ length: 100 })
     roomTitle: string;
@@ -22,13 +24,13 @@ export class Room {
     @Column('tinyint')
     round: number;
 
-    @Column('int')
+    @Column()
     readyTime: number;
 
-    @Column('int')
+    @Column()
     speechTime: number;
 
-    @Column('int')
+    @Column()
     discussionTime: number;
 
     @Column()
@@ -43,14 +45,15 @@ export class Room {
     @Column()
     isGameReadyToStart: boolean;
 
-    @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom, {
-        cascade: ['insert', 'update', 'remove'],
-    })
-    participants: SocketIdMap[];
-
     @CreateDateColumn()
     createdAt: Date;
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom)
+    socketId: SocketIdMap[];
+
+    @OneToMany(() => Player, (player) => player.roomId)
+    playerId: Player[];
 }

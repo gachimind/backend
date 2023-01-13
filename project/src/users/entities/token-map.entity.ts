@@ -1,25 +1,13 @@
-import {
-    Column,
-    JoinColumn,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
-    OneToOne,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
 export class TokenMap {
-    @PrimaryGeneratedColumn()
-    id: number;
-
-    @Column()
+    @PrimaryColumn()
     token: string;
 
-    @OneToOne(() => User)
-    @JoinColumn()
-    user: User;
+    @Column()
+    userId: number;
 
     @CreateDateColumn()
     createdAt: Date;
