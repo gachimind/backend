@@ -13,7 +13,7 @@ import {
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
-import { Request, response } from 'express';
+import { query, Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
@@ -30,47 +30,40 @@ export class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    @Get('login/kakao/redirect')
-    @UseGuards(KakaoAuthGuard)
-    handleRedirect(@Param('code') code: string) {
-        return { msg: 'OK' };
-    }
-
-    // @Get('login/kakao')
+    // @Get('login/kakao/redirect')
     // @UseGuards(KakaoAuthGuard)
-    // async kakaoLogin() {
-    //     return HttpStatus.OK;
+    // handleRedirect(@Param('code') code: string) {
+    //     return { msg: 'OK' };
     // }
 
     // 코드 받아서 검증해서 토큰을 넘겨주는 API
-    @Get('login/kakao')
+    @Get('login/kakao/redirect')
     @UseGuards(KakaoAuthGuard)
     // async kakaoLogin(@Req() req: Request, @Res() res: Response) {
-    async kakaoLoginRedirect(@Req() req, @Res() res: Response) {
+    async kakaoLoginRedirect(
+        @Param('code') code: string,
+        @Req() req,
+        // @Res({ passthrough: true }) res: Response,
+    ): Promise<any> {
         const user = await this.usersService.findUserById(req.user.userId);
         if (user === null) {
             // 유저가 없을때 회원가입 -> 로그인
-            const createUser = await this.usersService.validateUser(req.user);
+            const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            return response.status(HttpStatus.CREATED).json([accessToken]);
-            // return res.status(201).json({
-            //     accessToken: 'Bearer ' + accessToken,
-            //     message: '로그인 성공',
-            // });
+            return Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
+        } else {
+            // 유저가 있을때
+            const accessToken = await this.usersService.createAccessToken(user);
+            return Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
+            return true;
         }
-        // 유저가 있을때
-        const accessToken = await this.usersService.createAccessToken(user);
-        return response.status(HttpStatus.CREATED).json([accessToken]);
-        // return res.status(201).json({
-        //     accessToken: 'Bearer ' + accessToken,
-        //     message: '로그인 성공',
-        // });
     }
 
     @Get('status')
     user(@Req() request: Request) {
-        if (!request.user) throw new HttpException('토큰값이 일치하지 않습니다.', 401);
-        return { message: '토큰 인증이 완료되었습니다.', status: 202 };
+        if (!request.user) throw new HttpException('토큰 값이 일치하지 않습니다.', 401);
+        // return esponse.status(HttpStatus.CREATED);
+        return true;
     }
 
     // 회원 정보 상세 조회

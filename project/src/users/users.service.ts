@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import axios, { AxiosRequestConfig } from 'axios';
+import { stringify } from 'querystring';
 
 @Injectable()
 export class UsersService {
@@ -28,7 +29,13 @@ export class UsersService {
         return this.usersRepository.save(newUser);
     }
 
-    async findUserById(userId: number) {
+    async createUser(details: UserDetails) {
+        const user = this.usersRepository.create(details);
+        return this.usersRepository.save(user);
+        // return this.usersRepository.save(details);
+    }
+    e;
+    async findUserById(userId: string) {
         const user = await this.usersRepository.findOneBy({ userId });
         return user;
     }
@@ -36,7 +43,7 @@ export class UsersService {
     // 단순히 유저가 있는지 확인하고 있다면 리턴하고 없다면 저장
     // 유저가 있다면 strategy의 return done(user, null)에 포함되어 들어감
     // return된 done(user, null)는 guard의 req.logIn(request)로 가게 되고
-    // serializer의 serializerUser로 가게 됨
+    // guard 검증을 통과하면 serializer의 serializerUser로 가서 유저가 들고온 데이터가 맞는지 확인
 
     // 토큰 검증
     async tokenValidate(token: string) {
@@ -53,13 +60,13 @@ export class UsersService {
         };
         const accessToken: string = this.jwtService.sign(payload, {
             secret: process.env.TOKEN_SECRETE_KEY,
-            expiresIn: '1h',
+            expiresIn: '24h',
         });
         return accessToken;
     }
 
     // 회원 정보 상세 조회
-    async getUserDetailsByUserId(userId: number): Promise<User> {
+    async getUserDetailsByUserId(userId: any): Promise<User> {
         const user = await this.usersRepository.findOne({
             select: { userId: true, email: true, nickname: true, profileImg: true },
             where: { userId },

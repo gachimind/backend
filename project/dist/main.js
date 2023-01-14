@@ -380,23 +380,23 @@ let UsersController = class UsersController {
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
-    handleRedirect(code) {
-        return { msg: 'OK' };
-    }
-    async kakaoLoginRedirect(req, res) {
+    async kakaoLoginRedirect(code, req) {
         const user = await this.usersService.findUserById(req.user.userId);
         if (user === null) {
-            const createUser = await this.usersService.validateUser(req.user);
+            const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            return express_1.response.status(common_1.HttpStatus.CREATED).json([accessToken]);
+            return express_1.Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
         }
-        const accessToken = await this.usersService.createAccessToken(user);
-        return express_1.response.status(common_1.HttpStatus.CREATED).json([accessToken]);
+        else {
+            const accessToken = await this.usersService.createAccessToken(user);
+            return express_1.Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
+            return true;
+        }
     }
     user(request) {
         if (!request.user)
-            throw new common_1.HttpException('토큰값이 일치하지 않습니다.', 401);
-        return { message: '토큰 인증이 완료되었습니다.', status: 202 };
+            throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
+        return true;
     }
     getUserDetailsByUserId(userId) {
         return this.usersService.getUserDetailsByUserId(userId);
@@ -413,18 +413,10 @@ __decorate([
     (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
     __param(0, (0, common_1.Param)('code')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "handleRedirect", null);
-__decorate([
-    (0, common_1.Get)('login/kakao'),
-    (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof Response !== "undefined" && Response) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", typeof (_b = typeof Promise !== "undefined" && Promise) === "function" ? _b : Object)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
     (0, common_1.Get)('status'),
@@ -552,6 +544,10 @@ let UsersService = class UsersService {
         const newUser = this.usersRepository.create(details);
         return this.usersRepository.save(newUser);
     }
+    async createUser(details) {
+        const user = this.usersRepository.create(details);
+        return this.usersRepository.save(user);
+    }
     async findUserById(userId) {
         const user = await this.usersRepository.findOneBy({ userId });
         return user;
@@ -568,7 +564,7 @@ let UsersService = class UsersService {
         };
         const accessToken = this.jwtService.sign(payload, {
             secret: process.env.TOKEN_SECRETE_KEY,
-            expiresIn: '1h',
+            expiresIn: '24h',
         });
         return accessToken;
     }
@@ -622,13 +618,17 @@ let User = class User {
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], User.prototype, "userId", void 0);
+], User.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ unique: true, length: 50 }),
     __metadata("design:type", String)
+], User.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 50 }),
+    __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true, length: 30 }),
+    (0, typeorm_1.Column)({ length: 30 }),
     __metadata("design:type", String)
 ], User.prototype, "nickname", void 0);
 __decorate([
@@ -788,7 +788,7 @@ const users_service_1 = __webpack_require__(14);
 const typeorm_1 = __webpack_require__(15);
 const typeorm_2 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(16);
-let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy, 'kakao') {
+let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
     constructor(usersService, userRepository) {
         super({
             clientID: process.env.CLIENT_ID,
@@ -1831,7 +1831,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("e432cd54d6006588e4c2")
+/******/ 		__webpack_require__.h = () => ("1b6141aed695c72c5569")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

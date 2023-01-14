@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 
 @Injectable()
-export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
+export class KakaoStrategy extends PassportStrategy(Strategy) {
     constructor(
         @Inject('USER_SERVICE')
         private readonly usersService: UsersService,

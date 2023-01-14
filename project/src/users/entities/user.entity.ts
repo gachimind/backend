@@ -10,12 +10,15 @@ import {
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    userId: number;
+    id: number;
 
     @Column({ unique: true, length: 50 })
+    userId: string;
+
+    @Column({ length: 50 })
     email: string;
 
-    @Column({ unique: true, length: 30 })
+    @Column({ length: 30 })
     nickname: string;
 
     @Column('text')
