@@ -165,13 +165,12 @@ module.exports = function (updatedModules, renewedModules) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
-const dist_1 = __webpack_require__(32);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(39);
-const ws_exception_filter_1 = __webpack_require__(29);
-const session = __webpack_require__(40);
-const passport = __webpack_require__(41);
+const http_exception_filter_1 = __webpack_require__(170);
+const ws_exception_filter_1 = __webpack_require__(160);
+const session = __webpack_require__(171);
+const passport = __webpack_require__(172);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
@@ -199,8 +198,8 @@ async function bootstrap() {
         .setVersion('1.0')
         .addCookieAuth('connect.sid')
         .build();
-    const document = dist_1.SwaggerModule.createDocument(app, config);
-    dist_1.SwaggerModule.setup('api', app, document);
+    const document = swagger_1.SwaggerModule.createDocument(app, config);
+    swagger_1.SwaggerModule.setup('api', app, document);
     await app.listen(port);
     console.log(`listening on port ${port}`);
     if (true) {
@@ -241,13 +240,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
 const common_1 = __webpack_require__(7);
 const users_module_1 = __webpack_require__(8);
-const games_module_1 = __webpack_require__(24);
-const config_1 = __webpack_require__(36);
-const logger_middleware_1 = __webpack_require__(37);
+const games_module_1 = __webpack_require__(155);
+const config_1 = __webpack_require__(167);
+const logger_middleware_1 = __webpack_require__(168);
+const app_controller_1 = __webpack_require__(169);
+const passport_1 = __webpack_require__(150);
 const typeorm_1 = __webpack_require__(9);
-const user_entity_1 = __webpack_require__(42);
-const app_controller_1 = __webpack_require__(38);
-const passport_1 = __webpack_require__(19);
+const user_entity_1 = __webpack_require__(16);
+const token_map_entity_1 = __webpack_require__(154);
+const room_entity_1 = __webpack_require__(164);
+const player_entity_1 = __webpack_require__(165);
+const socketIdMap_entity_1 = __webpack_require__(166);
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -264,7 +267,7 @@ AppModule = __decorate([
                 username: process.env.MYSQL_USERNAME,
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
-                entities: [user_entity_1.User],
+                entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap],
                 synchronize: false,
                 logging: true,
                 keepConnectionAlive: true,
@@ -306,15 +309,16 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const users_controller_1 = __webpack_require__(10);
 const users_service_1 = __webpack_require__(14);
-const kakao_serializer_1 = __webpack_require__(20);
-const user_entity_1 = __webpack_require__(42);
-const kakao_guards_1 = __webpack_require__(18);
-const kakao_strategy_1 = __webpack_require__(21);
+const kakao_serializer_1 = __webpack_require__(151);
+const user_entity_1 = __webpack_require__(16);
+const kakao_guards_1 = __webpack_require__(149);
+const kakao_strategy_1 = __webpack_require__(152);
+const token_map_entity_1 = __webpack_require__(154);
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap])],
         controllers: [users_controller_1.UsersController],
         providers: [
             users_service_1.UsersService,
@@ -365,8 +369,8 @@ const undefinedToNull_interceptor_1 = __webpack_require__(11);
 const common_2 = __webpack_require__(7);
 const resultToData_interceptor_1 = __webpack_require__(13);
 const users_service_1 = __webpack_require__(14);
-const express_1 = __webpack_require__(17);
-const kakao_guards_1 = __webpack_require__(18);
+const express_1 = __webpack_require__(148);
+const kakao_guards_1 = __webpack_require__(149);
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -522,10 +526,10 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const common_2 = __webpack_require__(7);
 const typeorm_2 = __webpack_require__(15);
-const user_entity_1 = __webpack_require__(42);
-const jwt_1 = __webpack_require__(43);
-const axios_1 = __webpack_require__(52);
-const bcrypt = __webpack_require__(53);
+const user_entity_1 = __webpack_require__(16);
+const jwt_1 = __webpack_require__(17);
+const axios_1 = __webpack_require__(26);
+const bcrypt = __webpack_require__(27);
 let UsersService = class UsersService {
     constructor(usersRepository, jwtService) {
         this.usersRepository = usersRepository;
@@ -632,765 +636,7 @@ exports.UsersService = UsersService;
 module.exports = require("typeorm");
 
 /***/ }),
-/* 16 */,
-/* 17 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("express");
-
-/***/ }),
-/* 18 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KakaoAuthGuard = void 0;
-const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(19);
-let KakaoAuthGuard = class KakaoAuthGuard extends (0, passport_1.AuthGuard)('kakao') {
-    async canActivate(context) {
-        const activate = (await super.canActivate(context));
-        const request = context.switchToHttp().getRequest();
-        await super.logIn(request);
-        return activate;
-    }
-};
-KakaoAuthGuard = __decorate([
-    (0, common_1.Injectable)()
-], KakaoAuthGuard);
-exports.KakaoAuthGuard = KakaoAuthGuard;
-
-
-/***/ }),
-/* 19 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/passport");
-
-/***/ }),
-/* 20 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SessionSerializer = void 0;
-const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(19);
-const users_service_1 = __webpack_require__(14);
-let SessionSerializer = class SessionSerializer extends passport_1.PassportSerializer {
-    constructor(usersService) {
-        super();
-        this.usersService = usersService;
-    }
-    serializeUser(user, done) {
-        done(null, user);
-    }
-    async deserializeUser(payload, done) {
-        const user = await this.usersService.findUserById(payload.userId);
-        return user ? done(null, user) : done(null, null);
-    }
-};
-SessionSerializer = __decorate([
-    (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)('USER_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object])
-], SessionSerializer);
-exports.SessionSerializer = SessionSerializer;
-
-
-/***/ }),
-/* 21 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KakaoStrategy = void 0;
-const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(19);
-const passport_kakao_oauth2_1 = __webpack_require__(22);
-const users_service_1 = __webpack_require__(14);
-let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
-    constructor(usersService) {
-        super({
-            clientID: process.env.CLIENT_ID,
-            clientSecret: process.env.SECRET_KEY,
-            callbackURL: process.env.CALLBACK,
-        });
-        this.usersService = usersService;
-    }
-    async validate(accessToken, refreshToken, profile, done) {
-        const userId = profile._json.id;
-        const email = profile._json.kakao_account.email;
-        const nickname = profile._json.properties.nickname;
-        const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.validateUser({
-            userId,
-            email,
-            nickname,
-            profileImg,
-        });
-        return user || null;
-    }
-};
-KakaoStrategy = __decorate([
-    (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)('USER_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object])
-], KakaoStrategy);
-exports.KakaoStrategy = KakaoStrategy;
-
-
-/***/ }),
-/* 22 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("passport-kakao-oauth2");
-
-/***/ }),
-/* 23 */,
-/* 24 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GamesModule = void 0;
-const common_1 = __webpack_require__(7);
-const games_gateway_1 = __webpack_require__(25);
-const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(31);
-const users_module_1 = __webpack_require__(8);
-const inGame_users_service_1 = __webpack_require__(174);
-let GamesModule = class GamesModule {
-};
-GamesModule = __decorate([
-    (0, common_1.Module)({
-        imports: [users_module_1.UsersModule],
-        providers: [games_gateway_1.GamesGateway, room_service_1.RoomService, chat_service_1.ChatService, inGame_users_service_1.InGameUsersService],
-        exports: [games_gateway_1.GamesGateway],
-    })
-], GamesModule);
-exports.GamesModule = GamesModule;
-
-
-/***/ }),
-/* 25 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GamesGateway = void 0;
-const websockets_1 = __webpack_require__(26);
-const socket_io_1 = __webpack_require__(27);
-const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(31);
-const ws_exception_filter_1 = __webpack_require__(29);
-const inGame_users_service_1 = __webpack_require__(174);
-let GamesGateway = class GamesGateway {
-    constructor(roomService, chatService, inGameUsersService) {
-        this.roomService = roomService;
-        this.chatService = chatService;
-        this.inGameUsersService = inGameUsersService;
-    }
-    afterInit(server) {
-        console.log('webSocketServer init');
-    }
-    async handleConnection(socket) {
-        console.log('connected socket', socket.id);
-        const data = await this.roomService.getAllRoomList();
-        socket.emit('room-list', { data });
-    }
-    async handleDisconnect(socket) {
-        await this.inGameUsersService.handleDisconnect(socket);
-        console.log('disconnected socket', socket.id);
-    }
-    async socketIdMapToLoginUser(socket, { data }) {
-        if (!data.authorization) {
-            socket.emit('log-in', { errorMessage: '잘못된 접근입니다.', status: 401 });
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
-        }
-        const token = data.authorization;
-        await this.inGameUsersService.socketIdMapToLoginUser(token, socket);
-        console.log('로그인 성공!');
-        socket.emit('log-in', { message: '로그인 성공!' });
-    }
-    async socketIdMapToLogOutUser(socket) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('leave-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
-        }
-        if (requestUser.currentRoom) {
-            const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
-            socket.leave(`${updateRoomInfo.roomId}`);
-            this.server
-                .to(`${updateRoomInfo.roomId}`)
-                .emit('update-room', { data: updateRoomInfo });
-            const data = await this.roomService.getAllRoomList();
-            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
-        }
-        await this.inGameUsersService.socketIdMapToLogOutUser(socket);
-        console.log('로그아웃 성공!');
-        socket.emit('log-out', { message: '로그아웃 성공!' });
-    }
-    async handleCreateRoomRequest(socket, { data }) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('create-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
-        }
-        const newRoomId = await this.roomService.createRoom(data);
-        socket.emit('create-room', { data: { roomId: newRoomId } });
-        const updateRoomList = await this.roomService.getAllRoomList();
-        this.server.emit('room-list', { data: updateRoomList });
-    }
-    async handleEnterRoomRequest(socket, { data }) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('enter-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'enter-room');
-        }
-        if (requestUser.currentRoom) {
-            socket.emit('enter-room', {
-                errorMessage: '잘못된 접근입니다.',
-                status: 400,
-            });
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
-        }
-        const requestRoom = data;
-        const isRoomAvailable = await this.roomService.isRoomAvailable(requestUser, requestRoom);
-        if (!isRoomAvailable.availability) {
-            socket.emit('enter-room', {
-                errorMessage: isRoomAvailable.message,
-                status: isRoomAvailable.status,
-            });
-            throw new ws_exception_filter_1.SocketException(isRoomAvailable.message, isRoomAvailable.status, 'enter-room');
-        }
-        const updateRoomInfo = await this.roomService.updateRoomParticipants(socket.id, requestUser, isRoomAvailable.room);
-        socket.join(`${updateRoomInfo.roomId}`);
-        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', { data: updateRoomInfo });
-        const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
-    }
-    async handleLeaveRoomEvent(socket) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('leave-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
-        }
-        const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
-        await this.inGameUsersService.handleLeaveRoom(socket.id);
-        socket.leave(`${updateRoomInfo.roomId}`);
-        if (updateRoomInfo)
-            this.server
-                .to(`${updateRoomInfo.roomId}`)
-                .emit('update-room', { data: updateRoomInfo });
-        const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
-    }
-    async sendChatRequest(socket, { data }) {
-        const message = data.message;
-        const { nickname, currentRoom } = inGame_users_service_1.socketIdMap[socket.id];
-        this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
-    }
-};
-__decorate([
-    (0, websockets_1.WebSocketServer)(),
-    __metadata("design:type", typeof (_d = typeof socket_io_1.Server !== "undefined" && socket_io_1.Server) === "function" ? _d : Object)
-], GamesGateway.prototype, "server", void 0);
-__decorate([
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_e = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _e : Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "handleConnection", null);
-__decorate([
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_f = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _f : Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "handleDisconnect", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('log-in'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_g = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _g : Object, Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "socketIdMapToLoginUser", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('log-out'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_h = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _h : Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "socketIdMapToLogOutUser", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('create-room'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_j = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _j : Object, Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "handleCreateRoomRequest", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('enter-room'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_k = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _k : Object, Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "handleEnterRoomRequest", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('leave-room'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_l = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _l : Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "handleLeaveRoomEvent", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('send-chat'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_m = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _m : Object, Object]),
-    __metadata("design:returntype", Promise)
-], GamesGateway.prototype, "sendChatRequest", null);
-GamesGateway = __decorate([
-    (0, websockets_1.WebSocketGateway)({
-        cors: {
-            origin: '*',
-        },
-    }),
-    __metadata("design:paramtypes", [typeof (_a = typeof room_service_1.RoomService !== "undefined" && room_service_1.RoomService) === "function" ? _a : Object, typeof (_b = typeof chat_service_1.ChatService !== "undefined" && chat_service_1.ChatService) === "function" ? _b : Object, typeof (_c = typeof inGame_users_service_1.InGameUsersService !== "undefined" && inGame_users_service_1.InGameUsersService) === "function" ? _c : Object])
-], GamesGateway);
-exports.GamesGateway = GamesGateway;
-
-
-/***/ }),
-/* 26 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/websockets");
-
-/***/ }),
-/* 27 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("socket.io");
-
-/***/ }),
-/* 28 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RoomService = void 0;
-const common_1 = __webpack_require__(7);
-const ws_exception_filter_1 = __webpack_require__(29);
-const roomList = [];
-let RoomService = class RoomService {
-    async getAllRoomList() {
-        return await roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } = room;
-            return {
-                roomId,
-                roomTitle,
-                maxCount,
-                round,
-                participants: participants.length,
-                isSecreteRoom,
-                isGameOn,
-            };
-        });
-    }
-    createRoom(room) {
-        const newRoom = Object.assign(Object.assign({ roomId: roomList.length + 1 }, room), { isGameOn: false, participants: [], isGameReadyToStart: false });
-        if (!room.roomTitle) {
-            newRoom.roomTitle = '같이 가치마인드 한 판 해요!';
-        }
-        roomList.push(newRoom);
-        return newRoom.roomId;
-    }
-    async isRoomAvailable(requestUser, requestRoom) {
-        const room = await roomList.find((data) => {
-            return data.roomId === requestRoom.roomId;
-        });
-        let status;
-        if (!room) {
-            status = 404;
-            return { availability: false, message: '요청하신 방을 찾을 수 없습니다.', status };
-        }
-        if (room.maxCount == room.participants.length) {
-            status = 400;
-            return {
-                availability: false,
-                message: '정원초과로 방 입장에 실패했습니다.',
-                status,
-            };
-        }
-        if (room.IsSecreteRoom) {
-            if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
-                status = 404;
-                return {
-                    availability: false,
-                    message: '비밀번호가 일치하지 않습니다.',
-                    status,
-                };
-            }
-        }
-        const userInRoom = room.participants.find((user) => {
-            return user.userId === requestUser.userId;
-        });
-        if (userInRoom) {
-            status = 400;
-            return {
-                availability: false,
-                message: '같은 방에 중복 입장할 수 없습니다.',
-                status,
-            };
-        }
-        return { availability: true, message: '방 입장에 성공하였습니다.', room };
-    }
-    async updateRoomParticipants(socketId, requestUser, roomInfo) {
-        let isHost;
-        if (!roomInfo.participants.length)
-            isHost = true;
-        const { currentRoom } = requestUser, userInfo = __rest(requestUser, ["currentRoom"]);
-        roomInfo.participants.push(Object.assign(Object.assign({ socketId }, userInfo), { isReady: false, isHost }));
-        roomList.map((room, index) => {
-            if (room.roomId === roomInfo.roomId) {
-                return (roomList[index] = roomInfo);
-            }
-        });
-        return roomInfo;
-    }
-    async leaveRoom(requestUser) {
-        const targetRoom = await roomList.find((room) => {
-            return room.roomId === requestUser.currentRoom;
-        });
-        if (!targetRoom)
-            throw new ws_exception_filter_1.SocketException('bad request', 400, 'leave-room');
-        if (targetRoom.participants.length > 1) {
-            targetRoom.participants.map((user, index) => {
-                if (user.userId === requestUser.userId) {
-                    if (user.isHost) {
-                        targetRoom.participants[1].isHost = true;
-                    }
-                    return targetRoom.participants.splice(index, 1);
-                }
-            });
-            roomList.map((room, index) => {
-                if (room.roomId === targetRoom.roomId) {
-                    return (roomList[index] = targetRoom);
-                }
-            });
-            return targetRoom;
-        }
-        else {
-            const roomIndex = roomList.findIndex((room) => room.roomId === targetRoom.roomId);
-            roomList.splice(roomIndex, 1);
-            return null;
-        }
-    }
-};
-RoomService = __decorate([
-    (0, common_1.Injectable)()
-], RoomService);
-exports.RoomService = RoomService;
-
-
-/***/ }),
-/* 29 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SocketExceptionFilter = exports.SocketException = void 0;
-const common_1 = __webpack_require__(7);
-const websockets_1 = __webpack_require__(26);
-const errors_1 = __webpack_require__(30);
-class SocketException extends errors_1.WsException {
-    constructor(message, status, eventName) {
-        super({ message, status, eventName });
-    }
-}
-exports.SocketException = SocketException;
-let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
-    catch(exception, host) {
-        super.catch(exception, host);
-    }
-};
-SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
-], SocketExceptionFilter);
-exports.SocketExceptionFilter = SocketExceptionFilter;
-
-
-/***/ }),
-/* 30 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/websockets/errors");
-
-/***/ }),
-/* 31 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ChatService = void 0;
-const common_1 = __webpack_require__(7);
-let ChatService = class ChatService {
-};
-ChatService = __decorate([
-    (0, common_1.Injectable)()
-], ChatService);
-exports.ChatService = ChatService;
-
-
-/***/ }),
-/* 32 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/swagger/dist");
-
-/***/ }),
-/* 33 */,
-/* 34 */,
-/* 35 */,
-/* 36 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 37 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LoggerMiddleware = void 0;
-const common_1 = __webpack_require__(7);
-let LoggerMiddleware = class LoggerMiddleware {
-    constructor() {
-        this.logger = new common_1.Logger('HTTP');
-    }
-    use(request, response, next) {
-        const { ip, method, originalUrl } = request;
-        const userAgent = request.get('user-agent') || '';
-        response.on('finish', () => {
-            const { statusCode } = response;
-            const contentLength = response.get('content-length');
-            this.logger.log(`${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
-        });
-        next();
-    }
-};
-LoggerMiddleware = __decorate([
-    (0, common_1.Injectable)()
-], LoggerMiddleware);
-exports.LoggerMiddleware = LoggerMiddleware;
-
-
-/***/ }),
-/* 38 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AppController = void 0;
-const common_1 = __webpack_require__(7);
-let AppController = class AppController {
-    greetings() {
-        return `welcome to gachimind project nest server!`;
-    }
-};
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AppController.prototype, "greetings", null);
-AppController = __decorate([
-    (0, common_1.Controller)()
-], AppController);
-exports.AppController = AppController;
-
-
-/***/ }),
-/* 39 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.HttpExceptionFilter = void 0;
-const common_1 = __webpack_require__(7);
-let HttpExceptionFilter = class HttpExceptionFilter {
-    catch(exception, host) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse();
-        const status = exception.getStatus();
-        const errorMessage = exception.message;
-        console.error(exception);
-        response.status(status).json({
-            errorMessage,
-        });
-    }
-};
-HttpExceptionFilter = __decorate([
-    (0, common_1.Catch)(common_1.HttpException)
-], HttpExceptionFilter);
-exports.HttpExceptionFilter = HttpExceptionFilter;
-
-
-/***/ }),
-/* 40 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("express-session");
-
-/***/ }),
-/* 41 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("passport");
-
-/***/ }),
-/* 42 */
+/* 16 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1411,7 +657,7 @@ const typeorm_1 = __webpack_require__(15);
 let User = class User {
 };
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)({ name: 'id' }),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
 ], User.prototype, "userId", void 0);
 __decorate([
@@ -1443,13 +689,13 @@ __decorate([
     __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
 ], User.prototype, "deletedAt", void 0);
 User = __decorate([
-    (0, typeorm_1.Entity)({ name: 'User' })
+    (0, typeorm_1.Entity)()
 ], User);
 exports.User = User;
 
 
 /***/ }),
-/* 43 */
+/* 17 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -1458,11 +704,11 @@ function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 exports.__esModule = true;
-__export(__webpack_require__(44));
+__export(__webpack_require__(18));
 
 
 /***/ }),
-/* 44 */
+/* 18 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1478,13 +724,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(45), exports);
-__exportStar(__webpack_require__(47), exports);
-__exportStar(__webpack_require__(50), exports);
+__exportStar(__webpack_require__(19), exports);
+__exportStar(__webpack_require__(21), exports);
+__exportStar(__webpack_require__(24), exports);
 
 
 /***/ }),
-/* 45 */
+/* 19 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1500,11 +746,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(46), exports);
+__exportStar(__webpack_require__(20), exports);
 
 
 /***/ }),
-/* 46 */
+/* 20 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -1519,7 +765,7 @@ var JwtSecretRequestType;
 
 
 /***/ }),
-/* 47 */
+/* 21 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1543,9 +789,9 @@ var JwtModule_1;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.JwtModule = void 0;
 const common_1 = __webpack_require__(7);
-const jwt_constants_1 = __webpack_require__(48);
-const jwt_providers_1 = __webpack_require__(49);
-const jwt_service_1 = __webpack_require__(50);
+const jwt_constants_1 = __webpack_require__(22);
+const jwt_providers_1 = __webpack_require__(23);
+const jwt_service_1 = __webpack_require__(24);
 let JwtModule = JwtModule_1 = class JwtModule {
     static register(options) {
         return {
@@ -1597,7 +843,7 @@ exports.JwtModule = JwtModule;
 
 
 /***/ }),
-/* 48 */
+/* 22 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -1608,14 +854,14 @@ exports.JWT_MODULE_OPTIONS = 'JWT_MODULE_OPTIONS';
 
 
 /***/ }),
-/* 49 */
+/* 23 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createJwtProvider = void 0;
-const jwt_constants_1 = __webpack_require__(48);
+const jwt_constants_1 = __webpack_require__(22);
 function createJwtProvider(options) {
     return [{ provide: jwt_constants_1.JWT_MODULE_OPTIONS, useValue: options || {} }];
 }
@@ -1623,7 +869,7 @@ exports.createJwtProvider = createJwtProvider;
 
 
 /***/ }),
-/* 50 */
+/* 24 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1643,9 +889,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.JwtService = void 0;
 const common_1 = __webpack_require__(7);
-const jwt = __webpack_require__(51);
-const interfaces_1 = __webpack_require__(45);
-const jwt_constants_1 = __webpack_require__(48);
+const jwt = __webpack_require__(25);
+const interfaces_1 = __webpack_require__(19);
+const jwt_constants_1 = __webpack_require__(22);
 let JwtService = class JwtService {
     constructor(options = {}) {
         this.options = options;
@@ -1713,34 +959,34 @@ exports.JwtService = JwtService;
 
 
 /***/ }),
-/* 51 */
+/* 25 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("jsonwebtoken");
 
 /***/ }),
-/* 52 */
+/* 26 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("axios");
 
 /***/ }),
-/* 53 */
+/* 27 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var nodePreGyp = __webpack_require__(54);
-var path = __webpack_require__(58);
+var nodePreGyp = __webpack_require__(28);
+var path = __webpack_require__(32);
 var binding_path = nodePreGyp.find(path.resolve(path.join(__dirname, './package.json')));
-var bindings = __webpack_require__(172)(binding_path);
+var bindings = __webpack_require__(146)(binding_path);
 
-var crypto = __webpack_require__(157);
+var crypto = __webpack_require__(131);
 
-var promises = __webpack_require__(173);
+var promises = __webpack_require__(147);
 
 /// generate a salt (sync)
 /// @param {Number} [rounds] number of rounds (default 10)
@@ -1970,7 +1216,7 @@ module.exports.getRounds = function getRounds(hash) {
 
 
 /***/ }),
-/* 54 */
+/* 28 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -1988,20 +1234,20 @@ module.exports = exports;
 
 // load mocking control function for accessing s3 via https. the function is a noop always returning
 // false if not mocking.
-exports.mockS3Http = (__webpack_require__(55).get_mockS3Http)();
+exports.mockS3Http = (__webpack_require__(29).get_mockS3Http)();
 exports.mockS3Http('on');
 const mocking = exports.mockS3Http('get');
 
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
-const nopt = __webpack_require__(60);
-const log = __webpack_require__(63);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
+const nopt = __webpack_require__(34);
+const log = __webpack_require__(37);
 log.disableProgress();
-const napi = __webpack_require__(98);
+const napi = __webpack_require__(72);
 
-const EE = (__webpack_require__(68).EventEmitter);
-const inherits = (__webpack_require__(66).inherits);
+const EE = (__webpack_require__(42).EventEmitter);
+const inherits = (__webpack_require__(40).inherits);
 const cli_commands = [
   'clean',
   'install',
@@ -2029,7 +1275,7 @@ if (mocking) {
 // this is a getter to avoid circular reference warnings with node v14.
 Object.defineProperty(exports, "find", ({
   get: function() {
-    return (__webpack_require__(100).find);
+    return (__webpack_require__(74).find);
   },
   enumerable: true
 }));
@@ -2059,7 +1305,7 @@ function Run({ package_json_path = './package.json', argv }) {
   cli_commands.forEach((command) => {
     self.commands[command] = function(argvx, callback) {
       log.verbose('command', command, argvx);
-      return __webpack_require__(108)("./" + command)(self, argvx, callback);
+      return __webpack_require__(82)("./" + command)(self, argvx, callback);
     };
   });
 
@@ -2077,7 +1323,7 @@ const proto = Run.prototype;
  * Export the contents of the package.json.
  */
 
-proto.package = __webpack_require__(171);
+proto.package = __webpack_require__(145);
 
 /**
  * nopt configuration definitions
@@ -2264,7 +1510,7 @@ proto.usage = function usage() {
     '',
     '  where <command> is one of:',
     cli_commands.map((c) => {
-      return '    - ' + c + ' - ' + __webpack_require__(108)("./" + c).usage;
+      return '    - ' + c + ' - ' + __webpack_require__(82)("./" + c).usage;
     }).join('\n'),
     '',
     'node-pre-gyp@' + this.version + '  ' + path.resolve(__dirname, '..'),
@@ -2286,7 +1532,7 @@ Object.defineProperty(proto, 'version', {
 
 
 /***/ }),
-/* 55 */
+/* 29 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2294,9 +1540,9 @@ Object.defineProperty(proto, 'version', {
 
 module.exports = exports;
 
-const url = __webpack_require__(56);
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
+const url = __webpack_require__(30);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
 
 module.exports.detect = function(opts, config) {
   const to = opts.hosted_path;
@@ -2333,7 +1579,7 @@ module.exports.get_s3 = function(config) {
     // here we're mocking. node_pre_gyp_mock_s3 is the scratch directory
     // for the mock code.
     const AWSMock = __webpack_require__(Object(function webpackMissingModule() { var e = new Error("Cannot find module 'mock-aws-s3'"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-    const os = __webpack_require__(59);
+    const os = __webpack_require__(33);
 
     AWSMock.config.basePath = `${os.tmpdir()}/mock`;
 
@@ -2456,35 +1702,35 @@ module.exports.get_mockS3Http = function() {
 
 
 /***/ }),
-/* 56 */
+/* 30 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("url");
 
 /***/ }),
-/* 57 */
+/* 31 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("fs");
 
 /***/ }),
-/* 58 */
+/* 32 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("path");
 
 /***/ }),
-/* 59 */
+/* 33 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("os");
 
 /***/ }),
-/* 60 */
+/* 34 */
 /***/ ((module, exports, __webpack_require__) => {
 
 // info about each config option.
@@ -2493,11 +1739,11 @@ var debug = process.env.DEBUG_NOPT || process.env.NOPT_DEBUG
   ? function () { console.error.apply(console, arguments) }
   : function () {}
 
-var url = __webpack_require__(56)
-  , path = __webpack_require__(58)
-  , Stream = (__webpack_require__(61).Stream)
-  , abbrev = __webpack_require__(62)
-  , os = __webpack_require__(59)
+var url = __webpack_require__(30)
+  , path = __webpack_require__(32)
+  , Stream = (__webpack_require__(35).Stream)
+  , abbrev = __webpack_require__(36)
+  , os = __webpack_require__(33)
 
 module.exports = exports = nopt
 exports.clean = clean
@@ -2931,14 +2177,14 @@ function resolveShort (arg, shorthands, shortAbbr, abbrevs) {
 
 
 /***/ }),
-/* 61 */
+/* 35 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("stream");
 
 /***/ }),
-/* 62 */
+/* 36 */
 /***/ ((module, exports) => {
 
 module.exports = exports = abbrev.abbrev = abbrev
@@ -3005,19 +2251,19 @@ function lexSort (a, b) {
 
 
 /***/ }),
-/* 63 */
+/* 37 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
 
-var Progress = __webpack_require__(64)
-var Gauge = __webpack_require__(73)
-var EE = (__webpack_require__(68).EventEmitter)
+var Progress = __webpack_require__(38)
+var Gauge = __webpack_require__(47)
+var EE = (__webpack_require__(42).EventEmitter)
 var log = exports = module.exports = new EE()
-var util = __webpack_require__(66)
+var util = __webpack_require__(40)
 
-var setBlocking = __webpack_require__(97)
-var consoleControl = __webpack_require__(75)
+var setBlocking = __webpack_require__(71)
+var consoleControl = __webpack_require__(49)
 
 setBlocking(true)
 var stream = process.stderr
@@ -3415,26 +2661,26 @@ log.on('error', function () {})
 
 
 /***/ }),
-/* 64 */
+/* 38 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
-exports.TrackerGroup = __webpack_require__(65)
-exports.Tracker = __webpack_require__(69)
-exports.TrackerStream = __webpack_require__(70)
+exports.TrackerGroup = __webpack_require__(39)
+exports.Tracker = __webpack_require__(43)
+exports.TrackerStream = __webpack_require__(44)
 
 
 /***/ }),
-/* 65 */
+/* 39 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var util = __webpack_require__(66)
-var TrackerBase = __webpack_require__(67)
-var Tracker = __webpack_require__(69)
-var TrackerStream = __webpack_require__(70)
+var util = __webpack_require__(40)
+var TrackerBase = __webpack_require__(41)
+var Tracker = __webpack_require__(43)
+var TrackerStream = __webpack_require__(44)
 
 var TrackerGroup = module.exports = function (name) {
   TrackerBase.call(this, name)
@@ -3549,20 +2795,20 @@ TrackerGroup.prototype.debug = function (depth) {
 
 
 /***/ }),
-/* 66 */
+/* 40 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("util");
 
 /***/ }),
-/* 67 */
+/* 41 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var EventEmitter = (__webpack_require__(68).EventEmitter)
-var util = __webpack_require__(66)
+var EventEmitter = (__webpack_require__(42).EventEmitter)
+var util = __webpack_require__(40)
 
 var trackerId = 0
 var TrackerBase = module.exports = function (name) {
@@ -3574,20 +2820,20 @@ util.inherits(TrackerBase, EventEmitter)
 
 
 /***/ }),
-/* 68 */
+/* 42 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("events");
 
 /***/ }),
-/* 69 */
+/* 43 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var util = __webpack_require__(66)
-var TrackerBase = __webpack_require__(67)
+var util = __webpack_require__(40)
+var TrackerBase = __webpack_require__(41)
 
 var Tracker = module.exports = function (name, todo) {
   TrackerBase.call(this, name)
@@ -3620,15 +2866,15 @@ Tracker.prototype.finish = function () {
 
 
 /***/ }),
-/* 70 */
+/* 44 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var util = __webpack_require__(66)
-var stream = __webpack_require__(71)
-var delegate = __webpack_require__(72)
-var Tracker = __webpack_require__(69)
+var util = __webpack_require__(40)
+var stream = __webpack_require__(45)
+var delegate = __webpack_require__(46)
+var Tracker = __webpack_require__(43)
 
 var TrackerStream = module.exports = function (name, size, options) {
   stream.Transform.call(this, options)
@@ -3663,14 +2909,14 @@ delegate(TrackerStream.prototype, 'tracker')
 
 
 /***/ }),
-/* 71 */
+/* 45 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("readable-stream");
 
 /***/ }),
-/* 72 */
+/* 46 */
 /***/ ((module) => {
 
 
@@ -3797,19 +3043,19 @@ Delegator.prototype.fluent = function (name) {
 
 
 /***/ }),
-/* 73 */
+/* 47 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var Plumbing = __webpack_require__(74)
-var hasUnicode = __webpack_require__(84)
-var hasColor = __webpack_require__(85)
-var onExit = __webpack_require__(87)
-var defaultThemes = __webpack_require__(88)
-var setInterval = __webpack_require__(94)
-var process = __webpack_require__(95)
-var setImmediate = __webpack_require__(96)
+var Plumbing = __webpack_require__(48)
+var hasUnicode = __webpack_require__(58)
+var hasColor = __webpack_require__(59)
+var onExit = __webpack_require__(61)
+var defaultThemes = __webpack_require__(62)
+var setInterval = __webpack_require__(68)
+var process = __webpack_require__(69)
+var setImmediate = __webpack_require__(70)
 
 module.exports = Gauge
 
@@ -4037,14 +3283,14 @@ Gauge.prototype._doRedraw = function () {
 
 
 /***/ }),
-/* 74 */
+/* 48 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var consoleControl = __webpack_require__(75)
-var renderTemplate = __webpack_require__(76)
-var validate = __webpack_require__(79)
+var consoleControl = __webpack_require__(49)
+var renderTemplate = __webpack_require__(50)
+var validate = __webpack_require__(53)
 
 var Plumbing = module.exports = function (theme, template, width) {
   if (!width) width = 80
@@ -4092,7 +3338,7 @@ Plumbing.prototype.show = function (status) {
 
 
 /***/ }),
-/* 75 */
+/* 49 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -4224,16 +3470,16 @@ function colorNameToCode (color) {
 
 
 /***/ }),
-/* 76 */
+/* 50 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var align = __webpack_require__(77)
-var validate = __webpack_require__(79)
-var wideTruncate = __webpack_require__(80)
-var error = __webpack_require__(82)
-var TemplateItem = __webpack_require__(83)
+var align = __webpack_require__(51)
+var validate = __webpack_require__(53)
+var wideTruncate = __webpack_require__(54)
+var error = __webpack_require__(56)
+var TemplateItem = __webpack_require__(57)
 
 function renderValueWithValues (values) {
   return function (item) {
@@ -4409,12 +3655,12 @@ function renderValue (item, values) {
 
 
 /***/ }),
-/* 77 */
+/* 51 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
-var stringWidth = __webpack_require__(78)
+var stringWidth = __webpack_require__(52)
 
 exports.center = alignCenter
 exports.left = alignLeft
@@ -4481,14 +3727,14 @@ function alignCenter (str, width) {
 
 
 /***/ }),
-/* 78 */
+/* 52 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("string-width");
 
 /***/ }),
-/* 79 */
+/* 53 */
 /***/ ((module) => {
 
 "use strict";
@@ -4600,13 +3846,13 @@ function newException (code, msg) {
 
 
 /***/ }),
-/* 80 */
+/* 54 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var stringWidth = __webpack_require__(78)
-var stripAnsi = __webpack_require__(81)
+var stringWidth = __webpack_require__(52)
+var stripAnsi = __webpack_require__(55)
 
 module.exports = wideTruncate
 
@@ -4632,19 +3878,19 @@ function wideTruncate (str, target) {
 
 
 /***/ }),
-/* 81 */
+/* 55 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("strip-ansi");
 
 /***/ }),
-/* 82 */
+/* 56 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
-var util = __webpack_require__(66)
+var util = __webpack_require__(40)
 
 var User = exports.User = function User (msg) {
   var err = new Error(msg)
@@ -4670,12 +3916,12 @@ exports.Internal = function Internal (msg) {
 
 
 /***/ }),
-/* 83 */
+/* 57 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var stringWidth = __webpack_require__(78)
+var stringWidth = __webpack_require__(52)
 
 module.exports = TemplateItem
 
@@ -4749,12 +3995,12 @@ TemplateItem.prototype.getMinLength = function () {
 
 
 /***/ }),
-/* 84 */
+/* 58 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var os = __webpack_require__(59)
+var os = __webpack_require__(33)
 
 var hasUnicode = module.exports = function () {
   // Recent Win32 platforms (>XP) CAN support unicode in the console but
@@ -4772,18 +4018,18 @@ var hasUnicode = module.exports = function () {
 
 
 /***/ }),
-/* 85 */
+/* 59 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var colorSupport = __webpack_require__(86)
+var colorSupport = __webpack_require__(60)
 
 module.exports = colorSupport().hasBasic
 
 
 /***/ }),
-/* 86 */
+/* 60 */
 /***/ ((module) => {
 
 // call it on itself so we can test the export val for basic stuff
@@ -4923,20 +4169,20 @@ function colorSupport (options, obj) {
 
 
 /***/ }),
-/* 87 */
+/* 61 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("signal-exit");
 
 /***/ }),
-/* 88 */
+/* 62 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var color = (__webpack_require__(75).color)
-var ThemeSet = __webpack_require__(89)
+var color = (__webpack_require__(49).color)
+var ThemeSet = __webpack_require__(63)
 
 var themes = module.exports = new ThemeSet()
 
@@ -4993,12 +4239,12 @@ themes.setDefault({platform: 'linux', hasUnicode: true, hasColor: true}, 'colorB
 
 
 /***/ }),
-/* 89 */
+/* 63 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var objectAssign = __webpack_require__(90)
+var objectAssign = __webpack_require__(64)
 
 module.exports = function () {
   return ThemeSetProto.newThemeSet()
@@ -5006,7 +4252,7 @@ module.exports = function () {
 
 var ThemeSetProto = {}
 
-ThemeSetProto.baseTheme = __webpack_require__(91)
+ThemeSetProto.baseTheme = __webpack_require__(65)
 
 ThemeSetProto.newTheme = function (parent, theme) {
   if (!theme) {
@@ -5114,20 +4360,20 @@ ThemeSetProto.newThemeSet = function () {
 
 
 /***/ }),
-/* 90 */
+/* 64 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("object-assign");
 
 /***/ }),
-/* 91 */
+/* 65 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var spin = __webpack_require__(92)
-var progressBar = __webpack_require__(93)
+var spin = __webpack_require__(66)
+var progressBar = __webpack_require__(67)
 
 module.exports = {
   activityIndicator: function (values, theme, width) {
@@ -5142,7 +4388,7 @@ module.exports = {
 
 
 /***/ }),
-/* 92 */
+/* 66 */
 /***/ ((module) => {
 
 "use strict";
@@ -5154,15 +4400,15 @@ module.exports = function spin (spinstr, spun) {
 
 
 /***/ }),
-/* 93 */
+/* 67 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var validate = __webpack_require__(79)
-var renderTemplate = __webpack_require__(76)
-var wideTruncate = __webpack_require__(80)
-var stringWidth = __webpack_require__(78)
+var validate = __webpack_require__(53)
+var renderTemplate = __webpack_require__(50)
+var wideTruncate = __webpack_require__(54)
+var stringWidth = __webpack_require__(52)
 
 module.exports = function (theme, width, completed) {
   validate('ONN', [theme, width, completed])
@@ -5196,7 +4442,7 @@ function repeat (string, width) {
 
 
 /***/ }),
-/* 94 */
+/* 68 */
 /***/ ((module) => {
 
 "use strict";
@@ -5206,7 +4452,7 @@ module.exports = setInterval
 
 
 /***/ }),
-/* 95 */
+/* 69 */
 /***/ ((module) => {
 
 "use strict";
@@ -5216,12 +4462,12 @@ module.exports = process
 
 
 /***/ }),
-/* 96 */
+/* 70 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-var process = __webpack_require__(95)
+var process = __webpack_require__(69)
 try {
   module.exports = setImmediate
 } catch (ex) {
@@ -5230,7 +4476,7 @@ try {
 
 
 /***/ }),
-/* 97 */
+/* 71 */
 /***/ ((module) => {
 
 module.exports = function (blocking) {
@@ -5243,13 +4489,13 @@ module.exports = function (blocking) {
 
 
 /***/ }),
-/* 98 */
+/* 72 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
 
 
-const fs = __webpack_require__(57);
+const fs = __webpack_require__(31);
 
 module.exports = exports;
 
@@ -5362,7 +4608,7 @@ module.exports.expand_commands = function(package_json, opts, commands) {
 };
 
 module.exports.get_napi_build_versions = function(package_json, opts, warnings) { // opts may be undefined
-  const log = __webpack_require__(63);
+  const log = __webpack_require__(37);
   let napi_build_versions = [];
   const supported_napi_version = module.exports.get_napi_version(opts ? opts.target : undefined);
   // remove duplicates, verify each napi version can actaully be built
@@ -5415,7 +4661,7 @@ module.exports.get_napi_build_version_from_command_args = function(command_args)
 
 module.exports.swap_build_dir_out = function(napi_build_version) {
   if (napi_build_version) {
-    const rm = __webpack_require__(99);
+    const rm = __webpack_require__(73);
     rm.sync(module.exports.get_build_dir(napi_build_version));
     fs.renameSync('build', module.exports.get_build_dir(napi_build_version));
   }
@@ -5423,7 +4669,7 @@ module.exports.swap_build_dir_out = function(napi_build_version) {
 
 module.exports.swap_build_dir_in = function(napi_build_version) {
   if (napi_build_version) {
-    const rm = __webpack_require__(99);
+    const rm = __webpack_require__(73);
     rm.sync('build');
     fs.renameSync(module.exports.get_build_dir(napi_build_version), 'build');
   }
@@ -5455,24 +4701,24 @@ module.exports.build_napi_only = function(package_json) {
 
 
 /***/ }),
-/* 99 */
+/* 73 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("rimraf");
 
 /***/ }),
-/* 100 */
+/* 74 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
 
 
-const npg = __webpack_require__(54);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const existsSync = (__webpack_require__(57).existsSync) || (__webpack_require__(58).existsSync);
-const path = __webpack_require__(58);
+const npg = __webpack_require__(28);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const existsSync = (__webpack_require__(31).existsSync) || (__webpack_require__(32).existsSync);
+const path = __webpack_require__(32);
 
 module.exports = exports;
 
@@ -5503,7 +4749,7 @@ exports.find = function(package_json_path, opts) {
 
 
 /***/ }),
-/* 101 */
+/* 75 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -5511,11 +4757,11 @@ exports.find = function(package_json_path, opts) {
 
 module.exports = exports;
 
-const path = __webpack_require__(58);
-const semver = __webpack_require__(102);
-const url = __webpack_require__(56);
-const detect_libc = __webpack_require__(103);
-const napi = __webpack_require__(98);
+const path = __webpack_require__(32);
+const semver = __webpack_require__(76);
+const url = __webpack_require__(30);
+const detect_libc = __webpack_require__(77);
+const napi = __webpack_require__(72);
 
 let abi_crosswalk;
 
@@ -5523,9 +4769,9 @@ let abi_crosswalk;
 // ABI crosswalk that emulates one that is not updated
 // for the current version
 if (process.env.NODE_PRE_GYP_ABI_CROSSWALK) {
-  abi_crosswalk = __webpack_require__(106)(process.env.NODE_PRE_GYP_ABI_CROSSWALK);
+  abi_crosswalk = __webpack_require__(80)(process.env.NODE_PRE_GYP_ABI_CROSSWALK);
 } else {
-  abi_crosswalk = __webpack_require__(107);
+  abi_crosswalk = __webpack_require__(81);
 }
 
 const major_versions = {};
@@ -5845,21 +5091,21 @@ module.exports.evaluate = function(package_json, options, napi_build_version) {
 
 
 /***/ }),
-/* 102 */
+/* 76 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("semver");
 
 /***/ }),
-/* 103 */
+/* 77 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-const childProcess = __webpack_require__(104);
-const { isLinux, getReport } = __webpack_require__(105);
+const childProcess = __webpack_require__(78);
+const { isLinux, getReport } = __webpack_require__(79);
 
 const command = 'getconf GNU_LIBC_VERSION 2>&1 || true; ldd --version 2>&1 || true';
 let commandOut = '';
@@ -6037,14 +5283,14 @@ module.exports = {
 
 
 /***/ }),
-/* 104 */
+/* 78 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("child_process");
 
 /***/ }),
-/* 105 */
+/* 79 */
 /***/ ((module) => {
 
 "use strict";
@@ -6067,7 +5313,7 @@ module.exports = { isLinux, getReport };
 
 
 /***/ }),
-/* 106 */
+/* 80 */
 /***/ ((module) => {
 
 function webpackEmptyContext(req) {
@@ -6077,66 +5323,66 @@ function webpackEmptyContext(req) {
 }
 webpackEmptyContext.keys = () => ([]);
 webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 106;
+webpackEmptyContext.id = 80;
 module.exports = webpackEmptyContext;
 
 /***/ }),
-/* 107 */
+/* 81 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"0.1.14":{"node_abi":null,"v8":"1.3"},"0.1.15":{"node_abi":null,"v8":"1.3"},"0.1.16":{"node_abi":null,"v8":"1.3"},"0.1.17":{"node_abi":null,"v8":"1.3"},"0.1.18":{"node_abi":null,"v8":"1.3"},"0.1.19":{"node_abi":null,"v8":"2.0"},"0.1.20":{"node_abi":null,"v8":"2.0"},"0.1.21":{"node_abi":null,"v8":"2.0"},"0.1.22":{"node_abi":null,"v8":"2.0"},"0.1.23":{"node_abi":null,"v8":"2.0"},"0.1.24":{"node_abi":null,"v8":"2.0"},"0.1.25":{"node_abi":null,"v8":"2.0"},"0.1.26":{"node_abi":null,"v8":"2.0"},"0.1.27":{"node_abi":null,"v8":"2.1"},"0.1.28":{"node_abi":null,"v8":"2.1"},"0.1.29":{"node_abi":null,"v8":"2.1"},"0.1.30":{"node_abi":null,"v8":"2.1"},"0.1.31":{"node_abi":null,"v8":"2.1"},"0.1.32":{"node_abi":null,"v8":"2.1"},"0.1.33":{"node_abi":null,"v8":"2.1"},"0.1.90":{"node_abi":null,"v8":"2.2"},"0.1.91":{"node_abi":null,"v8":"2.2"},"0.1.92":{"node_abi":null,"v8":"2.2"},"0.1.93":{"node_abi":null,"v8":"2.2"},"0.1.94":{"node_abi":null,"v8":"2.2"},"0.1.95":{"node_abi":null,"v8":"2.2"},"0.1.96":{"node_abi":null,"v8":"2.2"},"0.1.97":{"node_abi":null,"v8":"2.2"},"0.1.98":{"node_abi":null,"v8":"2.2"},"0.1.99":{"node_abi":null,"v8":"2.2"},"0.1.100":{"node_abi":null,"v8":"2.2"},"0.1.101":{"node_abi":null,"v8":"2.3"},"0.1.102":{"node_abi":null,"v8":"2.3"},"0.1.103":{"node_abi":null,"v8":"2.3"},"0.1.104":{"node_abi":null,"v8":"2.3"},"0.2.0":{"node_abi":1,"v8":"2.3"},"0.2.1":{"node_abi":1,"v8":"2.3"},"0.2.2":{"node_abi":1,"v8":"2.3"},"0.2.3":{"node_abi":1,"v8":"2.3"},"0.2.4":{"node_abi":1,"v8":"2.3"},"0.2.5":{"node_abi":1,"v8":"2.3"},"0.2.6":{"node_abi":1,"v8":"2.3"},"0.3.0":{"node_abi":1,"v8":"2.5"},"0.3.1":{"node_abi":1,"v8":"2.5"},"0.3.2":{"node_abi":1,"v8":"3.0"},"0.3.3":{"node_abi":1,"v8":"3.0"},"0.3.4":{"node_abi":1,"v8":"3.0"},"0.3.5":{"node_abi":1,"v8":"3.0"},"0.3.6":{"node_abi":1,"v8":"3.0"},"0.3.7":{"node_abi":1,"v8":"3.0"},"0.3.8":{"node_abi":1,"v8":"3.1"},"0.4.0":{"node_abi":1,"v8":"3.1"},"0.4.1":{"node_abi":1,"v8":"3.1"},"0.4.2":{"node_abi":1,"v8":"3.1"},"0.4.3":{"node_abi":1,"v8":"3.1"},"0.4.4":{"node_abi":1,"v8":"3.1"},"0.4.5":{"node_abi":1,"v8":"3.1"},"0.4.6":{"node_abi":1,"v8":"3.1"},"0.4.7":{"node_abi":1,"v8":"3.1"},"0.4.8":{"node_abi":1,"v8":"3.1"},"0.4.9":{"node_abi":1,"v8":"3.1"},"0.4.10":{"node_abi":1,"v8":"3.1"},"0.4.11":{"node_abi":1,"v8":"3.1"},"0.4.12":{"node_abi":1,"v8":"3.1"},"0.5.0":{"node_abi":1,"v8":"3.1"},"0.5.1":{"node_abi":1,"v8":"3.4"},"0.5.2":{"node_abi":1,"v8":"3.4"},"0.5.3":{"node_abi":1,"v8":"3.4"},"0.5.4":{"node_abi":1,"v8":"3.5"},"0.5.5":{"node_abi":1,"v8":"3.5"},"0.5.6":{"node_abi":1,"v8":"3.6"},"0.5.7":{"node_abi":1,"v8":"3.6"},"0.5.8":{"node_abi":1,"v8":"3.6"},"0.5.9":{"node_abi":1,"v8":"3.6"},"0.5.10":{"node_abi":1,"v8":"3.7"},"0.6.0":{"node_abi":1,"v8":"3.6"},"0.6.1":{"node_abi":1,"v8":"3.6"},"0.6.2":{"node_abi":1,"v8":"3.6"},"0.6.3":{"node_abi":1,"v8":"3.6"},"0.6.4":{"node_abi":1,"v8":"3.6"},"0.6.5":{"node_abi":1,"v8":"3.6"},"0.6.6":{"node_abi":1,"v8":"3.6"},"0.6.7":{"node_abi":1,"v8":"3.6"},"0.6.8":{"node_abi":1,"v8":"3.6"},"0.6.9":{"node_abi":1,"v8":"3.6"},"0.6.10":{"node_abi":1,"v8":"3.6"},"0.6.11":{"node_abi":1,"v8":"3.6"},"0.6.12":{"node_abi":1,"v8":"3.6"},"0.6.13":{"node_abi":1,"v8":"3.6"},"0.6.14":{"node_abi":1,"v8":"3.6"},"0.6.15":{"node_abi":1,"v8":"3.6"},"0.6.16":{"node_abi":1,"v8":"3.6"},"0.6.17":{"node_abi":1,"v8":"3.6"},"0.6.18":{"node_abi":1,"v8":"3.6"},"0.6.19":{"node_abi":1,"v8":"3.6"},"0.6.20":{"node_abi":1,"v8":"3.6"},"0.6.21":{"node_abi":1,"v8":"3.6"},"0.7.0":{"node_abi":1,"v8":"3.8"},"0.7.1":{"node_abi":1,"v8":"3.8"},"0.7.2":{"node_abi":1,"v8":"3.8"},"0.7.3":{"node_abi":1,"v8":"3.9"},"0.7.4":{"node_abi":1,"v8":"3.9"},"0.7.5":{"node_abi":1,"v8":"3.9"},"0.7.6":{"node_abi":1,"v8":"3.9"},"0.7.7":{"node_abi":1,"v8":"3.9"},"0.7.8":{"node_abi":1,"v8":"3.9"},"0.7.9":{"node_abi":1,"v8":"3.11"},"0.7.10":{"node_abi":1,"v8":"3.9"},"0.7.11":{"node_abi":1,"v8":"3.11"},"0.7.12":{"node_abi":1,"v8":"3.11"},"0.8.0":{"node_abi":1,"v8":"3.11"},"0.8.1":{"node_abi":1,"v8":"3.11"},"0.8.2":{"node_abi":1,"v8":"3.11"},"0.8.3":{"node_abi":1,"v8":"3.11"},"0.8.4":{"node_abi":1,"v8":"3.11"},"0.8.5":{"node_abi":1,"v8":"3.11"},"0.8.6":{"node_abi":1,"v8":"3.11"},"0.8.7":{"node_abi":1,"v8":"3.11"},"0.8.8":{"node_abi":1,"v8":"3.11"},"0.8.9":{"node_abi":1,"v8":"3.11"},"0.8.10":{"node_abi":1,"v8":"3.11"},"0.8.11":{"node_abi":1,"v8":"3.11"},"0.8.12":{"node_abi":1,"v8":"3.11"},"0.8.13":{"node_abi":1,"v8":"3.11"},"0.8.14":{"node_abi":1,"v8":"3.11"},"0.8.15":{"node_abi":1,"v8":"3.11"},"0.8.16":{"node_abi":1,"v8":"3.11"},"0.8.17":{"node_abi":1,"v8":"3.11"},"0.8.18":{"node_abi":1,"v8":"3.11"},"0.8.19":{"node_abi":1,"v8":"3.11"},"0.8.20":{"node_abi":1,"v8":"3.11"},"0.8.21":{"node_abi":1,"v8":"3.11"},"0.8.22":{"node_abi":1,"v8":"3.11"},"0.8.23":{"node_abi":1,"v8":"3.11"},"0.8.24":{"node_abi":1,"v8":"3.11"},"0.8.25":{"node_abi":1,"v8":"3.11"},"0.8.26":{"node_abi":1,"v8":"3.11"},"0.8.27":{"node_abi":1,"v8":"3.11"},"0.8.28":{"node_abi":1,"v8":"3.11"},"0.9.0":{"node_abi":1,"v8":"3.11"},"0.9.1":{"node_abi":10,"v8":"3.11"},"0.9.2":{"node_abi":10,"v8":"3.11"},"0.9.3":{"node_abi":10,"v8":"3.13"},"0.9.4":{"node_abi":10,"v8":"3.13"},"0.9.5":{"node_abi":10,"v8":"3.13"},"0.9.6":{"node_abi":10,"v8":"3.15"},"0.9.7":{"node_abi":10,"v8":"3.15"},"0.9.8":{"node_abi":10,"v8":"3.15"},"0.9.9":{"node_abi":11,"v8":"3.15"},"0.9.10":{"node_abi":11,"v8":"3.15"},"0.9.11":{"node_abi":11,"v8":"3.14"},"0.9.12":{"node_abi":11,"v8":"3.14"},"0.10.0":{"node_abi":11,"v8":"3.14"},"0.10.1":{"node_abi":11,"v8":"3.14"},"0.10.2":{"node_abi":11,"v8":"3.14"},"0.10.3":{"node_abi":11,"v8":"3.14"},"0.10.4":{"node_abi":11,"v8":"3.14"},"0.10.5":{"node_abi":11,"v8":"3.14"},"0.10.6":{"node_abi":11,"v8":"3.14"},"0.10.7":{"node_abi":11,"v8":"3.14"},"0.10.8":{"node_abi":11,"v8":"3.14"},"0.10.9":{"node_abi":11,"v8":"3.14"},"0.10.10":{"node_abi":11,"v8":"3.14"},"0.10.11":{"node_abi":11,"v8":"3.14"},"0.10.12":{"node_abi":11,"v8":"3.14"},"0.10.13":{"node_abi":11,"v8":"3.14"},"0.10.14":{"node_abi":11,"v8":"3.14"},"0.10.15":{"node_abi":11,"v8":"3.14"},"0.10.16":{"node_abi":11,"v8":"3.14"},"0.10.17":{"node_abi":11,"v8":"3.14"},"0.10.18":{"node_abi":11,"v8":"3.14"},"0.10.19":{"node_abi":11,"v8":"3.14"},"0.10.20":{"node_abi":11,"v8":"3.14"},"0.10.21":{"node_abi":11,"v8":"3.14"},"0.10.22":{"node_abi":11,"v8":"3.14"},"0.10.23":{"node_abi":11,"v8":"3.14"},"0.10.24":{"node_abi":11,"v8":"3.14"},"0.10.25":{"node_abi":11,"v8":"3.14"},"0.10.26":{"node_abi":11,"v8":"3.14"},"0.10.27":{"node_abi":11,"v8":"3.14"},"0.10.28":{"node_abi":11,"v8":"3.14"},"0.10.29":{"node_abi":11,"v8":"3.14"},"0.10.30":{"node_abi":11,"v8":"3.14"},"0.10.31":{"node_abi":11,"v8":"3.14"},"0.10.32":{"node_abi":11,"v8":"3.14"},"0.10.33":{"node_abi":11,"v8":"3.14"},"0.10.34":{"node_abi":11,"v8":"3.14"},"0.10.35":{"node_abi":11,"v8":"3.14"},"0.10.36":{"node_abi":11,"v8":"3.14"},"0.10.37":{"node_abi":11,"v8":"3.14"},"0.10.38":{"node_abi":11,"v8":"3.14"},"0.10.39":{"node_abi":11,"v8":"3.14"},"0.10.40":{"node_abi":11,"v8":"3.14"},"0.10.41":{"node_abi":11,"v8":"3.14"},"0.10.42":{"node_abi":11,"v8":"3.14"},"0.10.43":{"node_abi":11,"v8":"3.14"},"0.10.44":{"node_abi":11,"v8":"3.14"},"0.10.45":{"node_abi":11,"v8":"3.14"},"0.10.46":{"node_abi":11,"v8":"3.14"},"0.10.47":{"node_abi":11,"v8":"3.14"},"0.10.48":{"node_abi":11,"v8":"3.14"},"0.11.0":{"node_abi":12,"v8":"3.17"},"0.11.1":{"node_abi":12,"v8":"3.18"},"0.11.2":{"node_abi":12,"v8":"3.19"},"0.11.3":{"node_abi":12,"v8":"3.19"},"0.11.4":{"node_abi":12,"v8":"3.20"},"0.11.5":{"node_abi":12,"v8":"3.20"},"0.11.6":{"node_abi":12,"v8":"3.20"},"0.11.7":{"node_abi":12,"v8":"3.20"},"0.11.8":{"node_abi":13,"v8":"3.21"},"0.11.9":{"node_abi":13,"v8":"3.22"},"0.11.10":{"node_abi":13,"v8":"3.22"},"0.11.11":{"node_abi":14,"v8":"3.22"},"0.11.12":{"node_abi":14,"v8":"3.22"},"0.11.13":{"node_abi":14,"v8":"3.25"},"0.11.14":{"node_abi":14,"v8":"3.26"},"0.11.15":{"node_abi":14,"v8":"3.28"},"0.11.16":{"node_abi":14,"v8":"3.28"},"0.12.0":{"node_abi":14,"v8":"3.28"},"0.12.1":{"node_abi":14,"v8":"3.28"},"0.12.2":{"node_abi":14,"v8":"3.28"},"0.12.3":{"node_abi":14,"v8":"3.28"},"0.12.4":{"node_abi":14,"v8":"3.28"},"0.12.5":{"node_abi":14,"v8":"3.28"},"0.12.6":{"node_abi":14,"v8":"3.28"},"0.12.7":{"node_abi":14,"v8":"3.28"},"0.12.8":{"node_abi":14,"v8":"3.28"},"0.12.9":{"node_abi":14,"v8":"3.28"},"0.12.10":{"node_abi":14,"v8":"3.28"},"0.12.11":{"node_abi":14,"v8":"3.28"},"0.12.12":{"node_abi":14,"v8":"3.28"},"0.12.13":{"node_abi":14,"v8":"3.28"},"0.12.14":{"node_abi":14,"v8":"3.28"},"0.12.15":{"node_abi":14,"v8":"3.28"},"0.12.16":{"node_abi":14,"v8":"3.28"},"0.12.17":{"node_abi":14,"v8":"3.28"},"0.12.18":{"node_abi":14,"v8":"3.28"},"1.0.0":{"node_abi":42,"v8":"3.31"},"1.0.1":{"node_abi":42,"v8":"3.31"},"1.0.2":{"node_abi":42,"v8":"3.31"},"1.0.3":{"node_abi":42,"v8":"4.1"},"1.0.4":{"node_abi":42,"v8":"4.1"},"1.1.0":{"node_abi":43,"v8":"4.1"},"1.2.0":{"node_abi":43,"v8":"4.1"},"1.3.0":{"node_abi":43,"v8":"4.1"},"1.4.1":{"node_abi":43,"v8":"4.1"},"1.4.2":{"node_abi":43,"v8":"4.1"},"1.4.3":{"node_abi":43,"v8":"4.1"},"1.5.0":{"node_abi":43,"v8":"4.1"},"1.5.1":{"node_abi":43,"v8":"4.1"},"1.6.0":{"node_abi":43,"v8":"4.1"},"1.6.1":{"node_abi":43,"v8":"4.1"},"1.6.2":{"node_abi":43,"v8":"4.1"},"1.6.3":{"node_abi":43,"v8":"4.1"},"1.6.4":{"node_abi":43,"v8":"4.1"},"1.7.1":{"node_abi":43,"v8":"4.1"},"1.8.1":{"node_abi":43,"v8":"4.1"},"1.8.2":{"node_abi":43,"v8":"4.1"},"1.8.3":{"node_abi":43,"v8":"4.1"},"1.8.4":{"node_abi":43,"v8":"4.1"},"2.0.0":{"node_abi":44,"v8":"4.2"},"2.0.1":{"node_abi":44,"v8":"4.2"},"2.0.2":{"node_abi":44,"v8":"4.2"},"2.1.0":{"node_abi":44,"v8":"4.2"},"2.2.0":{"node_abi":44,"v8":"4.2"},"2.2.1":{"node_abi":44,"v8":"4.2"},"2.3.0":{"node_abi":44,"v8":"4.2"},"2.3.1":{"node_abi":44,"v8":"4.2"},"2.3.2":{"node_abi":44,"v8":"4.2"},"2.3.3":{"node_abi":44,"v8":"4.2"},"2.3.4":{"node_abi":44,"v8":"4.2"},"2.4.0":{"node_abi":44,"v8":"4.2"},"2.5.0":{"node_abi":44,"v8":"4.2"},"3.0.0":{"node_abi":45,"v8":"4.4"},"3.1.0":{"node_abi":45,"v8":"4.4"},"3.2.0":{"node_abi":45,"v8":"4.4"},"3.3.0":{"node_abi":45,"v8":"4.4"},"3.3.1":{"node_abi":45,"v8":"4.4"},"4.0.0":{"node_abi":46,"v8":"4.5"},"4.1.0":{"node_abi":46,"v8":"4.5"},"4.1.1":{"node_abi":46,"v8":"4.5"},"4.1.2":{"node_abi":46,"v8":"4.5"},"4.2.0":{"node_abi":46,"v8":"4.5"},"4.2.1":{"node_abi":46,"v8":"4.5"},"4.2.2":{"node_abi":46,"v8":"4.5"},"4.2.3":{"node_abi":46,"v8":"4.5"},"4.2.4":{"node_abi":46,"v8":"4.5"},"4.2.5":{"node_abi":46,"v8":"4.5"},"4.2.6":{"node_abi":46,"v8":"4.5"},"4.3.0":{"node_abi":46,"v8":"4.5"},"4.3.1":{"node_abi":46,"v8":"4.5"},"4.3.2":{"node_abi":46,"v8":"4.5"},"4.4.0":{"node_abi":46,"v8":"4.5"},"4.4.1":{"node_abi":46,"v8":"4.5"},"4.4.2":{"node_abi":46,"v8":"4.5"},"4.4.3":{"node_abi":46,"v8":"4.5"},"4.4.4":{"node_abi":46,"v8":"4.5"},"4.4.5":{"node_abi":46,"v8":"4.5"},"4.4.6":{"node_abi":46,"v8":"4.5"},"4.4.7":{"node_abi":46,"v8":"4.5"},"4.5.0":{"node_abi":46,"v8":"4.5"},"4.6.0":{"node_abi":46,"v8":"4.5"},"4.6.1":{"node_abi":46,"v8":"4.5"},"4.6.2":{"node_abi":46,"v8":"4.5"},"4.7.0":{"node_abi":46,"v8":"4.5"},"4.7.1":{"node_abi":46,"v8":"4.5"},"4.7.2":{"node_abi":46,"v8":"4.5"},"4.7.3":{"node_abi":46,"v8":"4.5"},"4.8.0":{"node_abi":46,"v8":"4.5"},"4.8.1":{"node_abi":46,"v8":"4.5"},"4.8.2":{"node_abi":46,"v8":"4.5"},"4.8.3":{"node_abi":46,"v8":"4.5"},"4.8.4":{"node_abi":46,"v8":"4.5"},"4.8.5":{"node_abi":46,"v8":"4.5"},"4.8.6":{"node_abi":46,"v8":"4.5"},"4.8.7":{"node_abi":46,"v8":"4.5"},"4.9.0":{"node_abi":46,"v8":"4.5"},"4.9.1":{"node_abi":46,"v8":"4.5"},"5.0.0":{"node_abi":47,"v8":"4.6"},"5.1.0":{"node_abi":47,"v8":"4.6"},"5.1.1":{"node_abi":47,"v8":"4.6"},"5.2.0":{"node_abi":47,"v8":"4.6"},"5.3.0":{"node_abi":47,"v8":"4.6"},"5.4.0":{"node_abi":47,"v8":"4.6"},"5.4.1":{"node_abi":47,"v8":"4.6"},"5.5.0":{"node_abi":47,"v8":"4.6"},"5.6.0":{"node_abi":47,"v8":"4.6"},"5.7.0":{"node_abi":47,"v8":"4.6"},"5.7.1":{"node_abi":47,"v8":"4.6"},"5.8.0":{"node_abi":47,"v8":"4.6"},"5.9.0":{"node_abi":47,"v8":"4.6"},"5.9.1":{"node_abi":47,"v8":"4.6"},"5.10.0":{"node_abi":47,"v8":"4.6"},"5.10.1":{"node_abi":47,"v8":"4.6"},"5.11.0":{"node_abi":47,"v8":"4.6"},"5.11.1":{"node_abi":47,"v8":"4.6"},"5.12.0":{"node_abi":47,"v8":"4.6"},"6.0.0":{"node_abi":48,"v8":"5.0"},"6.1.0":{"node_abi":48,"v8":"5.0"},"6.2.0":{"node_abi":48,"v8":"5.0"},"6.2.1":{"node_abi":48,"v8":"5.0"},"6.2.2":{"node_abi":48,"v8":"5.0"},"6.3.0":{"node_abi":48,"v8":"5.0"},"6.3.1":{"node_abi":48,"v8":"5.0"},"6.4.0":{"node_abi":48,"v8":"5.0"},"6.5.0":{"node_abi":48,"v8":"5.1"},"6.6.0":{"node_abi":48,"v8":"5.1"},"6.7.0":{"node_abi":48,"v8":"5.1"},"6.8.0":{"node_abi":48,"v8":"5.1"},"6.8.1":{"node_abi":48,"v8":"5.1"},"6.9.0":{"node_abi":48,"v8":"5.1"},"6.9.1":{"node_abi":48,"v8":"5.1"},"6.9.2":{"node_abi":48,"v8":"5.1"},"6.9.3":{"node_abi":48,"v8":"5.1"},"6.9.4":{"node_abi":48,"v8":"5.1"},"6.9.5":{"node_abi":48,"v8":"5.1"},"6.10.0":{"node_abi":48,"v8":"5.1"},"6.10.1":{"node_abi":48,"v8":"5.1"},"6.10.2":{"node_abi":48,"v8":"5.1"},"6.10.3":{"node_abi":48,"v8":"5.1"},"6.11.0":{"node_abi":48,"v8":"5.1"},"6.11.1":{"node_abi":48,"v8":"5.1"},"6.11.2":{"node_abi":48,"v8":"5.1"},"6.11.3":{"node_abi":48,"v8":"5.1"},"6.11.4":{"node_abi":48,"v8":"5.1"},"6.11.5":{"node_abi":48,"v8":"5.1"},"6.12.0":{"node_abi":48,"v8":"5.1"},"6.12.1":{"node_abi":48,"v8":"5.1"},"6.12.2":{"node_abi":48,"v8":"5.1"},"6.12.3":{"node_abi":48,"v8":"5.1"},"6.13.0":{"node_abi":48,"v8":"5.1"},"6.13.1":{"node_abi":48,"v8":"5.1"},"6.14.0":{"node_abi":48,"v8":"5.1"},"6.14.1":{"node_abi":48,"v8":"5.1"},"6.14.2":{"node_abi":48,"v8":"5.1"},"6.14.3":{"node_abi":48,"v8":"5.1"},"6.14.4":{"node_abi":48,"v8":"5.1"},"6.15.0":{"node_abi":48,"v8":"5.1"},"6.15.1":{"node_abi":48,"v8":"5.1"},"6.16.0":{"node_abi":48,"v8":"5.1"},"6.17.0":{"node_abi":48,"v8":"5.1"},"6.17.1":{"node_abi":48,"v8":"5.1"},"7.0.0":{"node_abi":51,"v8":"5.4"},"7.1.0":{"node_abi":51,"v8":"5.4"},"7.2.0":{"node_abi":51,"v8":"5.4"},"7.2.1":{"node_abi":51,"v8":"5.4"},"7.3.0":{"node_abi":51,"v8":"5.4"},"7.4.0":{"node_abi":51,"v8":"5.4"},"7.5.0":{"node_abi":51,"v8":"5.4"},"7.6.0":{"node_abi":51,"v8":"5.5"},"7.7.0":{"node_abi":51,"v8":"5.5"},"7.7.1":{"node_abi":51,"v8":"5.5"},"7.7.2":{"node_abi":51,"v8":"5.5"},"7.7.3":{"node_abi":51,"v8":"5.5"},"7.7.4":{"node_abi":51,"v8":"5.5"},"7.8.0":{"node_abi":51,"v8":"5.5"},"7.9.0":{"node_abi":51,"v8":"5.5"},"7.10.0":{"node_abi":51,"v8":"5.5"},"7.10.1":{"node_abi":51,"v8":"5.5"},"8.0.0":{"node_abi":57,"v8":"5.8"},"8.1.0":{"node_abi":57,"v8":"5.8"},"8.1.1":{"node_abi":57,"v8":"5.8"},"8.1.2":{"node_abi":57,"v8":"5.8"},"8.1.3":{"node_abi":57,"v8":"5.8"},"8.1.4":{"node_abi":57,"v8":"5.8"},"8.2.0":{"node_abi":57,"v8":"5.8"},"8.2.1":{"node_abi":57,"v8":"5.8"},"8.3.0":{"node_abi":57,"v8":"6.0"},"8.4.0":{"node_abi":57,"v8":"6.0"},"8.5.0":{"node_abi":57,"v8":"6.0"},"8.6.0":{"node_abi":57,"v8":"6.0"},"8.7.0":{"node_abi":57,"v8":"6.1"},"8.8.0":{"node_abi":57,"v8":"6.1"},"8.8.1":{"node_abi":57,"v8":"6.1"},"8.9.0":{"node_abi":57,"v8":"6.1"},"8.9.1":{"node_abi":57,"v8":"6.1"},"8.9.2":{"node_abi":57,"v8":"6.1"},"8.9.3":{"node_abi":57,"v8":"6.1"},"8.9.4":{"node_abi":57,"v8":"6.1"},"8.10.0":{"node_abi":57,"v8":"6.2"},"8.11.0":{"node_abi":57,"v8":"6.2"},"8.11.1":{"node_abi":57,"v8":"6.2"},"8.11.2":{"node_abi":57,"v8":"6.2"},"8.11.3":{"node_abi":57,"v8":"6.2"},"8.11.4":{"node_abi":57,"v8":"6.2"},"8.12.0":{"node_abi":57,"v8":"6.2"},"8.13.0":{"node_abi":57,"v8":"6.2"},"8.14.0":{"node_abi":57,"v8":"6.2"},"8.14.1":{"node_abi":57,"v8":"6.2"},"8.15.0":{"node_abi":57,"v8":"6.2"},"8.15.1":{"node_abi":57,"v8":"6.2"},"8.16.0":{"node_abi":57,"v8":"6.2"},"8.16.1":{"node_abi":57,"v8":"6.2"},"8.16.2":{"node_abi":57,"v8":"6.2"},"8.17.0":{"node_abi":57,"v8":"6.2"},"9.0.0":{"node_abi":59,"v8":"6.2"},"9.1.0":{"node_abi":59,"v8":"6.2"},"9.2.0":{"node_abi":59,"v8":"6.2"},"9.2.1":{"node_abi":59,"v8":"6.2"},"9.3.0":{"node_abi":59,"v8":"6.2"},"9.4.0":{"node_abi":59,"v8":"6.2"},"9.5.0":{"node_abi":59,"v8":"6.2"},"9.6.0":{"node_abi":59,"v8":"6.2"},"9.6.1":{"node_abi":59,"v8":"6.2"},"9.7.0":{"node_abi":59,"v8":"6.2"},"9.7.1":{"node_abi":59,"v8":"6.2"},"9.8.0":{"node_abi":59,"v8":"6.2"},"9.9.0":{"node_abi":59,"v8":"6.2"},"9.10.0":{"node_abi":59,"v8":"6.2"},"9.10.1":{"node_abi":59,"v8":"6.2"},"9.11.0":{"node_abi":59,"v8":"6.2"},"9.11.1":{"node_abi":59,"v8":"6.2"},"9.11.2":{"node_abi":59,"v8":"6.2"},"10.0.0":{"node_abi":64,"v8":"6.6"},"10.1.0":{"node_abi":64,"v8":"6.6"},"10.2.0":{"node_abi":64,"v8":"6.6"},"10.2.1":{"node_abi":64,"v8":"6.6"},"10.3.0":{"node_abi":64,"v8":"6.6"},"10.4.0":{"node_abi":64,"v8":"6.7"},"10.4.1":{"node_abi":64,"v8":"6.7"},"10.5.0":{"node_abi":64,"v8":"6.7"},"10.6.0":{"node_abi":64,"v8":"6.7"},"10.7.0":{"node_abi":64,"v8":"6.7"},"10.8.0":{"node_abi":64,"v8":"6.7"},"10.9.0":{"node_abi":64,"v8":"6.8"},"10.10.0":{"node_abi":64,"v8":"6.8"},"10.11.0":{"node_abi":64,"v8":"6.8"},"10.12.0":{"node_abi":64,"v8":"6.8"},"10.13.0":{"node_abi":64,"v8":"6.8"},"10.14.0":{"node_abi":64,"v8":"6.8"},"10.14.1":{"node_abi":64,"v8":"6.8"},"10.14.2":{"node_abi":64,"v8":"6.8"},"10.15.0":{"node_abi":64,"v8":"6.8"},"10.15.1":{"node_abi":64,"v8":"6.8"},"10.15.2":{"node_abi":64,"v8":"6.8"},"10.15.3":{"node_abi":64,"v8":"6.8"},"10.16.0":{"node_abi":64,"v8":"6.8"},"10.16.1":{"node_abi":64,"v8":"6.8"},"10.16.2":{"node_abi":64,"v8":"6.8"},"10.16.3":{"node_abi":64,"v8":"6.8"},"10.17.0":{"node_abi":64,"v8":"6.8"},"10.18.0":{"node_abi":64,"v8":"6.8"},"10.18.1":{"node_abi":64,"v8":"6.8"},"10.19.0":{"node_abi":64,"v8":"6.8"},"10.20.0":{"node_abi":64,"v8":"6.8"},"10.20.1":{"node_abi":64,"v8":"6.8"},"10.21.0":{"node_abi":64,"v8":"6.8"},"10.22.0":{"node_abi":64,"v8":"6.8"},"10.22.1":{"node_abi":64,"v8":"6.8"},"10.23.0":{"node_abi":64,"v8":"6.8"},"10.23.1":{"node_abi":64,"v8":"6.8"},"10.23.2":{"node_abi":64,"v8":"6.8"},"10.23.3":{"node_abi":64,"v8":"6.8"},"10.24.0":{"node_abi":64,"v8":"6.8"},"10.24.1":{"node_abi":64,"v8":"6.8"},"11.0.0":{"node_abi":67,"v8":"7.0"},"11.1.0":{"node_abi":67,"v8":"7.0"},"11.2.0":{"node_abi":67,"v8":"7.0"},"11.3.0":{"node_abi":67,"v8":"7.0"},"11.4.0":{"node_abi":67,"v8":"7.0"},"11.5.0":{"node_abi":67,"v8":"7.0"},"11.6.0":{"node_abi":67,"v8":"7.0"},"11.7.0":{"node_abi":67,"v8":"7.0"},"11.8.0":{"node_abi":67,"v8":"7.0"},"11.9.0":{"node_abi":67,"v8":"7.0"},"11.10.0":{"node_abi":67,"v8":"7.0"},"11.10.1":{"node_abi":67,"v8":"7.0"},"11.11.0":{"node_abi":67,"v8":"7.0"},"11.12.0":{"node_abi":67,"v8":"7.0"},"11.13.0":{"node_abi":67,"v8":"7.0"},"11.14.0":{"node_abi":67,"v8":"7.0"},"11.15.0":{"node_abi":67,"v8":"7.0"},"12.0.0":{"node_abi":72,"v8":"7.4"},"12.1.0":{"node_abi":72,"v8":"7.4"},"12.2.0":{"node_abi":72,"v8":"7.4"},"12.3.0":{"node_abi":72,"v8":"7.4"},"12.3.1":{"node_abi":72,"v8":"7.4"},"12.4.0":{"node_abi":72,"v8":"7.4"},"12.5.0":{"node_abi":72,"v8":"7.5"},"12.6.0":{"node_abi":72,"v8":"7.5"},"12.7.0":{"node_abi":72,"v8":"7.5"},"12.8.0":{"node_abi":72,"v8":"7.5"},"12.8.1":{"node_abi":72,"v8":"7.5"},"12.9.0":{"node_abi":72,"v8":"7.6"},"12.9.1":{"node_abi":72,"v8":"7.6"},"12.10.0":{"node_abi":72,"v8":"7.6"},"12.11.0":{"node_abi":72,"v8":"7.7"},"12.11.1":{"node_abi":72,"v8":"7.7"},"12.12.0":{"node_abi":72,"v8":"7.7"},"12.13.0":{"node_abi":72,"v8":"7.7"},"12.13.1":{"node_abi":72,"v8":"7.7"},"12.14.0":{"node_abi":72,"v8":"7.7"},"12.14.1":{"node_abi":72,"v8":"7.7"},"12.15.0":{"node_abi":72,"v8":"7.7"},"12.16.0":{"node_abi":72,"v8":"7.8"},"12.16.1":{"node_abi":72,"v8":"7.8"},"12.16.2":{"node_abi":72,"v8":"7.8"},"12.16.3":{"node_abi":72,"v8":"7.8"},"12.17.0":{"node_abi":72,"v8":"7.8"},"12.18.0":{"node_abi":72,"v8":"7.8"},"12.18.1":{"node_abi":72,"v8":"7.8"},"12.18.2":{"node_abi":72,"v8":"7.8"},"12.18.3":{"node_abi":72,"v8":"7.8"},"12.18.4":{"node_abi":72,"v8":"7.8"},"12.19.0":{"node_abi":72,"v8":"7.8"},"12.19.1":{"node_abi":72,"v8":"7.8"},"12.20.0":{"node_abi":72,"v8":"7.8"},"12.20.1":{"node_abi":72,"v8":"7.8"},"12.20.2":{"node_abi":72,"v8":"7.8"},"12.21.0":{"node_abi":72,"v8":"7.8"},"12.22.0":{"node_abi":72,"v8":"7.8"},"12.22.1":{"node_abi":72,"v8":"7.8"},"12.22.2":{"node_abi":72,"v8":"7.8"},"12.22.3":{"node_abi":72,"v8":"7.8"},"12.22.4":{"node_abi":72,"v8":"7.8"},"12.22.5":{"node_abi":72,"v8":"7.8"},"12.22.6":{"node_abi":72,"v8":"7.8"},"12.22.7":{"node_abi":72,"v8":"7.8"},"13.0.0":{"node_abi":79,"v8":"7.8"},"13.0.1":{"node_abi":79,"v8":"7.8"},"13.1.0":{"node_abi":79,"v8":"7.8"},"13.2.0":{"node_abi":79,"v8":"7.9"},"13.3.0":{"node_abi":79,"v8":"7.9"},"13.4.0":{"node_abi":79,"v8":"7.9"},"13.5.0":{"node_abi":79,"v8":"7.9"},"13.6.0":{"node_abi":79,"v8":"7.9"},"13.7.0":{"node_abi":79,"v8":"7.9"},"13.8.0":{"node_abi":79,"v8":"7.9"},"13.9.0":{"node_abi":79,"v8":"7.9"},"13.10.0":{"node_abi":79,"v8":"7.9"},"13.10.1":{"node_abi":79,"v8":"7.9"},"13.11.0":{"node_abi":79,"v8":"7.9"},"13.12.0":{"node_abi":79,"v8":"7.9"},"13.13.0":{"node_abi":79,"v8":"7.9"},"13.14.0":{"node_abi":79,"v8":"7.9"},"14.0.0":{"node_abi":83,"v8":"8.1"},"14.1.0":{"node_abi":83,"v8":"8.1"},"14.2.0":{"node_abi":83,"v8":"8.1"},"14.3.0":{"node_abi":83,"v8":"8.1"},"14.4.0":{"node_abi":83,"v8":"8.1"},"14.5.0":{"node_abi":83,"v8":"8.3"},"14.6.0":{"node_abi":83,"v8":"8.4"},"14.7.0":{"node_abi":83,"v8":"8.4"},"14.8.0":{"node_abi":83,"v8":"8.4"},"14.9.0":{"node_abi":83,"v8":"8.4"},"14.10.0":{"node_abi":83,"v8":"8.4"},"14.10.1":{"node_abi":83,"v8":"8.4"},"14.11.0":{"node_abi":83,"v8":"8.4"},"14.12.0":{"node_abi":83,"v8":"8.4"},"14.13.0":{"node_abi":83,"v8":"8.4"},"14.13.1":{"node_abi":83,"v8":"8.4"},"14.14.0":{"node_abi":83,"v8":"8.4"},"14.15.0":{"node_abi":83,"v8":"8.4"},"14.15.1":{"node_abi":83,"v8":"8.4"},"14.15.2":{"node_abi":83,"v8":"8.4"},"14.15.3":{"node_abi":83,"v8":"8.4"},"14.15.4":{"node_abi":83,"v8":"8.4"},"14.15.5":{"node_abi":83,"v8":"8.4"},"14.16.0":{"node_abi":83,"v8":"8.4"},"14.16.1":{"node_abi":83,"v8":"8.4"},"14.17.0":{"node_abi":83,"v8":"8.4"},"14.17.1":{"node_abi":83,"v8":"8.4"},"14.17.2":{"node_abi":83,"v8":"8.4"},"14.17.3":{"node_abi":83,"v8":"8.4"},"14.17.4":{"node_abi":83,"v8":"8.4"},"14.17.5":{"node_abi":83,"v8":"8.4"},"14.17.6":{"node_abi":83,"v8":"8.4"},"14.18.0":{"node_abi":83,"v8":"8.4"},"14.18.1":{"node_abi":83,"v8":"8.4"},"15.0.0":{"node_abi":88,"v8":"8.6"},"15.0.1":{"node_abi":88,"v8":"8.6"},"15.1.0":{"node_abi":88,"v8":"8.6"},"15.2.0":{"node_abi":88,"v8":"8.6"},"15.2.1":{"node_abi":88,"v8":"8.6"},"15.3.0":{"node_abi":88,"v8":"8.6"},"15.4.0":{"node_abi":88,"v8":"8.6"},"15.5.0":{"node_abi":88,"v8":"8.6"},"15.5.1":{"node_abi":88,"v8":"8.6"},"15.6.0":{"node_abi":88,"v8":"8.6"},"15.7.0":{"node_abi":88,"v8":"8.6"},"15.8.0":{"node_abi":88,"v8":"8.6"},"15.9.0":{"node_abi":88,"v8":"8.6"},"15.10.0":{"node_abi":88,"v8":"8.6"},"15.11.0":{"node_abi":88,"v8":"8.6"},"15.12.0":{"node_abi":88,"v8":"8.6"},"15.13.0":{"node_abi":88,"v8":"8.6"},"15.14.0":{"node_abi":88,"v8":"8.6"},"16.0.0":{"node_abi":93,"v8":"9.0"},"16.1.0":{"node_abi":93,"v8":"9.0"},"16.2.0":{"node_abi":93,"v8":"9.0"},"16.3.0":{"node_abi":93,"v8":"9.0"},"16.4.0":{"node_abi":93,"v8":"9.1"},"16.4.1":{"node_abi":93,"v8":"9.1"},"16.4.2":{"node_abi":93,"v8":"9.1"},"16.5.0":{"node_abi":93,"v8":"9.1"},"16.6.0":{"node_abi":93,"v8":"9.2"},"16.6.1":{"node_abi":93,"v8":"9.2"},"16.6.2":{"node_abi":93,"v8":"9.2"},"16.7.0":{"node_abi":93,"v8":"9.2"},"16.8.0":{"node_abi":93,"v8":"9.2"},"16.9.0":{"node_abi":93,"v8":"9.3"},"16.9.1":{"node_abi":93,"v8":"9.3"},"16.10.0":{"node_abi":93,"v8":"9.3"},"16.11.0":{"node_abi":93,"v8":"9.4"},"16.11.1":{"node_abi":93,"v8":"9.4"},"16.12.0":{"node_abi":93,"v8":"9.4"},"16.13.0":{"node_abi":93,"v8":"9.4"},"17.0.0":{"node_abi":102,"v8":"9.5"},"17.0.1":{"node_abi":102,"v8":"9.5"},"17.1.0":{"node_abi":102,"v8":"9.5"}}');
 
 /***/ }),
-/* 108 */
+/* 82 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var map = {
-	"./build": 109,
-	"./build.js": 109,
-	"./clean": 113,
-	"./clean.js": 113,
-	"./configure": 112,
-	"./configure.js": 112,
-	"./info": 114,
-	"./info.js": 114,
-	"./install": 115,
-	"./install.js": 115,
-	"./main": 160,
-	"./main.js": 160,
-	"./node-pre-gyp": 54,
-	"./node-pre-gyp.js": 54,
-	"./package": 161,
-	"./package.js": 161,
-	"./pre-binding": 100,
-	"./pre-binding.js": 100,
-	"./publish": 162,
-	"./publish.js": 162,
-	"./rebuild": 163,
-	"./rebuild.js": 163,
-	"./reinstall": 164,
-	"./reinstall.js": 164,
-	"./reveal": 165,
-	"./reveal.js": 165,
-	"./testbinary": 166,
-	"./testbinary.js": 166,
-	"./testpackage": 167,
-	"./testpackage.js": 167,
-	"./unpublish": 168,
-	"./unpublish.js": 168,
-	"./util/abi_crosswalk.json": 107,
-	"./util/compile": 110,
-	"./util/compile.js": 110,
-	"./util/handle_gyp_opts": 111,
-	"./util/handle_gyp_opts.js": 111,
-	"./util/napi": 98,
-	"./util/napi.js": 98,
-	"./util/nw-pre-gyp/index.html": 169,
-	"./util/nw-pre-gyp/package.json": 170,
-	"./util/s3_setup": 55,
-	"./util/s3_setup.js": 55,
-	"./util/versioning": 101,
-	"./util/versioning.js": 101
+	"./build": 83,
+	"./build.js": 83,
+	"./clean": 87,
+	"./clean.js": 87,
+	"./configure": 86,
+	"./configure.js": 86,
+	"./info": 88,
+	"./info.js": 88,
+	"./install": 89,
+	"./install.js": 89,
+	"./main": 134,
+	"./main.js": 134,
+	"./node-pre-gyp": 28,
+	"./node-pre-gyp.js": 28,
+	"./package": 135,
+	"./package.js": 135,
+	"./pre-binding": 74,
+	"./pre-binding.js": 74,
+	"./publish": 136,
+	"./publish.js": 136,
+	"./rebuild": 137,
+	"./rebuild.js": 137,
+	"./reinstall": 138,
+	"./reinstall.js": 138,
+	"./reveal": 139,
+	"./reveal.js": 139,
+	"./testbinary": 140,
+	"./testbinary.js": 140,
+	"./testpackage": 141,
+	"./testpackage.js": 141,
+	"./unpublish": 142,
+	"./unpublish.js": 142,
+	"./util/abi_crosswalk.json": 81,
+	"./util/compile": 84,
+	"./util/compile.js": 84,
+	"./util/handle_gyp_opts": 85,
+	"./util/handle_gyp_opts.js": 85,
+	"./util/napi": 72,
+	"./util/napi.js": 72,
+	"./util/nw-pre-gyp/index.html": 143,
+	"./util/nw-pre-gyp/package.json": 144,
+	"./util/s3_setup": 29,
+	"./util/s3_setup.js": 29,
+	"./util/versioning": 75,
+	"./util/versioning.js": 75
 };
 
 
@@ -6157,10 +5403,10 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = 108;
+webpackContext.id = 82;
 
 /***/ }),
-/* 109 */
+/* 83 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6170,10 +5416,10 @@ module.exports = exports = build;
 
 exports.usage = 'Attempts to compile the module by dispatching to node-gyp or nw-gyp';
 
-const napi = __webpack_require__(98);
-const compile = __webpack_require__(110);
-const handle_gyp_opts = __webpack_require__(111);
-const configure = __webpack_require__(112);
+const napi = __webpack_require__(72);
+const compile = __webpack_require__(84);
+const handle_gyp_opts = __webpack_require__(85);
+const configure = __webpack_require__(86);
 
 function do_build(gyp, argv, callback) {
   handle_gyp_opts(gyp, argv, (err, result) => {
@@ -6218,7 +5464,7 @@ function build(gyp, argv, callback) {
 
 
 /***/ }),
-/* 110 */
+/* 84 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6226,11 +5472,11 @@ function build(gyp, argv, callback) {
 
 module.exports = exports;
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
 const win = process.platform === 'win32';
 const existsSync = fs.existsSync || path.existsSync;
-const cp = __webpack_require__(104);
+const cp = __webpack_require__(78);
 
 // try to build up the complete path to node-gyp
 /* priority:
@@ -6318,7 +5564,7 @@ module.exports.run_gyp = function(args, opts, callback) {
 
 
 /***/ }),
-/* 111 */
+/* 85 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6326,8 +5572,8 @@ module.exports.run_gyp = function(args, opts, callback) {
 
 module.exports = exports = handle_gyp_opts;
 
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
 
 /*
 
@@ -6427,7 +5673,7 @@ function handle_gyp_opts(gyp, argv, callback) {
 
 
 /***/ }),
-/* 112 */
+/* 86 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6437,9 +5683,9 @@ module.exports = exports = configure;
 
 exports.usage = 'Attempts to configure node-gyp or nw-gyp build';
 
-const napi = __webpack_require__(98);
-const compile = __webpack_require__(110);
-const handle_gyp_opts = __webpack_require__(111);
+const napi = __webpack_require__(72);
+const compile = __webpack_require__(84);
+const handle_gyp_opts = __webpack_require__(85);
 
 function configure(gyp, argv, callback) {
   handle_gyp_opts(gyp, argv, (err, result) => {
@@ -6486,7 +5732,7 @@ function configure(gyp, argv, callback) {
 
 
 /***/ }),
-/* 113 */
+/* 87 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6496,11 +5742,11 @@ module.exports = exports = clean;
 
 exports.usage = 'Removes the entire folder containing the compiled .node module';
 
-const rm = __webpack_require__(99);
-const exists = (__webpack_require__(57).exists) || (__webpack_require__(58).exists);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const path = __webpack_require__(58);
+const rm = __webpack_require__(73);
+const exists = (__webpack_require__(31).exists) || (__webpack_require__(32).exists);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const path = __webpack_require__(32);
 
 function clean(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -6524,7 +5770,7 @@ function clean(gyp, argv, callback) {
 
 
 /***/ }),
-/* 114 */
+/* 88 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6534,9 +5780,9 @@ module.exports = exports = info;
 
 exports.usage = 'Lists all published binaries (requires aws-sdk)';
 
-const log = __webpack_require__(63);
-const versioning = __webpack_require__(101);
-const s3_setup = __webpack_require__(55);
+const log = __webpack_require__(37);
+const versioning = __webpack_require__(75);
+const s3_setup = __webpack_require__(29);
 
 function info(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -6569,7 +5815,7 @@ function info(gyp, argv, callback) {
 
 
 /***/ }),
-/* 115 */
+/* 89 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -6579,16 +5825,16 @@ module.exports = exports = install;
 
 exports.usage = 'Attempts to install pre-built binary for module';
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
-const log = __webpack_require__(63);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
+const log = __webpack_require__(37);
 const existsAsync = fs.exists || path.exists;
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const makeDir = __webpack_require__(116);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const makeDir = __webpack_require__(90);
 // for fetching binaries
-const fetch = __webpack_require__(117);
-const tar = __webpack_require__(118);
+const fetch = __webpack_require__(91);
+const tar = __webpack_require__(92);
 
 let npgVersion = 'unknown';
 try {
@@ -6631,7 +5877,7 @@ function place_binary(uri, targetDir, opts, callback) {
                     process.env.npm_config_proxy;
   let agent;
   if (proxyUrl) {
-    const ProxyAgent = __webpack_require__(159);
+    const ProxyAgent = __webpack_require__(133);
     agent = new ProxyAgent(proxyUrl);
     log.http('download', 'proxy agent configured using: "%s"', proxyUrl);
   }
@@ -6811,58 +6057,58 @@ function install(gyp, argv, callback) {
 
 
 /***/ }),
-/* 116 */
+/* 90 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("make-dir");
 
 /***/ }),
-/* 117 */
+/* 91 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node-fetch");
 
 /***/ }),
-/* 118 */
+/* 92 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 
 // high-level commands
-exports.c = exports.create = __webpack_require__(119)
-exports.r = exports.replace = __webpack_require__(148)
-exports.t = exports.list = __webpack_require__(145)
-exports.u = exports.update = __webpack_require__(149)
-exports.x = exports.extract = __webpack_require__(150)
+exports.c = exports.create = __webpack_require__(93)
+exports.r = exports.replace = __webpack_require__(122)
+exports.t = exports.list = __webpack_require__(119)
+exports.u = exports.update = __webpack_require__(123)
+exports.x = exports.extract = __webpack_require__(124)
 
 // classes
-exports.Pack = __webpack_require__(121)
-exports.Unpack = __webpack_require__(151)
-exports.Parse = __webpack_require__(146)
-exports.ReadEntry = __webpack_require__(130)
-exports.WriteEntry = __webpack_require__(132)
-exports.Header = __webpack_require__(134)
-exports.Pax = __webpack_require__(133)
-exports.types = __webpack_require__(135)
+exports.Pack = __webpack_require__(95)
+exports.Unpack = __webpack_require__(125)
+exports.Parse = __webpack_require__(120)
+exports.ReadEntry = __webpack_require__(104)
+exports.WriteEntry = __webpack_require__(106)
+exports.Header = __webpack_require__(108)
+exports.Pax = __webpack_require__(107)
+exports.types = __webpack_require__(109)
 
 
 /***/ }),
-/* 119 */
+/* 93 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 // tar -c
-const hlo = __webpack_require__(120)
+const hlo = __webpack_require__(94)
 
-const Pack = __webpack_require__(121)
-const fsm = __webpack_require__(143)
-const t = __webpack_require__(145)
-const path = __webpack_require__(58)
+const Pack = __webpack_require__(95)
+const fsm = __webpack_require__(117)
+const t = __webpack_require__(119)
+const path = __webpack_require__(32)
 
 module.exports = (opt_, files, cb) => {
   if (typeof files === 'function') {
@@ -6968,7 +6214,7 @@ const create = (opt, files) => {
 
 
 /***/ }),
-/* 120 */
+/* 94 */
 /***/ ((module) => {
 
 "use strict";
@@ -7004,7 +6250,7 @@ module.exports = opt => opt ? Object.keys(opt).map(k => [
 
 
 /***/ }),
-/* 121 */
+/* 95 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -7032,13 +6278,13 @@ class PackJob {
   }
 }
 
-const MiniPass = __webpack_require__(122)
-const zlib = __webpack_require__(124)
-const ReadEntry = __webpack_require__(130)
-const WriteEntry = __webpack_require__(132)
+const MiniPass = __webpack_require__(96)
+const zlib = __webpack_require__(98)
+const ReadEntry = __webpack_require__(104)
+const WriteEntry = __webpack_require__(106)
 const WriteEntrySync = WriteEntry.Sync
 const WriteEntryTar = WriteEntry.Tar
-const Yallist = __webpack_require__(142)
+const Yallist = __webpack_require__(116)
 const EOF = Buffer.alloc(1024)
 const ONSTAT = Symbol('onStat')
 const ENDED = Symbol('ended')
@@ -7061,10 +6307,10 @@ const WRITEENTRYCLASS = Symbol('writeEntryClass')
 const WRITE = Symbol('write')
 const ONDRAIN = Symbol('ondrain')
 
-const fs = __webpack_require__(57)
-const path = __webpack_require__(58)
-const warner = __webpack_require__(138)
-const normPath = __webpack_require__(131)
+const fs = __webpack_require__(31)
+const path = __webpack_require__(32)
+const warner = __webpack_require__(112)
+const normPath = __webpack_require__(105)
 
 const Pack = warner(class Pack extends MiniPass {
   constructor (opt) {
@@ -7431,7 +6677,7 @@ module.exports = Pack
 
 
 /***/ }),
-/* 122 */
+/* 96 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -7440,9 +6686,9 @@ const proc = typeof process === 'object' && process ? process : {
   stdout: null,
   stderr: null,
 }
-const EE = __webpack_require__(68)
-const Stream = __webpack_require__(61)
-const SD = (__webpack_require__(123).StringDecoder)
+const EE = __webpack_require__(42)
+const Stream = __webpack_require__(35)
+const SD = (__webpack_require__(97).StringDecoder)
 
 const EOF = Symbol('EOF')
 const MAYBE_EMIT_END = Symbol('maybeEmitEnd')
@@ -8095,25 +7341,25 @@ module.exports = class Minipass extends Stream {
 
 
 /***/ }),
-/* 123 */
+/* 97 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("string_decoder");
 
 /***/ }),
-/* 124 */
+/* 98 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 
-const assert = __webpack_require__(125)
-const Buffer = (__webpack_require__(126).Buffer)
-const realZlib = __webpack_require__(127)
+const assert = __webpack_require__(99)
+const Buffer = (__webpack_require__(100).Buffer)
+const realZlib = __webpack_require__(101)
 
-const constants = exports.constants = __webpack_require__(128)
-const Minipass = __webpack_require__(129)
+const constants = exports.constants = __webpack_require__(102)
+const Minipass = __webpack_require__(103)
 
 const OriginalBufferConcat = Buffer.concat
 
@@ -8457,35 +7703,35 @@ if (typeof realZlib.BrotliCompress === 'function') {
 
 
 /***/ }),
-/* 125 */
+/* 99 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("assert");
 
 /***/ }),
-/* 126 */
+/* 100 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("buffer");
 
 /***/ }),
-/* 127 */
+/* 101 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("zlib");
 
 /***/ }),
-/* 128 */
+/* 102 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Update with any zlib constants that are added or changed in the future.
 // Node v6 didn't export this, so we just hard code the version and rely
 // on all the other hard-coded values from zlib v4736.  When node v6
 // support drops, we can just export the realZlibConstants object.
-const realZlibConstants = (__webpack_require__(127).constants) ||
+const realZlibConstants = (__webpack_require__(101).constants) ||
   /* istanbul ignore next */ { ZLIB_VERNUM: 4736 }
 
 module.exports = Object.freeze(Object.assign(Object.create(null), {
@@ -8599,7 +7845,7 @@ module.exports = Object.freeze(Object.assign(Object.create(null), {
 
 
 /***/ }),
-/* 129 */
+/* 103 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -8608,9 +7854,9 @@ const proc = typeof process === 'object' && process ? process : {
   stdout: null,
   stderr: null,
 }
-const EE = __webpack_require__(68)
-const Stream = __webpack_require__(61)
-const SD = (__webpack_require__(123).StringDecoder)
+const EE = __webpack_require__(42)
+const Stream = __webpack_require__(35)
+const SD = (__webpack_require__(97).StringDecoder)
 
 const EOF = Symbol('EOF')
 const MAYBE_EMIT_END = Symbol('maybeEmitEnd')
@@ -9255,13 +8501,13 @@ module.exports = class Minipass extends Stream {
 
 
 /***/ }),
-/* 130 */
+/* 104 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-const MiniPass = __webpack_require__(122)
-const normPath = __webpack_require__(131)
+const MiniPass = __webpack_require__(96)
+const normPath = __webpack_require__(105)
 
 const SLURP = Symbol('slurp')
 module.exports = class ReadEntry extends MiniPass {
@@ -9369,7 +8615,7 @@ module.exports = class ReadEntry extends MiniPass {
 
 
 /***/ }),
-/* 131 */
+/* 105 */
 /***/ ((module) => {
 
 // on windows, either \ or / are valid directory separators.
@@ -9383,18 +8629,18 @@ module.exports = platform !== 'win32' ? p => p
 
 
 /***/ }),
-/* 132 */
+/* 106 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-const MiniPass = __webpack_require__(122)
-const Pax = __webpack_require__(133)
-const Header = __webpack_require__(134)
-const fs = __webpack_require__(57)
-const path = __webpack_require__(58)
-const normPath = __webpack_require__(131)
-const stripSlash = __webpack_require__(137)
+const MiniPass = __webpack_require__(96)
+const Pax = __webpack_require__(107)
+const Header = __webpack_require__(108)
+const fs = __webpack_require__(31)
+const path = __webpack_require__(32)
+const normPath = __webpack_require__(105)
+const stripSlash = __webpack_require__(111)
 
 const prefixPath = (path, prefix) => {
   if (!prefix) {
@@ -9424,11 +8670,11 @@ const AWAITDRAIN = Symbol('awaitDrain')
 const ONDRAIN = Symbol('ondrain')
 const PREFIX = Symbol('prefix')
 const HAD_ERROR = Symbol('hadError')
-const warner = __webpack_require__(138)
-const winchars = __webpack_require__(139)
-const stripAbsolutePath = __webpack_require__(140)
+const warner = __webpack_require__(112)
+const winchars = __webpack_require__(113)
+const stripAbsolutePath = __webpack_require__(114)
 
-const modeFix = __webpack_require__(141)
+const modeFix = __webpack_require__(115)
 
 const WriteEntry = warner(class WriteEntry extends MiniPass {
   constructor (p, opt) {
@@ -9936,13 +9182,13 @@ module.exports = WriteEntry
 
 
 /***/ }),
-/* 133 */
+/* 107 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-const Header = __webpack_require__(134)
-const path = __webpack_require__(58)
+const Header = __webpack_require__(108)
+const path = __webpack_require__(32)
 
 class Pax {
   constructor (obj, global) {
@@ -10093,7 +9339,7 @@ module.exports = Pax
 
 
 /***/ }),
-/* 134 */
+/* 108 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10103,9 +9349,9 @@ module.exports = Pax
 // the data could not be faithfully encoded in a simple header.
 // (Also, check header.needPax to see if it needs a pax header.)
 
-const types = __webpack_require__(135)
-const pathModule = (__webpack_require__(58).posix)
-const large = __webpack_require__(136)
+const types = __webpack_require__(109)
+const pathModule = (__webpack_require__(32).posix)
+const large = __webpack_require__(110)
 
 const SLURP = Symbol('slurp')
 const TYPE = Symbol('type')
@@ -10404,7 +9650,7 @@ module.exports = Header
 
 
 /***/ }),
-/* 135 */
+/* 109 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10455,7 +9701,7 @@ exports.code = new Map(Array.from(exports.name).map(kv => [kv[1], kv[0]]))
 
 
 /***/ }),
-/* 136 */
+/* 110 */
 /***/ ((module) => {
 
 "use strict";
@@ -10566,7 +9812,7 @@ module.exports = {
 
 
 /***/ }),
-/* 137 */
+/* 111 */
 /***/ ((module) => {
 
 // warning: extremely hot code path.
@@ -10585,7 +9831,7 @@ module.exports = str => {
 
 
 /***/ }),
-/* 138 */
+/* 112 */
 /***/ ((module) => {
 
 "use strict";
@@ -10616,7 +9862,7 @@ module.exports = Base => class extends Base {
 
 
 /***/ }),
-/* 139 */
+/* 113 */
 /***/ ((module) => {
 
 "use strict";
@@ -10646,11 +9892,11 @@ module.exports = {
 
 
 /***/ }),
-/* 140 */
+/* 114 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // unix absolute paths are also absolute on win32, so we use this for both
-const { isAbsolute, parse } = (__webpack_require__(58).win32)
+const { isAbsolute, parse } = (__webpack_require__(32).win32)
 
 // returns [root, stripped]
 // Note that windows will think that //x/y/z/a has a "root" of //x/y, and in
@@ -10676,7 +9922,7 @@ module.exports = path => {
 
 
 /***/ }),
-/* 141 */
+/* 115 */
 /***/ ((module) => {
 
 "use strict";
@@ -10710,21 +9956,21 @@ module.exports = (mode, isDir, portable) => {
 
 
 /***/ }),
-/* 142 */
+/* 116 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("yallist");
 
 /***/ }),
-/* 143 */
+/* 117 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
-const MiniPass = __webpack_require__(144)
-const EE = (__webpack_require__(68).EventEmitter)
-const fs = __webpack_require__(57)
+const MiniPass = __webpack_require__(118)
+const EE = (__webpack_require__(42).EventEmitter)
+const fs = __webpack_require__(31)
 
 let writev = fs.writev
 /* istanbul ignore next */
@@ -11146,7 +10392,7 @@ exports.WriteStreamSync = WriteStreamSync
 
 
 /***/ }),
-/* 144 */
+/* 118 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11155,9 +10401,9 @@ const proc = typeof process === 'object' && process ? process : {
   stdout: null,
   stderr: null,
 }
-const EE = __webpack_require__(68)
-const Stream = __webpack_require__(61)
-const SD = (__webpack_require__(123).StringDecoder)
+const EE = __webpack_require__(42)
+const Stream = __webpack_require__(35)
+const SD = (__webpack_require__(97).StringDecoder)
 
 const EOF = Symbol('EOF')
 const MAYBE_EMIT_END = Symbol('maybeEmitEnd')
@@ -11802,7 +11048,7 @@ module.exports = class Minipass extends Stream {
 
 
 /***/ }),
-/* 145 */
+/* 119 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11812,12 +11058,12 @@ module.exports = class Minipass extends Stream {
 // maybe some DRY opportunity here?
 
 // tar -t
-const hlo = __webpack_require__(120)
-const Parser = __webpack_require__(146)
-const fs = __webpack_require__(57)
-const fsm = __webpack_require__(143)
-const path = __webpack_require__(58)
-const stripSlash = __webpack_require__(137)
+const hlo = __webpack_require__(94)
+const Parser = __webpack_require__(120)
+const fs = __webpack_require__(31)
+const fsm = __webpack_require__(117)
+const path = __webpack_require__(32)
+const stripSlash = __webpack_require__(111)
 
 module.exports = (opt_, files, cb) => {
   if (typeof opt_ === 'function') {
@@ -11948,7 +11194,7 @@ const list = opt => new Parser(opt)
 
 
 /***/ }),
-/* 146 */
+/* 120 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11974,15 +11220,15 @@ const list = opt => new Parser(opt)
 //
 // ignored entries get .resume() called on them straight away
 
-const warner = __webpack_require__(138)
-const Header = __webpack_require__(134)
-const EE = __webpack_require__(68)
-const Yallist = __webpack_require__(142)
+const warner = __webpack_require__(112)
+const Header = __webpack_require__(108)
+const EE = __webpack_require__(42)
+const Yallist = __webpack_require__(116)
 const maxMetaEntrySize = 1024 * 1024
-const Entry = __webpack_require__(130)
-const Pax = __webpack_require__(133)
-const zlib = __webpack_require__(124)
-const { nextTick } = __webpack_require__(147)
+const Entry = __webpack_require__(104)
+const Pax = __webpack_require__(107)
+const zlib = __webpack_require__(98)
+const { nextTick } = __webpack_require__(121)
 
 const gzipHeader = Buffer.from([0x1f, 0x8b])
 const STATE = Symbol('state')
@@ -12464,26 +11710,26 @@ module.exports = warner(class Parser extends EE {
 
 
 /***/ }),
-/* 147 */
+/* 121 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("process");
 
 /***/ }),
-/* 148 */
+/* 122 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 // tar -r
-const hlo = __webpack_require__(120)
-const Pack = __webpack_require__(121)
-const fs = __webpack_require__(57)
-const fsm = __webpack_require__(143)
-const t = __webpack_require__(145)
-const path = __webpack_require__(58)
+const hlo = __webpack_require__(94)
+const Pack = __webpack_require__(95)
+const fs = __webpack_require__(31)
+const fsm = __webpack_require__(117)
+const t = __webpack_require__(119)
+const path = __webpack_require__(32)
 
 // starting at the head of the file, read a Header
 // If the checksum is invalid, that's our position to start writing
@@ -12491,7 +11737,7 @@ const path = __webpack_require__(58)
 // and try again.
 // Write the new Pack stream starting there.
 
-const Header = __webpack_require__(134)
+const Header = __webpack_require__(108)
 
 module.exports = (opt_, files, cb) => {
   const opt = hlo(opt_)
@@ -12724,7 +11970,7 @@ const addFilesAsync = (p, files) => {
 
 
 /***/ }),
-/* 149 */
+/* 123 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12732,8 +11978,8 @@ const addFilesAsync = (p, files) => {
 
 // tar -u
 
-const hlo = __webpack_require__(120)
-const r = __webpack_require__(148)
+const hlo = __webpack_require__(94)
+const r = __webpack_require__(122)
 // just call tar.r with the filter and mtimeCache
 
 module.exports = (opt_, files, cb) => {
@@ -12771,19 +12017,19 @@ const mtimeFilter = opt => {
 
 
 /***/ }),
-/* 150 */
+/* 124 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 // tar -x
-const hlo = __webpack_require__(120)
-const Unpack = __webpack_require__(151)
-const fs = __webpack_require__(57)
-const fsm = __webpack_require__(143)
-const path = __webpack_require__(58)
-const stripSlash = __webpack_require__(137)
+const hlo = __webpack_require__(94)
+const Unpack = __webpack_require__(125)
+const fs = __webpack_require__(31)
+const fsm = __webpack_require__(117)
+const path = __webpack_require__(32)
+const stripSlash = __webpack_require__(111)
 
 module.exports = (opt_, files, cb) => {
   if (typeof opt_ === 'function') {
@@ -12891,7 +12137,7 @@ const extract = opt => new Unpack(opt)
 
 
 /***/ }),
-/* 151 */
+/* 125 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12903,18 +12149,18 @@ const extract = opt => new Unpack(opt)
 // (like a Link depending on its target) or destructive operations (like
 // clobbering an fs object to create one of a different type.)
 
-const assert = __webpack_require__(125)
-const Parser = __webpack_require__(146)
-const fs = __webpack_require__(57)
-const fsm = __webpack_require__(143)
-const path = __webpack_require__(58)
-const mkdir = __webpack_require__(152)
-const wc = __webpack_require__(139)
-const pathReservations = __webpack_require__(155)
-const stripAbsolutePath = __webpack_require__(140)
-const normPath = __webpack_require__(131)
-const stripSlash = __webpack_require__(137)
-const normalize = __webpack_require__(156)
+const assert = __webpack_require__(99)
+const Parser = __webpack_require__(120)
+const fs = __webpack_require__(31)
+const fsm = __webpack_require__(117)
+const path = __webpack_require__(32)
+const mkdir = __webpack_require__(126)
+const wc = __webpack_require__(113)
+const pathReservations = __webpack_require__(129)
+const stripAbsolutePath = __webpack_require__(114)
+const normPath = __webpack_require__(105)
+const stripSlash = __webpack_require__(111)
+const normalize = __webpack_require__(130)
 
 const ONENTRY = Symbol('onEntry')
 const CHECKFS = Symbol('checkFs')
@@ -12941,8 +12187,8 @@ const DOCHOWN = Symbol('doChown')
 const UID = Symbol('uid')
 const GID = Symbol('gid')
 const CHECKED_CWD = Symbol('checkedCwd')
-const crypto = __webpack_require__(157)
-const getFlag = __webpack_require__(158)
+const crypto = __webpack_require__(131)
+const getFlag = __webpack_require__(132)
 const platform = process.env.TESTING_TAR_FAKE_PLATFORM || process.platform
 const isWindows = platform === 'win32'
 
@@ -13804,7 +13050,7 @@ module.exports = Unpack
 
 
 /***/ }),
-/* 152 */
+/* 126 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13814,11 +13060,11 @@ module.exports = Unpack
 // TODO: This should probably be a class, not functionally
 // passing around state in a gazillion args.
 
-const mkdirp = __webpack_require__(153)
-const fs = __webpack_require__(57)
-const path = __webpack_require__(58)
-const chownr = __webpack_require__(154)
-const normPath = __webpack_require__(131)
+const mkdirp = __webpack_require__(127)
+const fs = __webpack_require__(31)
+const path = __webpack_require__(32)
+const chownr = __webpack_require__(128)
+const normPath = __webpack_require__(105)
 
 class SymlinkError extends Error {
   constructor (symlink, path) {
@@ -14040,20 +13286,20 @@ module.exports.sync = (dir, opt) => {
 
 
 /***/ }),
-/* 153 */
+/* 127 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("mkdirp");
 
 /***/ }),
-/* 154 */
+/* 128 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-const fs = __webpack_require__(57)
-const path = __webpack_require__(58)
+const fs = __webpack_require__(31)
+const path = __webpack_require__(32)
 
 /* istanbul ignore next */
 const LCHOWN = fs.lchown ? 'lchown' : 'chown'
@@ -14221,7 +13467,7 @@ chownr.sync = chownrSync
 
 
 /***/ }),
-/* 155 */
+/* 129 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // A path exclusive reservation system
@@ -14232,10 +13478,10 @@ chownr.sync = chownrSync
 // Used by async unpack to avoid clobbering paths in use,
 // while still allowing maximal safe parallelization.
 
-const assert = __webpack_require__(125)
-const normalize = __webpack_require__(156)
-const stripSlashes = __webpack_require__(137)
-const { join } = __webpack_require__(58)
+const assert = __webpack_require__(99)
+const normalize = __webpack_require__(130)
+const stripSlashes = __webpack_require__(111)
+const { join } = __webpack_require__(32)
 
 const platform = process.env.TESTING_TAR_FAKE_PLATFORM || process.platform
 const isWindows = platform === 'win32'
@@ -14383,7 +13629,7 @@ module.exports = () => {
 
 
 /***/ }),
-/* 156 */
+/* 130 */
 /***/ ((module) => {
 
 // warning: extremely hot code path.
@@ -14401,14 +13647,14 @@ module.exports = s => {
 
 
 /***/ }),
-/* 157 */
+/* 131 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("crypto");
 
 /***/ }),
-/* 158 */
+/* 132 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Get the appropriate flag to use for creating files
@@ -14421,7 +13667,7 @@ module.exports = require("crypto");
 // Only supported in Node v12.9.0 and above.
 const platform = process.env.__FAKE_PLATFORM__ || process.platform
 const isWindows = platform === 'win32'
-const fs = global.__FAKE_TESTING_FS__ || __webpack_require__(57)
+const fs = global.__FAKE_TESTING_FS__ || __webpack_require__(31)
 
 /* istanbul ignore next */
 const { O_CREAT, O_TRUNC, O_WRONLY, UV_FS_O_FILEMAP = 0 } = fs.constants
@@ -14434,14 +13680,14 @@ module.exports = !fMapEnabled ? () => 'w'
 
 
 /***/ }),
-/* 159 */
+/* 133 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("https-proxy-agent");
 
 /***/ }),
-/* 160 */
+/* 134 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -14453,8 +13699,8 @@ module.exports = require("https-proxy-agent");
 
 process.title = 'node-pre-gyp';
 
-const node_pre_gyp = __webpack_require__(54);
-const log = __webpack_require__(63);
+const node_pre_gyp = __webpack_require__(28);
+const log = __webpack_require__(37);
 
 /**
  * Process and execute the selected commands.
@@ -14492,7 +13738,7 @@ log.info('using', 'node@%s | %s | %s', process.versions.node, process.platform, 
 
 const dir = prog.opts.directory;
 if (dir) {
-  const fs = __webpack_require__(57);
+  const fs = __webpack_require__(31);
   try {
     const stat = fs.statSync(dir);
     if (stat.isDirectory()) {
@@ -14560,7 +13806,7 @@ process.on('uncaughtException', (err) => {
 
 function errorMessage() {
   // copied from npm's lib/util/error-handler.js
-  const os = __webpack_require__(59);
+  const os = __webpack_require__(33);
   log.error('System', os.type() + ' ' + os.release());
   log.error('command', process.argv.map(JSON.stringify).join(' '));
   log.error('cwd', process.cwd());
@@ -14573,7 +13819,7 @@ run();
 
 
 /***/ }),
-/* 161 */
+/* 135 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14583,14 +13829,14 @@ module.exports = exports = _package;
 
 exports.usage = 'Packs binary (and enclosing directory) into locally staged tarball';
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
-const log = __webpack_require__(63);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
+const log = __webpack_require__(37);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
 const existsAsync = fs.exists || path.exists;
-const makeDir = __webpack_require__(116);
-const tar = __webpack_require__(118);
+const makeDir = __webpack_require__(90);
+const tar = __webpack_require__(92);
 
 function readdirSync(dir) {
   let list = [];
@@ -14653,7 +13899,7 @@ function _package(gyp, argv, callback) {
 
 
 /***/ }),
-/* 162 */
+/* 136 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14663,14 +13909,14 @@ module.exports = exports = publish;
 
 exports.usage = 'Publishes pre-built binary (requires aws-sdk)';
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
-const log = __webpack_require__(63);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const s3_setup = __webpack_require__(55);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
+const log = __webpack_require__(37);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const s3_setup = __webpack_require__(29);
 const existsAsync = fs.exists || path.exists;
-const url = __webpack_require__(56);
+const url = __webpack_require__(30);
 
 function publish(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -14741,7 +13987,7 @@ function publish(gyp, argv, callback) {
 
 
 /***/ }),
-/* 163 */
+/* 137 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14751,7 +13997,7 @@ module.exports = exports = rebuild;
 
 exports.usage = 'Runs "clean" and "build" at once';
 
-const napi = __webpack_require__(98);
+const napi = __webpack_require__(72);
 
 function rebuild(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -14768,7 +14014,7 @@ function rebuild(gyp, argv, callback) {
 
 
 /***/ }),
-/* 164 */
+/* 138 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14778,7 +14024,7 @@ module.exports = exports = rebuild;
 
 exports.usage = 'Runs "clean" and "install" at once';
 
-const napi = __webpack_require__(98);
+const napi = __webpack_require__(72);
 
 function rebuild(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -14794,7 +14040,7 @@ function rebuild(gyp, argv, callback) {
 
 
 /***/ }),
-/* 165 */
+/* 139 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14804,8 +14050,8 @@ module.exports = exports = reveal;
 
 exports.usage = 'Reveals data on the versioned binary';
 
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
 
 function unix_paths(key, val) {
   return val && val.replace ? val.replace(/\\/g, '/') : val;
@@ -14833,7 +14079,7 @@ function reveal(gyp, argv, callback) {
 
 
 /***/ }),
-/* 166 */
+/* 140 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14843,11 +14089,11 @@ module.exports = exports = testbinary;
 
 exports.usage = 'Tests that the binary.node can be required';
 
-const path = __webpack_require__(58);
-const log = __webpack_require__(63);
-const cp = __webpack_require__(104);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
+const path = __webpack_require__(32);
+const log = __webpack_require__(37);
+const cp = __webpack_require__(78);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
 
 function testbinary(gyp, argv, callback) {
   const args = [];
@@ -14919,7 +14165,7 @@ function testbinary(gyp, argv, callback) {
 
 
 /***/ }),
-/* 167 */
+/* 141 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14929,15 +14175,15 @@ module.exports = exports = testpackage;
 
 exports.usage = 'Tests that the staged package is valid';
 
-const fs = __webpack_require__(57);
-const path = __webpack_require__(58);
-const log = __webpack_require__(63);
+const fs = __webpack_require__(31);
+const path = __webpack_require__(32);
+const log = __webpack_require__(37);
 const existsAsync = fs.exists || path.exists;
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const testbinary = __webpack_require__(166);
-const tar = __webpack_require__(118);
-const makeDir = __webpack_require__(116);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const testbinary = __webpack_require__(140);
+const tar = __webpack_require__(92);
+const makeDir = __webpack_require__(90);
 
 function testpackage(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -14979,7 +14225,7 @@ function testpackage(gyp, argv, callback) {
 
 
 /***/ }),
-/* 168 */
+/* 142 */
 /***/ ((module, exports, __webpack_require__) => {
 
 "use strict";
@@ -14989,11 +14235,11 @@ module.exports = exports = unpublish;
 
 exports.usage = 'Unpublishes pre-built binary (requires aws-sdk)';
 
-const log = __webpack_require__(63);
-const versioning = __webpack_require__(101);
-const napi = __webpack_require__(98);
-const s3_setup = __webpack_require__(55);
-const url = __webpack_require__(56);
+const log = __webpack_require__(37);
+const versioning = __webpack_require__(75);
+const napi = __webpack_require__(72);
+const s3_setup = __webpack_require__(29);
+const url = __webpack_require__(30);
 
 function unpublish(gyp, argv, callback) {
   const package_json = gyp.package_json;
@@ -15027,27 +14273,27 @@ function unpublish(gyp, argv, callback) {
 
 
 /***/ }),
-/* 169 */
+/* 143 */
 /***/ (() => {
 
 throw new Error("Module parse failed: Unexpected token (1:0)\nYou may need an appropriate loader to handle this file type, currently no loaders are configured to process this file. See https://webpack.js.org/concepts#loaders\n> <!doctype html>\n| <html>\n| <head>");
 
 /***/ }),
-/* 170 */
+/* 144 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"main":"index.html","name":"nw-pre-gyp-module-test","description":"Node-webkit-based module test.","version":"0.0.1","window":{"show":false}}');
 
 /***/ }),
-/* 171 */
+/* 145 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"name":"@mapbox/node-pre-gyp","description":"Node.js native addon binary install tool","version":"1.0.10","keywords":["native","addon","module","c","c++","bindings","binary"],"license":"BSD-3-Clause","author":"Dane Springmeyer <dane@mapbox.com>","repository":{"type":"git","url":"git://github.com/mapbox/node-pre-gyp.git"},"bin":"./bin/node-pre-gyp","main":"./lib/node-pre-gyp.js","dependencies":{"detect-libc":"^2.0.0","https-proxy-agent":"^5.0.0","make-dir":"^3.1.0","node-fetch":"^2.6.7","nopt":"^5.0.0","npmlog":"^5.0.1","rimraf":"^3.0.2","semver":"^7.3.5","tar":"^6.1.11"},"devDependencies":{"@mapbox/cloudfriend":"^5.1.0","@mapbox/eslint-config-mapbox":"^3.0.0","aws-sdk":"^2.1087.0","codecov":"^3.8.3","eslint":"^7.32.0","eslint-plugin-node":"^11.1.0","mock-aws-s3":"^4.0.2","nock":"^12.0.3","node-addon-api":"^4.3.0","nyc":"^15.1.0","tape":"^5.5.2","tar-fs":"^2.1.1"},"nyc":{"all":true,"skip-full":false,"exclude":["test/**"]},"scripts":{"coverage":"nyc --all --include index.js --include lib/ npm test","upload-coverage":"nyc report --reporter json && codecov --clear --flags=unit --file=./coverage/coverage-final.json","lint":"eslint bin/node-pre-gyp lib/*js lib/util/*js test/*js scripts/*js","fix":"npm run lint -- --fix","update-crosswalk":"node scripts/abi_crosswalk.js","test":"tape test/*test.js"}}');
 
 /***/ }),
-/* 172 */
+/* 146 */
 /***/ ((module) => {
 
 function webpackEmptyContext(req) {
@@ -15057,11 +14303,11 @@ function webpackEmptyContext(req) {
 }
 webpackEmptyContext.keys = () => ([]);
 webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 172;
+webpackEmptyContext.id = 146;
 module.exports = webpackEmptyContext;
 
 /***/ }),
-/* 173 */
+/* 147 */
 /***/ ((module) => {
 
 "use strict";
@@ -15110,7 +14356,14 @@ module.exports.use = function(promise) {
 
 
 /***/ }),
-/* 174 */
+/* 148 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("express");
+
+/***/ }),
+/* 149 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -15122,9 +14375,687 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.InGameUsersService = exports.socketIdMap = void 0;
+exports.KakaoAuthGuard = void 0;
 const common_1 = __webpack_require__(7);
-const ws_exception_filter_1 = __webpack_require__(29);
+const passport_1 = __webpack_require__(150);
+let KakaoAuthGuard = class KakaoAuthGuard extends (0, passport_1.AuthGuard)('kakao') {
+    async canActivate(context) {
+        const activate = (await super.canActivate(context));
+        const request = context.switchToHttp().getRequest();
+        await super.logIn(request);
+        return activate;
+    }
+};
+KakaoAuthGuard = __decorate([
+    (0, common_1.Injectable)()
+], KakaoAuthGuard);
+exports.KakaoAuthGuard = KakaoAuthGuard;
+
+
+/***/ }),
+/* 150 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/passport");
+
+/***/ }),
+/* 151 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SessionSerializer = void 0;
+const common_1 = __webpack_require__(7);
+const passport_1 = __webpack_require__(150);
+const users_service_1 = __webpack_require__(14);
+let SessionSerializer = class SessionSerializer extends passport_1.PassportSerializer {
+    constructor(usersService) {
+        super();
+        this.usersService = usersService;
+    }
+    serializeUser(user, done) {
+        done(null, user);
+    }
+    async deserializeUser(payload, done) {
+        const user = await this.usersService.findUserById(payload.id);
+        return user ? done(null, user) : done(null, null);
+    }
+};
+SessionSerializer = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, common_1.Inject)('USER_SERVICE')),
+    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object])
+], SessionSerializer);
+exports.SessionSerializer = SessionSerializer;
+
+
+/***/ }),
+/* 152 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KakaoStrategy = void 0;
+const common_1 = __webpack_require__(7);
+const passport_1 = __webpack_require__(150);
+const passport_kakao_oauth2_1 = __webpack_require__(153);
+const users_service_1 = __webpack_require__(14);
+let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
+    constructor(usersService) {
+        super({
+            clientID: process.env.CLIENT_ID,
+            clientSecret: process.env.SECRET_KEY,
+            callbackURL: process.env.CALLBACK,
+        });
+        this.usersService = usersService;
+    }
+    async validate(accessToken, refreshToken, profile, done) {
+        const userId = profile._json.id;
+        const email = profile._json.kakao_account.email;
+        const nickname = profile._json.properties.nickname;
+        const profileImg = profile._json.properties.profile_image;
+        const user = await this.usersService.validateUser({
+            userId,
+            email,
+            nickname,
+            profileImg,
+        });
+        return user || null;
+    }
+};
+KakaoStrategy = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, common_1.Inject)('USER_SERVICE')),
+    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object])
+], KakaoStrategy);
+exports.KakaoStrategy = KakaoStrategy;
+
+
+/***/ }),
+/* 153 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("passport-kakao-oauth2");
+
+/***/ }),
+/* 154 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TokenMap = void 0;
+const typeorm_1 = __webpack_require__(15);
+let TokenMap = class TokenMap {
+};
+__decorate([
+    (0, typeorm_1.PrimaryColumn)(),
+    __metadata("design:type", String)
+], TokenMap.prototype, "token", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], TokenMap.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], TokenMap.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], TokenMap.prototype, "updatedAt", void 0);
+TokenMap = __decorate([
+    (0, typeorm_1.Entity)()
+], TokenMap);
+exports.TokenMap = TokenMap;
+
+
+/***/ }),
+/* 155 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GamesModule = void 0;
+const common_1 = __webpack_require__(7);
+const typeorm_1 = __webpack_require__(9);
+const games_gateway_1 = __webpack_require__(156);
+const room_service_1 = __webpack_require__(159);
+const chat_service_1 = __webpack_require__(162);
+const users_module_1 = __webpack_require__(8);
+const players_service_1 = __webpack_require__(163);
+const room_entity_1 = __webpack_require__(164);
+const player_entity_1 = __webpack_require__(165);
+const socketIdMap_entity_1 = __webpack_require__(166);
+let GamesModule = class GamesModule {
+};
+GamesModule = __decorate([
+    (0, common_1.Module)({
+        imports: [users_module_1.UsersModule, typeorm_1.TypeOrmModule.forFeature([room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap])],
+        providers: [games_gateway_1.GamesGateway, room_service_1.RoomService, chat_service_1.ChatService, players_service_1.PlayersService],
+        exports: [games_gateway_1.GamesGateway, typeorm_1.TypeOrmModule],
+    })
+], GamesModule);
+exports.GamesModule = GamesModule;
+
+
+/***/ }),
+/* 156 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GamesGateway = void 0;
+const websockets_1 = __webpack_require__(157);
+const socket_io_1 = __webpack_require__(158);
+const room_service_1 = __webpack_require__(159);
+const chat_service_1 = __webpack_require__(162);
+const ws_exception_filter_1 = __webpack_require__(160);
+const players_service_1 = __webpack_require__(163);
+let GamesGateway = class GamesGateway {
+    constructor(roomService, chatService, playersService) {
+        this.roomService = roomService;
+        this.chatService = chatService;
+        this.playersService = playersService;
+    }
+    afterInit(server) {
+        console.log('webSocketServer init');
+    }
+    async handleConnection(socket) {
+        console.log('connected socket', socket.id);
+        const data = await this.roomService.getAllRoomList();
+        socket.emit('room-list', { data });
+    }
+    async handleDisconnect(socket) {
+        await this.playersService.handleDisconnect(socket);
+        console.log('disconnected socket', socket.id);
+    }
+    async socketIdMapToLoginUser(socket, { data }) {
+        if (!data.authorization) {
+            socket.emit('log-in', { errorMessage: '잘못된 접근입니다.', status: 401 });
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
+        }
+        const token = data.authorization;
+        await this.playersService.socketIdMapToLoginUser(token, socket);
+        console.log('로그인 성공!');
+        socket.emit('log-in', { message: '로그인 성공!' });
+    }
+    async socketIdMapToLogOutUser(socket) {
+        const requestUser = players_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+        if (requestUser.currentRoom) {
+            const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
+            socket.leave(`${updateRoomInfo.roomId}`);
+            const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
+            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            });
+            const data = await this.roomService.getAllRoomList();
+            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
+        }
+        await this.playersService.socketIdMapToLogOutUser(socket);
+        console.log('로그아웃 성공!');
+        socket.emit('log-out', { message: '로그아웃 성공!' });
+    }
+    async handleCreateRoomRequest(socket, { data }) {
+        const requestUser = players_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('create-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+        }
+        const newRoomId = await this.roomService.createRoom(data);
+        socket.emit('create-room', { data: { roomId: newRoomId } });
+        const updateRoomList = await this.roomService.getAllRoomList();
+        this.server.emit('room-list', { data: updateRoomList });
+    }
+    async handleEnterRoomRequest(socket, { data }) {
+        const requestUser = players_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('enter-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'enter-room');
+        }
+        if (requestUser.currentRoom) {
+            socket.emit('enter-room', {
+                errorMessage: '잘못된 접근입니다.',
+                status: 400,
+            });
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
+        }
+        const requestRoom = data;
+        const isRoomAvailable = await this.roomService.isRoomAvailable(requestUser, requestRoom);
+        if (!isRoomAvailable.availability) {
+            socket.emit('enter-room', {
+                errorMessage: isRoomAvailable.message,
+                status: isRoomAvailable.status,
+            });
+            throw new ws_exception_filter_1.SocketException(isRoomAvailable.message, isRoomAvailable.status, 'enter-room');
+        }
+        const updateRoomInfo = await this.roomService.updateRoomParticipants(socket.id, requestUser, isRoomAvailable.room);
+        socket.join(`${updateRoomInfo.roomId}`);
+        const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+            data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'enter' },
+        });
+        const roomInfoList = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
+    }
+    async handleLeaveRoomEvent(socket) {
+        const requestUser = players_service_1.socketIdMap[socket.id];
+        if (!requestUser) {
+            socket.emit('leave-room', {
+                errorMessage: '로그인이 필요한 서비스입니다.',
+                status: 401,
+            });
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+        }
+        const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
+        await this.playersService.handleLeaveRoom(socket.id);
+        socket.leave(`${updateRoomInfo.roomId}`);
+        if (updateRoomInfo) {
+            const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
+            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            });
+        }
+        const roomInfoList = await this.roomService.getAllRoomList();
+        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
+    }
+    async sendChatRequest(socket, { data }) {
+        const message = data.message;
+        const { nickname, currentRoom } = players_service_1.socketIdMap[socket.id];
+        this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
+    }
+};
+__decorate([
+    (0, websockets_1.WebSocketServer)(),
+    __metadata("design:type", typeof (_d = typeof socket_io_1.Server !== "undefined" && socket_io_1.Server) === "function" ? _d : Object)
+], GamesGateway.prototype, "server", void 0);
+__decorate([
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _e : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleConnection", null);
+__decorate([
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _f : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleDisconnect", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('log-in'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_g = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _g : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "socketIdMapToLoginUser", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('log-out'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_h = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _h : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "socketIdMapToLogOutUser", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('create-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_j = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _j : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleCreateRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('enter-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_k = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _k : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleEnterRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('leave-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_l = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _l : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleLeaveRoomEvent", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('send-chat'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_m = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _m : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "sendChatRequest", null);
+GamesGateway = __decorate([
+    (0, websockets_1.WebSocketGateway)({
+        cors: {
+            origin: '*',
+        },
+    }),
+    __metadata("design:paramtypes", [typeof (_a = typeof room_service_1.RoomService !== "undefined" && room_service_1.RoomService) === "function" ? _a : Object, typeof (_b = typeof chat_service_1.ChatService !== "undefined" && chat_service_1.ChatService) === "function" ? _b : Object, typeof (_c = typeof players_service_1.PlayersService !== "undefined" && players_service_1.PlayersService) === "function" ? _c : Object])
+], GamesGateway);
+exports.GamesGateway = GamesGateway;
+
+
+/***/ }),
+/* 157 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/websockets");
+
+/***/ }),
+/* 158 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("socket.io");
+
+/***/ }),
+/* 159 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.RoomService = void 0;
+const common_1 = __webpack_require__(7);
+const ws_exception_filter_1 = __webpack_require__(160);
+const roomList = [];
+let RoomService = class RoomService {
+    async getAllRoomList() {
+        return await roomList.map((room) => {
+            const { roomId, roomTitle, maxCount, round, participants, isSecreteRoom, isGameOn } = room;
+            return {
+                roomId,
+                roomTitle,
+                maxCount,
+                round,
+                participants: participants.length,
+                isSecreteRoom,
+                isGameOn,
+            };
+        });
+    }
+    createRoom(room) {
+        const newRoom = Object.assign(Object.assign({ roomId: roomList.length + 1 }, room), { isGameOn: false, participants: [], isGameReadyToStart: false });
+        if (!room.roomTitle) {
+            newRoom.roomTitle = '같이 가치마인드 한 판 해요!';
+        }
+        roomList.push(newRoom);
+        return newRoom.roomId;
+    }
+    async isRoomAvailable(requestUser, requestRoom) {
+        const room = await roomList.find((data) => {
+            return data.roomId === requestRoom.roomId;
+        });
+        let status;
+        if (!room) {
+            status = 404;
+            return { availability: false, message: '요청하신 방을 찾을 수 없습니다.', status };
+        }
+        if (room.maxCount == room.participants.length) {
+            status = 400;
+            return {
+                availability: false,
+                message: '정원초과로 방 입장에 실패했습니다.',
+                status,
+            };
+        }
+        if (room.IsSecreteRoom) {
+            if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
+                status = 404;
+                return {
+                    availability: false,
+                    message: '비밀번호가 일치하지 않습니다.',
+                    status,
+                };
+            }
+        }
+        const userInRoom = room.participants.find((user) => {
+            return user.userId === requestUser.userId;
+        });
+        if (userInRoom) {
+            status = 400;
+            return {
+                availability: false,
+                message: '같은 방에 중복 입장할 수 없습니다.',
+                status,
+            };
+        }
+        return { availability: true, message: '방 입장에 성공하였습니다.', room };
+    }
+    async updateRoomParticipants(socketId, requestUser, roomInfo) {
+        let isHost;
+        if (!roomInfo.participants.length)
+            isHost = true;
+        const { currentRoom } = requestUser, userInfo = __rest(requestUser, ["currentRoom"]);
+        roomInfo.participants.push(Object.assign(Object.assign({ socketId }, userInfo), { isReady: false, isHost }));
+        roomList.map((room, index) => {
+            if (room.roomId === roomInfo.roomId) {
+                return (roomList[index] = roomInfo);
+            }
+        });
+        return roomInfo;
+    }
+    async leaveRoom(requestUser) {
+        const targetRoom = await roomList.find((room) => {
+            return room.roomId === requestUser.currentRoom;
+        });
+        if (!targetRoom)
+            throw new ws_exception_filter_1.SocketException('bad request', 400, 'leave-room');
+        if (targetRoom.participants.length > 1) {
+            targetRoom.participants.map((user, index) => {
+                if (user.userId === requestUser.userId) {
+                    if (user.isHost) {
+                        targetRoom.participants[1].isHost = true;
+                    }
+                    return targetRoom.participants.splice(index, 1);
+                }
+            });
+            roomList.map((room, index) => {
+                if (room.roomId === targetRoom.roomId) {
+                    return (roomList[index] = targetRoom);
+                }
+            });
+            return targetRoom;
+        }
+        else {
+            const roomIndex = roomList.findIndex((room) => room.roomId === targetRoom.roomId);
+            roomList.splice(roomIndex, 1);
+            return null;
+        }
+    }
+};
+RoomService = __decorate([
+    (0, common_1.Injectable)()
+], RoomService);
+exports.RoomService = RoomService;
+
+
+/***/ }),
+/* 160 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SocketExceptionFilter = exports.SocketException = void 0;
+const common_1 = __webpack_require__(7);
+const websockets_1 = __webpack_require__(157);
+const errors_1 = __webpack_require__(161);
+class SocketException extends errors_1.WsException {
+    constructor(message, status, eventName) {
+        super({ message, status, eventName });
+    }
+}
+exports.SocketException = SocketException;
+let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
+    catch(exception, host) {
+        super.catch(exception, host);
+    }
+};
+SocketExceptionFilter = __decorate([
+    (0, common_1.Catch)(SocketException)
+], SocketExceptionFilter);
+exports.SocketExceptionFilter = SocketExceptionFilter;
+
+
+/***/ }),
+/* 161 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/websockets/errors");
+
+/***/ }),
+/* 162 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatService = void 0;
+const common_1 = __webpack_require__(7);
+let ChatService = class ChatService {
+};
+ChatService = __decorate([
+    (0, common_1.Injectable)()
+], ChatService);
+exports.ChatService = ChatService;
+
+
+/***/ }),
+/* 163 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PlayersService = exports.socketIdMap = void 0;
+const common_1 = __webpack_require__(7);
+const ws_exception_filter_1 = __webpack_require__(160);
 exports.socketIdMap = {};
 const authentication = { token1: 1, token2: 2, token3: 3 };
 const fakeDBUserTable = [
@@ -15147,7 +15078,7 @@ const fakeDBUserTable = [
         profileImg: 'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
     },
 ];
-let InGameUsersService = class InGameUsersService {
+let PlayersService = class PlayersService {
     handleDisconnect(socket) {
         exports.socketIdMap[socket.id] = null;
     }
@@ -15188,11 +15119,341 @@ let InGameUsersService = class InGameUsersService {
         return console.log(exports.socketIdMap[socketId]);
     }
 };
-InGameUsersService = __decorate([
+PlayersService = __decorate([
     (0, common_1.Injectable)()
-], InGameUsersService);
-exports.InGameUsersService = InGameUsersService;
+], PlayersService);
+exports.PlayersService = PlayersService;
 
+
+/***/ }),
+/* 164 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Room = void 0;
+const typeorm_1 = __webpack_require__(15);
+const player_entity_1 = __webpack_require__(165);
+const socketIdMap_entity_1 = __webpack_require__(166);
+let Room = class Room {
+};
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], Room.prototype, "roomId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 100 }),
+    __metadata("design:type", String)
+], Room.prototype, "roomTitle", void 0);
+__decorate([
+    (0, typeorm_1.Column)('tinyint'),
+    __metadata("design:type", Number)
+], Room.prototype, "maxCount", void 0);
+__decorate([
+    (0, typeorm_1.Column)('tinyint'),
+    __metadata("design:type", Number)
+], Room.prototype, "round", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], Room.prototype, "readyTime", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], Room.prototype, "speechTime", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], Room.prototype, "discussionTime", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], Room.prototype, "isSecreteRoom", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'tinyint', width: 4 }),
+    __metadata("design:type", Number)
+], Room.prototype, "roomPassword", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], Room.prototype, "isGameOn", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], Room.prototype, "isGameReadyToStart", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], Room.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], Room.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => socketIdMap_entity_1.SocketIdMap, (socket) => socket.currentRoom),
+    __metadata("design:type", Array)
+], Room.prototype, "socketId", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomId),
+    __metadata("design:type", Array)
+], Room.prototype, "playerId", void 0);
+Room = __decorate([
+    (0, typeorm_1.Entity)()
+], Room);
+exports.Room = Room;
+
+
+/***/ }),
+/* 165 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Player = void 0;
+const typeorm_1 = __webpack_require__(15);
+const room_entity_1 = __webpack_require__(164);
+const socketIdMap_entity_1 = __webpack_require__(166);
+let Player = class Player {
+};
+__decorate([
+    (0, typeorm_1.PrimaryColumn)(),
+    __metadata("design:type", Number)
+], Player.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap),
+    (0, typeorm_1.JoinColumn)({ name: 'socketId' }),
+    __metadata("design:type", typeof (_a = typeof socketIdMap_entity_1.SocketIdMap !== "undefined" && socketIdMap_entity_1.SocketIdMap) === "function" ? _a : Object)
+], Player.prototype, "socketId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'roomId' }),
+    __metadata("design:type", typeof (_b = typeof room_entity_1.Room !== "undefined" && room_entity_1.Room) === "function" ? _b : Object)
+], Player.prototype, "roomId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], Player.prototype, "isGameOn", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], Player.prototype, "isGameReadyToStart", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
+], Player.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
+], Player.prototype, "updatedAt", void 0);
+Player = __decorate([
+    (0, typeorm_1.Entity)()
+], Player);
+exports.Player = Player;
+
+
+/***/ }),
+/* 166 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SocketIdMap = void 0;
+const user_entity_1 = __webpack_require__(16);
+const typeorm_1 = __webpack_require__(15);
+const room_entity_1 = __webpack_require__(164);
+let SocketIdMap = class SocketIdMap {
+};
+__decorate([
+    (0, typeorm_1.PrimaryColumn)(),
+    __metadata("design:type", String)
+], SocketIdMap.prototype, "socketId", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User),
+    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
+], SocketIdMap.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], SocketIdMap.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
+], SocketIdMap.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'currentRoom' }),
+    __metadata("design:type", typeof (_d = typeof room_entity_1.Room !== "undefined" && room_entity_1.Room) === "function" ? _d : Object)
+], SocketIdMap.prototype, "currentRoom", void 0);
+SocketIdMap = __decorate([
+    (0, typeorm_1.Entity)()
+], SocketIdMap);
+exports.SocketIdMap = SocketIdMap;
+
+
+/***/ }),
+/* 167 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/config");
+
+/***/ }),
+/* 168 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LoggerMiddleware = void 0;
+const common_1 = __webpack_require__(7);
+let LoggerMiddleware = class LoggerMiddleware {
+    constructor() {
+        this.logger = new common_1.Logger('HTTP');
+    }
+    use(request, response, next) {
+        const { ip, method, originalUrl } = request;
+        const userAgent = request.get('user-agent') || '';
+        response.on('finish', () => {
+            const { statusCode } = response;
+            const contentLength = response.get('content-length');
+            this.logger.log(`${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
+        });
+        next();
+    }
+};
+LoggerMiddleware = __decorate([
+    (0, common_1.Injectable)()
+], LoggerMiddleware);
+exports.LoggerMiddleware = LoggerMiddleware;
+
+
+/***/ }),
+/* 169 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AppController = void 0;
+const common_1 = __webpack_require__(7);
+let AppController = class AppController {
+    greetings() {
+        return `welcome to gachimind project nest server!`;
+    }
+};
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "greetings", null);
+AppController = __decorate([
+    (0, common_1.Controller)()
+], AppController);
+exports.AppController = AppController;
+
+
+/***/ }),
+/* 170 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HttpExceptionFilter = void 0;
+const common_1 = __webpack_require__(7);
+let HttpExceptionFilter = class HttpExceptionFilter {
+    catch(exception, host) {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse();
+        const status = exception.getStatus();
+        const errorMessage = exception.message;
+        console.error(exception);
+        response.status(status).json({
+            errorMessage,
+        });
+    }
+};
+HttpExceptionFilter = __decorate([
+    (0, common_1.Catch)(common_1.HttpException)
+], HttpExceptionFilter);
+exports.HttpExceptionFilter = HttpExceptionFilter;
+
+
+/***/ }),
+/* 171 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("express-session");
+
+/***/ }),
+/* 172 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("passport");
 
 /***/ })
 /******/ 	]);
@@ -15256,7 +15517,7 @@ exports.InGameUsersService = InGameUsersService;
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("f998473113582adf6d1b")
+/******/ 		__webpack_require__.h = () => ("5673af9510b39fba781c")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
