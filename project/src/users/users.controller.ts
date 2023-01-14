@@ -3,7 +3,7 @@ import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToN
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
-import { Request } from 'express';
+import { query, Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
@@ -19,20 +19,25 @@ export class UsersController {
     //     return { msg: 'Kakao-Talk Authentication' };
     // }
 
+    // @Get('login/kakao')
+    // @UseGuards(KakaoAuthGuard)
+    // handleRedirect(@Param('code') code: string) {
+    //     return { msg: 'OK' }; // 여기는 토큰값(바디값)
+    // }
+
+    // 코드 받아서 검증해서 토큰을 넘겨주는 API
     @Post('login/kakao')
     @UseGuards(KakaoAuthGuard)
-    async kakaoLogin(@Req() req, @Res() res) {
+    async kakaoLogin(@Param('code') code: string, @Req() req: Request, @Res() res: Response) {
         const { accessToken, refreshToken } = await this.usersService.kakaoLogin(
             req.headers.authorization,
         );
         res.cookie('accessToken', accessToken);
         res.cookie('refreshToken', refreshToken);
-    }
-
-    @Get('login/kakao/redirect')
-    @UseGuards(KakaoAuthGuard)
-    handleRedirect(@Param('code') code: string) {
-        return { msg: 'OK' };
+        res.status(200).json({
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+        });
     }
 
     @Get('status')

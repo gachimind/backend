@@ -8,23 +8,21 @@ import {
 } from 'typeorm';
 
 @Entity()
-// @Entity({ name: 'User' })
 export class User {
     @PrimaryGeneratedColumn()
-    // @PrimaryGeneratedColumn({ name: 'id' })
     userId: number;
 
-    @Column('varchar', { unique: true, length: 50 })
+    @Column({ unique: true, length: 50 })
     email: string;
 
-    @Column('varchar')
+    @Column({ unique: true, length: 30 })
     nickname: string;
 
     @Column('text')
     profileImg: string;
 
     @Column({ nullable: true })
-    currentHashedRefreshToken: string;
+    token: string;
 
     @CreateDateColumn()
     createdAt: Date;

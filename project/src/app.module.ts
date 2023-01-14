@@ -11,6 +11,7 @@ import { TokenMap } from './users/entities/token-map.entity';
 import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -37,6 +38,7 @@ import { SocketIdMap } from './games/entities/socketIdMap.entity';
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
         }),
+        JwtModule,
         UsersModule,
         GamesModule,
         PassportModule.register({ session: true }),

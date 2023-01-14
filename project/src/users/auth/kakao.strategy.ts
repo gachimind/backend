@@ -2,14 +2,21 @@ import { Inject, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-kakao-oauth2';
 import { UsersService } from '../users.service';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../entities/user.entity';
 
-// kakao-strategy
 @Injectable()
 export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
-    constructor(@Inject('USER_SERVICE') private readonly usersService: UsersService) {
+    constructor(
+        @Inject('USER_SERVICE')
+        private readonly usersService: UsersService,
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
+    ) {
         super({
             clientID: process.env.CLIENT_ID, // restAPI key
-            clientSecret: process.env.SECRET_KEY, // client secret
+            // clientSecret: process.env.SECRET_KEY, // client secret
             callbackURL: process.env.CALLBACK, // redirect url
         });
     }
@@ -24,11 +31,11 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.validateUser(userId);
+        const user = await this.usersService.findUserById(userId);
 
-        // 신규유저
+        // 유저가 없을 때
         if (!user) {
-            console.log('회원정보 저장후 토큰발급');
+            console.log('회원정보 저장 후 토큰 발급');
             const access_token = this.authService.createLoginToken(userId);
             const refresh_token = this.userService.makeRefreshToken(userId);
             const newUser = await this.userRepository.save({
@@ -42,7 +49,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
             return { access_token, refresh_token };
         }
 
-        // 기존 유저
+        // 유저가 있을 때
         console.log('로그인 토큰 발급');
         const access_token = await this.authService.createLoginToken(user);
         const refresh_token = await this.userService.makeRefreshToken(user);
