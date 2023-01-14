@@ -16,10 +16,11 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
     ) {
         super({
             clientID: process.env.CLIENT_ID, // restAPI key
-            // clientSecret: process.env.SECRET_KEY, // client secret
+            clientSecret: process.env.SECRET_KEY, // client secret
             callbackURL: process.env.CALLBACK, // redirect url
         });
     }
+    // 카카오에 요청할 때 필요한 cliendId / secret / callbackurl 등 입력
 
     async validate(
         accessToken: string,
@@ -31,29 +32,15 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.findUserById(userId);
-
-        // 유저가 없을 때
-        if (!user) {
-            console.log('회원정보 저장 후 토큰 발급');
-            const access_token = this.authService.createLoginToken(userId);
-            const refresh_token = this.userService.makeRefreshToken(userId);
-            const newUser = await this.userRepository.save({
-                userId: userId,
-                email: email,
-                nickname: nickname,
-                profileImg: profileImg,
-                refresh_token: refreshToken,
-            });
-            await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
-            return { access_token, refresh_token };
-        }
-
-        // 유저가 있을 때
-        console.log('로그인 토큰 발급');
-        const access_token = await this.authService.createLoginToken(user);
-        const refresh_token = await this.userService.makeRefreshToken(user);
-        await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
-        return { access_token, refresh_token, nickname };
+        // const user = await this.usersService.findUserById(userId);
+        const payload = {
+            userId,
+            email,
+            nickname,
+            profileImg,
+        };
+        done(null, payload);
     }
+    // 유저 검증을 kakao-oauth2를 통해서 한 다음
+    // 카카오가 accessToken, refreshToken, profile을 서버에 전달
 }

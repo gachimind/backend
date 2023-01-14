@@ -1,43 +1,70 @@
-import { Controller, Get, Post, UseInterceptors, Req, Res, UseGuards, Param } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    UseInterceptors,
+    Req,
+    Res,
+    UseGuards,
+    Param,
+    HttpException,
+    HttpStatus,
+    HttpCode,
+} from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
-import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
-import { query, Request, Response } from 'express';
+import { Request, response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
+
     // 에러핸들링 -> throw new HttpException(message, status)
 
     // 카카오 로그인
-    // @Get('login/kakao')
-    // @UseGuards(KakaoAuthGuard)
-    // handleLogin() {
-    //     return { msg: 'Kakao-Talk Authentication' };
-    // }
+    @Get('login/kakao')
+    @UseGuards(KakaoAuthGuard)
+    handleLogin() {
+        return { msg: 'Kakao-Talk Authentication' };
+    }
+
+    @Get('login/kakao/redirect')
+    @UseGuards(KakaoAuthGuard)
+    handleRedirect(@Param('code') code: string) {
+        return { msg: 'OK' };
+    }
 
     // @Get('login/kakao')
     // @UseGuards(KakaoAuthGuard)
-    // handleRedirect(@Param('code') code: string) {
-    //     return { msg: 'OK' }; // 여기는 토큰값(바디값)
+    // async kakaoLogin() {
+    //     return HttpStatus.OK;
     // }
 
     // 코드 받아서 검증해서 토큰을 넘겨주는 API
-    @Post('login/kakao')
+    @Get('login/kakao')
     @UseGuards(KakaoAuthGuard)
-    async kakaoLogin(@Param('code') code: string, @Req() req: Request, @Res() res: Response) {
-        const { accessToken, refreshToken } = await this.usersService.kakaoLogin(
-            req.headers.authorization,
-        );
-        res.cookie('accessToken', accessToken);
-        res.cookie('refreshToken', refreshToken);
-        res.status(200).json({
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-        });
+    // async kakaoLogin(@Req() req: Request, @Res() res: Response) {
+    async kakaoLoginRedirect(@Req() req, @Res() res: Response) {
+        const user = await this.usersService.findUserById(req.user.userId);
+        if (user === null) {
+            // 유저가 없을때 회원가입 -> 로그인
+            const createUser = await this.usersService.validateUser(req.user);
+            const accessToken = await this.usersService.createAccessToken(createUser);
+            return response.status(HttpStatus.CREATED).json([accessToken]);
+            // return res.status(201).json({
+            //     accessToken: 'Bearer ' + accessToken,
+            //     message: '로그인 성공',
+            // });
+        }
+        // 유저가 있을때
+        const accessToken = await this.usersService.createAccessToken(user);
+        return response.status(HttpStatus.CREATED).json([accessToken]);
+        // return res.status(201).json({
+        //     accessToken: 'Bearer ' + accessToken,
+        //     message: '로그인 성공',
+        // });
     }
 
     @Get('status')

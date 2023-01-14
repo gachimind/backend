@@ -16,7 +16,7 @@ const dataSource = new DataSource({
     entities: [User, TokenMap, SocketIdMap, Room, Player],
     //migrations: [__dirname + '/src/migrations/*.ts'],
     // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
-    synchronize: true,
+    synchronize: false,
     logging: true,
 });
 

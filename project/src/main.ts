@@ -28,7 +28,7 @@ async function bootstrap() {
             saveUninitialized: false,
             resave: false,
             cookie: {
-                maxAge: 60000,
+                maxAge: 60000, // 토큰 1분 유지
             },
         }),
     );

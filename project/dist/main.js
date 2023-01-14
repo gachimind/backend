@@ -167,10 +167,10 @@ const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(42);
-const ws_exception_filter_1 = __webpack_require__(33);
-const session = __webpack_require__(43);
-const passport = __webpack_require__(44);
+const http_exception_filter_1 = __webpack_require__(40);
+const ws_exception_filter_1 = __webpack_require__(31);
+const session = __webpack_require__(41);
+const passport = __webpack_require__(42);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
@@ -240,17 +240,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
 const common_1 = __webpack_require__(7);
 const users_module_1 = __webpack_require__(8);
-const games_module_1 = __webpack_require__(28);
+const games_module_1 = __webpack_require__(26);
 const config_1 = __webpack_require__(17);
-const logger_middleware_1 = __webpack_require__(40);
-const app_controller_1 = __webpack_require__(41);
-const passport_1 = __webpack_require__(23);
+const logger_middleware_1 = __webpack_require__(38);
+const app_controller_1 = __webpack_require__(39);
+const passport_1 = __webpack_require__(21);
 const typeorm_1 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(16);
-const token_map_entity_1 = __webpack_require__(27);
-const room_entity_1 = __webpack_require__(37);
-const player_entity_1 = __webpack_require__(38);
-const socketIdMap_entity_1 = __webpack_require__(39);
+const token_map_entity_1 = __webpack_require__(25);
+const room_entity_1 = __webpack_require__(35);
+const player_entity_1 = __webpack_require__(36);
+const socketIdMap_entity_1 = __webpack_require__(37);
 const jwt_1 = __webpack_require__(18);
 let AppModule = class AppModule {
     configure(consumer) {
@@ -311,11 +311,11 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const users_controller_1 = __webpack_require__(10);
 const users_service_1 = __webpack_require__(14);
-const kakao_serializer_1 = __webpack_require__(24);
+const kakao_serializer_1 = __webpack_require__(22);
 const user_entity_1 = __webpack_require__(16);
-const kakao_guards_1 = __webpack_require__(22);
-const kakao_strategy_1 = __webpack_require__(25);
-const token_map_entity_1 = __webpack_require__(27);
+const kakao_guards_1 = __webpack_require__(20);
+const kakao_strategy_1 = __webpack_require__(23);
+const token_map_entity_1 = __webpack_require__(25);
 const jwt_1 = __webpack_require__(18);
 let UsersModule = class UsersModule {
 };
@@ -364,32 +364,38 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(7);
 const undefinedToNull_interceptor_1 = __webpack_require__(11);
-const common_2 = __webpack_require__(7);
 const resultToData_interceptor_1 = __webpack_require__(13);
 const users_service_1 = __webpack_require__(14);
-const express_1 = __webpack_require__(21);
-const kakao_guards_1 = __webpack_require__(22);
+const express_1 = __webpack_require__(19);
+const kakao_guards_1 = __webpack_require__(20);
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    async kakaoLogin(code, req, res) {
-        const { accessToken, refreshToken } = await this.usersService.kakaoLogin(req.headers.authorization);
-        res.cookie('accessToken', accessToken);
-        res.cookie('refreshToken', refreshToken);
-        res.status(200).json({
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-        });
+    handleLogin() {
+        return { msg: 'Kakao-Talk Authentication' };
+    }
+    handleRedirect(code) {
+        return { msg: 'OK' };
+    }
+    async kakaoLoginRedirect(req, res) {
+        const user = await this.usersService.findUserById(req.user.userId);
+        if (user === null) {
+            const createUser = await this.usersService.validateUser(req.user);
+            const accessToken = await this.usersService.createAccessToken(createUser);
+            return express_1.response.status(common_1.HttpStatus.CREATED).json([accessToken]);
+        }
+        const accessToken = await this.usersService.createAccessToken(user);
+        return express_1.response.status(common_1.HttpStatus.CREATED).json([accessToken]);
     }
     user(request) {
         if (!request.user)
-            throw new common_2.HttpException('토큰값이 일치하지 않습니다.', 401);
+            throw new common_1.HttpException('토큰값이 일치하지 않습니다.', 401);
         return { message: '토큰 인증이 완료되었습니다.', status: 202 };
     }
     getUserDetailsByUserId(userId) {
@@ -397,20 +403,34 @@ let UsersController = class UsersController {
     }
 };
 __decorate([
-    (0, common_1.Post)('login/kakao'),
+    (0, common_1.Get)('login/kakao'),
+    (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "handleLogin", null);
+__decorate([
+    (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
     __param(0, (0, common_1.Param)('code')),
-    __param(1, (0, common_1.Req)()),
-    __param(2, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "handleRedirect", null);
+__decorate([
+    (0, common_1.Get)('login/kakao'),
+    (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof Response !== "undefined" && Response) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
-], UsersController.prototype, "kakaoLogin", null);
+], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
     (0, common_1.Get)('status'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
 __decorate([
@@ -517,74 +537,40 @@ const typeorm_2 = __webpack_require__(15);
 const user_entity_1 = __webpack_require__(16);
 const config_1 = __webpack_require__(17);
 const jwt_1 = __webpack_require__(18);
-const bcrypt = __webpack_require__(19);
-const axios_1 = __webpack_require__(20);
 let UsersService = class UsersService {
     constructor(usersRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.jwtService = jwtService;
         this.configService = configService;
     }
+    async validateUser(details) {
+        const user = await this.usersRepository.findOneBy({
+            userId: details.userId,
+        });
+        if (user)
+            return user;
+        const newUser = this.usersRepository.create(details);
+        return this.usersRepository.save(newUser);
+    }
     async findUserById(userId) {
         const user = await this.usersRepository.findOneBy({ userId });
         return user;
     }
-    async kakaoLogin(authorization) {
-        if (!authorization)
-            throw new common_2.HttpException('토큰 정보가 없습니다.', 402);
-        const kakaoAccessToken = authorization;
-        const { data: kakaoUser } = await (0, axios_1.default)('https://kapi.kakao.com/v2/user/me', {
-            headers: {
-                Authorization: `${kakaoAccessToken}`,
-            },
+    async tokenValidate(token) {
+        return await this.jwtService.verify(token, {
+            secret: process.env.TOKEN_SECRETE_KEY,
         });
-        const profileImg = kakaoUser.properties.profile_image;
-        const nickname = kakaoUser.properties.nickname;
-        const email = kakaoUser.kakao_account.email;
-        const exUser = await this.usersRepository.findOne({
-            where: { email },
-        });
-        if (!exUser) {
-            const newUser = await this.usersRepository.save({
-                nickname,
-                profileImg,
-                email,
-            });
-            console.log('회원정보 저장 토큰 발급');
-            const accessToken = await this.makeAccessToken(newUser.email);
-            const refreshToken = await this.makeAccessToken(newUser.email);
-            await this.CurrnetRefreshToken(refreshToken, newUser.userId);
-            return { accessToken, refreshToken };
-        }
-        else {
-            const { userId } = exUser;
-            console.log('로그인 토큰 발급');
-            const accessToken = await this.makeAccessToken(exUser.email);
-            const refreshToken = await this.makeAccessToken(exUser.email);
-            await this.CurrnetRefreshToken(refreshToken, userId);
-            return { accessToken, refreshToken };
-        }
     }
-    async makeAccessToken(email) {
-        const payload = { email };
-        const accessToken = await this.jwtService.sign(payload, {
-            secret: process.env.JWT_SECRET_KEY,
-            expiresIn: '60m',
+    async createAccessToken(user) {
+        const payload = {
+            userId: user.userId,
+            tokenType: 'accessToken',
+        };
+        const accessToken = this.jwtService.sign(payload, {
+            secret: process.env.TOKEN_SECRETE_KEY,
+            expiresIn: '1h',
         });
         return accessToken;
-    }
-    async makeRefreshToken(email) {
-        const payload = { email };
-        const refreshToken = await this.jwtService.sign(payload, {
-            secret: process.env.JWT_SECRET_KEY,
-            expiresIn: '1d',
-        });
-        return refreshToken;
-    }
-    async CurrnetRefreshToken(refreshToken, userId) {
-        const salt = await bcrypt.genSalt();
-        const token = await bcrypt.hash(refreshToken, salt);
-        await this.usersRepository.update(userId, { token });
     }
     async getUserDetailsByUserId(userId) {
         const user = await this.usersRepository.findOne({
@@ -690,24 +676,10 @@ module.exports = require("@nestjs/jwt");
 /***/ ((module) => {
 
 "use strict";
-module.exports = require("bcrypt");
-
-/***/ }),
-/* 20 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("axios");
-
-/***/ }),
-/* 21 */
-/***/ ((module) => {
-
-"use strict";
 module.exports = require("express");
 
 /***/ }),
-/* 22 */
+/* 20 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -721,7 +693,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KakaoAuthGuard = void 0;
 const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(23);
+const passport_1 = __webpack_require__(21);
 let KakaoAuthGuard = class KakaoAuthGuard extends (0, passport_1.AuthGuard)('kakao') {
     async canActivate(context) {
         const activate = (await super.canActivate(context));
@@ -737,14 +709,14 @@ exports.KakaoAuthGuard = KakaoAuthGuard;
 
 
 /***/ }),
-/* 23 */
+/* 21 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/passport");
 
 /***/ }),
-/* 24 */
+/* 22 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -765,7 +737,7 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SessionSerializer = void 0;
 const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(23);
+const passport_1 = __webpack_require__(21);
 const users_service_1 = __webpack_require__(14);
 let SessionSerializer = class SessionSerializer extends passport_1.PassportSerializer {
     constructor(usersService) {
@@ -789,7 +761,7 @@ exports.SessionSerializer = SessionSerializer;
 
 
 /***/ }),
-/* 25 */
+/* 23 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -810,8 +782,8 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KakaoStrategy = void 0;
 const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(23);
-const passport_kakao_oauth2_1 = __webpack_require__(26);
+const passport_1 = __webpack_require__(21);
+const passport_kakao_oauth2_1 = __webpack_require__(24);
 const users_service_1 = __webpack_require__(14);
 const typeorm_1 = __webpack_require__(15);
 const typeorm_2 = __webpack_require__(9);
@@ -820,6 +792,7 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
     constructor(usersService, userRepository) {
         super({
             clientID: process.env.CLIENT_ID,
+            clientSecret: process.env.SECRET_KEY,
             callbackURL: process.env.CALLBACK,
         });
         this.usersService = usersService;
@@ -830,26 +803,13 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.findUserById(userId);
-        if (!user) {
-            console.log('회원정보 저장 후 토큰 발급');
-            const access_token = this.authService.createLoginToken(userId);
-            const refresh_token = this.userService.makeRefreshToken(userId);
-            const newUser = await this.userRepository.save({
-                userId: userId,
-                email: email,
-                nickname: nickname,
-                profileImg: profileImg,
-                refresh_token: refreshToken,
-            });
-            await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
-            return { access_token, refresh_token };
-        }
-        console.log('로그인 토큰 발급');
-        const access_token = await this.authService.createLoginToken(user);
-        const refresh_token = await this.userService.makeRefreshToken(user);
-        await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
-        return { access_token, refresh_token, nickname };
+        const payload = {
+            userId,
+            email,
+            nickname,
+            profileImg,
+        };
+        done(null, payload);
     }
 };
 KakaoStrategy = __decorate([
@@ -862,14 +822,14 @@ exports.KakaoStrategy = KakaoStrategy;
 
 
 /***/ }),
-/* 26 */
+/* 24 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("passport-kakao-oauth2");
 
 /***/ }),
-/* 27 */
+/* 25 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -912,7 +872,7 @@ exports.TokenMap = TokenMap;
 
 
 /***/ }),
-/* 28 */
+/* 26 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -927,14 +887,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesModule = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
-const games_gateway_1 = __webpack_require__(29);
-const room_service_1 = __webpack_require__(32);
-const chat_service_1 = __webpack_require__(35);
+const games_gateway_1 = __webpack_require__(27);
+const room_service_1 = __webpack_require__(30);
+const chat_service_1 = __webpack_require__(33);
 const users_module_1 = __webpack_require__(8);
-const players_service_1 = __webpack_require__(36);
-const room_entity_1 = __webpack_require__(37);
-const player_entity_1 = __webpack_require__(38);
-const socketIdMap_entity_1 = __webpack_require__(39);
+const players_service_1 = __webpack_require__(34);
+const room_entity_1 = __webpack_require__(35);
+const player_entity_1 = __webpack_require__(36);
+const socketIdMap_entity_1 = __webpack_require__(37);
 let GamesModule = class GamesModule {
 };
 GamesModule = __decorate([
@@ -948,7 +908,7 @@ exports.GamesModule = GamesModule;
 
 
 /***/ }),
-/* 29 */
+/* 27 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -979,12 +939,12 @@ var __rest = (this && this.__rest) || function (s, e) {
 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesGateway = void 0;
-const websockets_1 = __webpack_require__(30);
-const socket_io_1 = __webpack_require__(31);
-const room_service_1 = __webpack_require__(32);
-const chat_service_1 = __webpack_require__(35);
-const ws_exception_filter_1 = __webpack_require__(33);
-const players_service_1 = __webpack_require__(36);
+const websockets_1 = __webpack_require__(28);
+const socket_io_1 = __webpack_require__(29);
+const room_service_1 = __webpack_require__(30);
+const chat_service_1 = __webpack_require__(33);
+const ws_exception_filter_1 = __webpack_require__(31);
+const players_service_1 = __webpack_require__(34);
 let GamesGateway = class GamesGateway {
     constructor(roomService, chatService, playersService) {
         this.roomService = roomService;
@@ -1185,21 +1145,21 @@ exports.GamesGateway = GamesGateway;
 
 
 /***/ }),
-/* 30 */
+/* 28 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/websockets");
 
 /***/ }),
-/* 31 */
+/* 29 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("socket.io");
 
 /***/ }),
-/* 32 */
+/* 30 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1224,7 +1184,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RoomService = void 0;
 const common_1 = __webpack_require__(7);
-const ws_exception_filter_1 = __webpack_require__(33);
+const ws_exception_filter_1 = __webpack_require__(31);
 const roomList = [];
 let RoomService = class RoomService {
     async getAllRoomList() {
@@ -1338,7 +1298,7 @@ exports.RoomService = RoomService;
 
 
 /***/ }),
-/* 33 */
+/* 31 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1352,8 +1312,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SocketExceptionFilter = exports.SocketException = void 0;
 const common_1 = __webpack_require__(7);
-const websockets_1 = __webpack_require__(30);
-const errors_1 = __webpack_require__(34);
+const websockets_1 = __webpack_require__(28);
+const errors_1 = __webpack_require__(32);
 class SocketException extends errors_1.WsException {
     constructor(message, status, eventName) {
         super({ message, status, eventName });
@@ -1372,14 +1332,14 @@ exports.SocketExceptionFilter = SocketExceptionFilter;
 
 
 /***/ }),
-/* 34 */
+/* 32 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/websockets/errors");
 
 /***/ }),
-/* 35 */
+/* 33 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1402,7 +1362,7 @@ exports.ChatService = ChatService;
 
 
 /***/ }),
-/* 36 */
+/* 34 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1416,7 +1376,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PlayersService = exports.socketIdMap = void 0;
 const common_1 = __webpack_require__(7);
-const ws_exception_filter_1 = __webpack_require__(33);
+const ws_exception_filter_1 = __webpack_require__(31);
 exports.socketIdMap = {};
 const authentication = { token1: 1, token2: 2, token3: 3 };
 const fakeDBUserTable = [
@@ -1487,7 +1447,7 @@ exports.PlayersService = PlayersService;
 
 
 /***/ }),
-/* 37 */
+/* 35 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1505,8 +1465,8 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Room = void 0;
 const typeorm_1 = __webpack_require__(15);
-const player_entity_1 = __webpack_require__(38);
-const socketIdMap_entity_1 = __webpack_require__(39);
+const player_entity_1 = __webpack_require__(36);
+const socketIdMap_entity_1 = __webpack_require__(37);
 let Room = class Room {
 };
 __decorate([
@@ -1576,7 +1536,7 @@ exports.Room = Room;
 
 
 /***/ }),
-/* 38 */
+/* 36 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1594,8 +1554,8 @@ var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Player = void 0;
 const typeorm_1 = __webpack_require__(15);
-const room_entity_1 = __webpack_require__(37);
-const socketIdMap_entity_1 = __webpack_require__(39);
+const room_entity_1 = __webpack_require__(35);
+const socketIdMap_entity_1 = __webpack_require__(37);
 let Player = class Player {
 };
 __decorate([
@@ -1638,7 +1598,7 @@ exports.Player = Player;
 
 
 /***/ }),
-/* 39 */
+/* 37 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1657,7 +1617,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SocketIdMap = void 0;
 const user_entity_1 = __webpack_require__(16);
 const typeorm_1 = __webpack_require__(15);
-const room_entity_1 = __webpack_require__(37);
+const room_entity_1 = __webpack_require__(35);
 let SocketIdMap = class SocketIdMap {
 };
 __decorate([
@@ -1692,7 +1652,7 @@ exports.SocketIdMap = SocketIdMap;
 
 
 /***/ }),
-/* 40 */
+/* 38 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1728,7 +1688,7 @@ exports.LoggerMiddleware = LoggerMiddleware;
 
 
 /***/ }),
-/* 41 */
+/* 39 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1763,7 +1723,7 @@ exports.AppController = AppController;
 
 
 /***/ }),
-/* 42 */
+/* 40 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1796,14 +1756,14 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 
 
 /***/ }),
-/* 43 */
+/* 41 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("express-session");
 
 /***/ }),
-/* 44 */
+/* 42 */
 /***/ ((module) => {
 
 "use strict";
@@ -1871,7 +1831,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("a25e6c433a4c9f2349b3")
+/******/ 		__webpack_require__.h = () => ("e432cd54d6006588e4c2")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

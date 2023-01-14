@@ -1,17 +1,45 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
 import { HttpException } from '@nestjs/common';
+import { UsersService } from '../users.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-    canActivate(context: ExecutionContext) {
-        return super.canActivate(context);
+    constructor(private jwtService: JwtService, private userService: UsersService) {
+        super();
+    }
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const request = context.switchToHttp().getRequest();
+        const response = context.switchToHttp().getResponse();
+        const { authorization } = request.headers;
+        if (authorization === undefined) {
+            throw new HttpException('토큰 전송 실패', HttpStatus.UNAUTHORIZED);
+        }
+
+        const tokenValue = authorization.replace('Bearer ', '');
+        const userId: number = await this.validate(tokenValue);
+        response.userId = userId;
+        return true;
     }
 
-    handleRequest(err: any, user: any, info: any) {
-        if (!user) {
-            throw new HttpException('회원 인증에 실패했습니다.', 402);
+    // 토큰 검증
+    async validate(token: string) {
+        try {
+            const { userId } = await this.userService.tokenValidate(token);
+            return userId;
+        } catch (error) {
+            switch (error.message) {
+                // 토큰 오류 판단
+                case 'invalid token':
+                    throw new HttpException('유효하지 않은 토큰입니다.', 401);
+
+                case 'jwt expired':
+                    throw new HttpException('토큰이 만료되었습니다.', 410);
+
+                default:
+                    throw new HttpException('서버 오류입니다.', 500);
+            }
         }
-        return user;
     }
 }

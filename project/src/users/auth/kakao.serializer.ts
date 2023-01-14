@@ -19,3 +19,7 @@ export class SessionSerializer extends PassportSerializer {
         return user ? done(null, user) : done(null, null);
     }
 }
+
+// 클라이언트에 반환할 데이터를 변환하고 검사하기 위한 규칙 제공
+// 즉 Serializer는 입력값을 검증하는 역할
+// 유저가 가져온 payload 값을 검증
