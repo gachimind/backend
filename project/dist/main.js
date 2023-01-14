@@ -375,8 +375,10 @@ let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    handleLogin() {
-        return { msg: 'Kakao-Talk Authentication' };
+    async kakaoLogin(req, res) {
+        const { accessToken, refreshToken } = await this.usersService.kakaoLogin(req.headers.authorization);
+        res.cookie('accessToken', accessToken);
+        res.cookie('refreshToken', refreshToken);
     }
     handleRedirect(code) {
         return { msg: 'OK' };
@@ -386,22 +388,19 @@ let UsersController = class UsersController {
             throw new common_2.HttpException('토큰값이 일치하지 않습니다.', 401);
         return { message: '토큰 인증이 완료되었습니다.', status: 202 };
     }
-    async kakaoLogin(req, res) {
-        const { accessToken, refreshToken } = await this.usersService.kakaoLogin(req.headers.authorization);
-        res.cookie('accessToken', accessToken);
-        res.cookie('refreshToken', refreshToken);
-    }
     getUserDetailsByUserId(userId) {
         return this.usersService.getUserDetailsByUserId(userId);
     }
 };
 __decorate([
-    (0, common_1.Get)('login/kakao'),
+    (0, common_1.Post)('login/kakao'),
     (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "handleLogin", null);
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "kakaoLogin", null);
 __decorate([
     (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
@@ -417,14 +416,6 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
-__decorate([
-    (0, common_1.Post)('login/kakao'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "kakaoLogin", null);
 __decorate([
     (0, common_1.Get)(':userId'),
     __param(0, (0, common_1.Param)('userId')),
@@ -557,7 +548,7 @@ let UsersService = class UsersService {
                 Authorization: `${kakaoAccessToken}`,
             },
         });
-        console.log('카카오에서 받아온 유저 정보 >>>> ', kakaoUser);
+        console.log(kakaoUser);
         const userId = kakaoUser.profile._json.id;
         const profileImg = kakaoUser.properties.profile_image;
         const nickname = kakaoUser.properties.nickname;
@@ -572,7 +563,7 @@ let UsersService = class UsersService {
                 profileImg,
                 email,
             });
-            console.log(newUser, '<================================저장한 값');
+            console.log(newUser);
             console.log('회원정보 저장 후 토큰발급');
             const accessToken = await this.makeAccessToken(newUser.userId);
             const refreshToken = await this.makeAccessToken(newUser.userId);
@@ -14469,7 +14460,7 @@ const common_1 = __webpack_require__(7);
 const passport_1 = __webpack_require__(150);
 const passport_kakao_oauth2_1 = __webpack_require__(153);
 const users_service_1 = __webpack_require__(14);
-let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
+let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy, 'kakao') {
     constructor(usersService) {
         super({
             clientID: process.env.CLIENT_ID,
@@ -14483,13 +14474,26 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const user = await this.usersService.validateUser({
-            userId,
-            email,
-            nickname,
-            profileImg,
-        });
-        return user || null;
+        const user = await this.usersService.validateUser(userId);
+        if (!user) {
+            console.log('회원정보 저장후 토큰발급');
+            const access_token = this.authService.createLoginToken(userId);
+            const refresh_token = this.userService.makeRefreshToken(userId);
+            const newUser = await this.userRepository.save({
+                userId: userId,
+                email: email,
+                nickname: nickname,
+                profileImg: profileImg,
+                refresh_token: refreshToken,
+            });
+            await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
+            return { access_token, refresh_token };
+        }
+        console.log('로그인 토큰 발급');
+        const access_token = await this.authService.createLoginToken(user);
+        const refresh_token = await this.userService.makeRefreshToken(user);
+        await this.userService.CurrnetRefreshToken(refreshToken, user.userId);
+        return { access_token, refresh_token, nickname };
     }
 };
 KakaoStrategy = __decorate([
@@ -15517,7 +15521,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("5673af9510b39fba781c")
+/******/ 		__webpack_require__.h = () => ("d4b9e36008579cb2f591")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
