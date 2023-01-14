@@ -50,12 +50,15 @@ export class UsersController {
             // 유저가 없을때 회원가입 -> 로그인
             const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            return Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
+            Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            // res.setHeader('accessToken', `Bearer ${accessToken}`);
+            // return true;
         } else {
             // 유저가 있을때
             const accessToken = await this.usersService.createAccessToken(user);
-            return Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
-            return true;
+            Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            // res.setHeader('accessToken', `Bearer ${accessToken}`);
+            // return true;
         }
     }
 

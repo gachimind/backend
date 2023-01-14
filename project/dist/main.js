@@ -385,12 +385,11 @@ let UsersController = class UsersController {
         if (user === null) {
             const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            return express_1.Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
+            express_1.Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
         }
         else {
             const accessToken = await this.usersService.createAccessToken(user);
-            return express_1.Response.redirect('http://doyoung.shop:3000/login?accessToken=' + accessToken);
-            return true;
+            express_1.Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
         }
     }
     user(request) {
@@ -1831,7 +1830,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("1b6141aed695c72c5569")
+/******/ 		__webpack_require__.h = () => ("4ab98bea635d19d8a6c1")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
