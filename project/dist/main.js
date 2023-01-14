@@ -364,7 +364,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(7);
@@ -380,16 +380,16 @@ let UsersController = class UsersController {
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
-    async kakaoLoginRedirect(code, req) {
+    async kakaoLoginRedirect(code, req, res) {
         const user = await this.usersService.findUserById(req.user.userId);
         if (user === null) {
             const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            express_1.Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            res.redirect('http://localhost:3000/login?accessToken=' + accessToken);
         }
         else {
             const accessToken = await this.usersService.createAccessToken(user);
-            express_1.Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            res.redirect('http://localhost:3000/login?accessToken=' + accessToken);
         }
     }
     user(request) {
@@ -413,15 +413,16 @@ __decorate([
     (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
     __param(0, (0, common_1.Param)('code')),
     __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", typeof (_b = typeof Promise !== "undefined" && Promise) === "function" ? _b : Object)
+    __metadata("design:paramtypes", [String, Object, typeof (_b = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _b : Object]),
+    __metadata("design:returntype", typeof (_c = typeof Promise !== "undefined" && Promise) === "function" ? _c : Object)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
     (0, common_1.Get)('status'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _d : Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
 __decorate([
@@ -1830,7 +1831,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("4ab98bea635d19d8a6c1")
+/******/ 		__webpack_require__.h = () => ("4880f0066e0f755d203a")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

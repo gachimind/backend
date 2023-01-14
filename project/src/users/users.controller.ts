@@ -43,20 +43,20 @@ export class UsersController {
     async kakaoLoginRedirect(
         @Param('code') code: string,
         @Req() req,
-        // @Res({ passthrough: true }) res: Response,
+        @Res({ passthrough: true }) res: Response,
     ): Promise<any> {
         const user = await this.usersService.findUserById(req.user.userId);
         if (user === null) {
             // 유저가 없을때 회원가입 -> 로그인
             const createUser = await this.usersService.createUser(req.user);
             const accessToken = await this.usersService.createAccessToken(createUser);
-            Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            res.redirect('http://localhost:3000/login?accessToken=' + accessToken);
             // res.setHeader('accessToken', `Bearer ${accessToken}`);
             // return true;
         } else {
             // 유저가 있을때
             const accessToken = await this.usersService.createAccessToken(user);
-            Response.redirect('http://doyoung.shop/login?accessToken=' + accessToken);
+            res.redirect('http://localhost:3000/login?accessToken=' + accessToken);
             // res.setHeader('accessToken', `Bearer ${accessToken}`);
             // return true;
         }
