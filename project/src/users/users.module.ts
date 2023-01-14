@@ -15,8 +15,8 @@ import { JwtModule } from '@nestjs/jwt';
     providers: [
         UsersService,
         SessionSerializer,
-        KakaoAuthGuard, // 유저가 가져온 payload 입력값이 맞는지 확인
-        KakaoStrategy, // 여기서 카카오 토큰을 가져와서 검증
+        KakaoAuthGuard,
+        KakaoStrategy,
         {
             provide: 'USER_SERVICE',
             useClass: UsersService,

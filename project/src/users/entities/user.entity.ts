@@ -24,9 +24,6 @@ export class User {
     @Column('text')
     profileImg: string;
 
-    @Column({ nullable: true })
-    token: string;
-
     @CreateDateColumn()
     createdAt: Date;
 

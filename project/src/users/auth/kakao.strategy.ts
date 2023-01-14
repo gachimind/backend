@@ -15,12 +15,11 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
         private readonly userRepository: Repository<User>,
     ) {
         super({
-            clientID: process.env.CLIENT_ID, // restAPI key
-            clientSecret: process.env.SECRET_KEY, // client secret
-            callbackURL: process.env.CALLBACK, // redirect url
+            clientID: process.env.CLIENT_ID,
+            clientSecret: process.env.SECRET_KEY,
+            callbackURL: process.env.CALLBACK,
         });
     }
-    // 카카오에 요청할 때 필요한 cliendId / secret / callbackurl 등 입력
 
     async validate(
         accessToken: string,
@@ -32,7 +31,6 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        // const user = await this.usersService.findUserById(userId);
         const payload = {
             userId,
             email,
@@ -41,6 +39,4 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
         };
         done(null, payload);
     }
-    // 유저 검증을 kakao-oauth2를 통해서 한 다음
-    // 카카오가 accessToken, refreshToken, profile을 서버에 전달
 }
