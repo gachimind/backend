@@ -40,7 +40,7 @@ export class UsersService {
                 Authorization: `${kakaoAccessToken}`,
             },
         });
-        console.log('카카오에서 받아온 유저 정보 >>>> ', kakaoUser);
+        console.log(kakaoUser);
 
         const userId: number = kakaoUser.profile._json.id;
         const profileImg: string = kakaoUser.properties.profile_image;
@@ -56,7 +56,9 @@ export class UsersService {
                 profileImg,
                 email,
             });
-            console.log(newUser, '<================================저장한 값');
+            console.log(newUser);
+
+            // 회원 정보 저장 후 토큰 발급
             console.log('회원정보 저장 후 토큰발급');
 
             const accessToken = await this.makeAccessToken(newUser.userId);
@@ -65,6 +67,8 @@ export class UsersService {
             return { accessToken, refreshToken };
         } else {
             const { userId } = exUser;
+
+            // 로그인 토큰 발급
             console.log('로그인 토큰발급');
             const accessToken = await this.makeAccessToken(exUser.userId);
             const refreshToken = await this.makeAccessToken(exUser.userId);
