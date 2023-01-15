@@ -61,6 +61,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @MessageBody() { data }: { data: AuthorizationRequestDto },
     ) {
         const token = data.authorization;
+        console.log('token', token);
 
         if (!token) {
             throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
@@ -77,8 +78,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
         this.socketAuthentication(socket);
 
-        // 방에서 로그아웃 한 경우 leaveroom event 재사용
-        this.handleLeaveRoomEvent(socket);
+        // 방에서 로그아웃 한 경우 leave-room event 재사용
+        await this.handleLeaveRoomEvent(socket);
 
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
@@ -178,10 +179,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async updateRoomAnnouncement(requestUser, requestRoom, event) {
         // game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
-        console.log('!!!update room announcement!!!');
-
-        console.log(requestUser, requestRoom);
-
         const updateRoomInfo: RoomInfoToRoomDto = await this.roomService.updateRoomInfoToRoom(
             requestRoom.roomId,
         );

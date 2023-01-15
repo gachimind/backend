@@ -926,6 +926,7 @@ let GamesGateway = class GamesGateway {
     }
     async socketIdMapToLoginUser(socket, { data }) {
         const token = data.authorization;
+        console.log('token', token);
         if (!token) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
         }
@@ -935,7 +936,7 @@ let GamesGateway = class GamesGateway {
     }
     async socketIdMapToLogOutUser(socket) {
         this.socketAuthentication(socket);
-        this.handleLeaveRoomEvent(socket);
+        await this.handleLeaveRoomEvent(socket);
         await this.playersService.removeSocketBySocketId(socket.id);
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
@@ -1532,7 +1533,7 @@ let PlayersService = class PlayersService {
     }
     async getUserByUserID(userId) {
         const user = await this.socketIdMapRepository.findOne({
-            where: userId,
+            where: { userInfo: { userId } },
             relations: { playerInfo: { roomInfo: true } },
         });
         return user;
@@ -1549,18 +1550,13 @@ let PlayersService = class PlayersService {
                 token,
             });
             const userId = requestUser.userInfo.userId;
-            console.log('userId from tokenMap: ', userId);
             if (!userId) {
                 throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
             }
             if (await this.getUserBySocketId({ socketId })) {
-                console.log('socketId 중복!');
                 throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
-            const userInfo = await this.getUserByUserID({ userInfo: userId });
-            console.log(userInfo);
-            if (userInfo) {
-                console.log('userId 중복!');
+            if (await this.getUserByUserID(userId)) {
                 throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
             const user = { socketId, userInfo: userId };
@@ -1788,7 +1784,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("4d392694bae8e7106d6d")
+/******/ 		__webpack_require__.h = () => ("9d983472f3840be4e7ba")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

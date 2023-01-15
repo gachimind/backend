@@ -27,11 +27,12 @@ export class PlayersService {
         return user;
     }
 
-    async getUserByUserID(userId: { userInfo: number }): Promise<SocketIdMap> {
+    async getUserByUserID(userId: number): Promise<SocketIdMap> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOne({
-            where: userId,
+            where: { userInfo: { userId } },
             relations: { playerInfo: { roomInfo: true } },
         });
+
         return user;
     }
 
@@ -50,7 +51,6 @@ export class PlayersService {
                 token,
             });
             const userId: number = requestUser.userInfo.userId;
-            console.log('userId from tokenMap: ', userId);
 
             if (!userId) {
                 throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
@@ -58,16 +58,11 @@ export class PlayersService {
 
             // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
             if (await this.getUserBySocketId({ socketId })) {
-                console.log('socketId 중복!');
                 throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
 
             // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
-            const userInfo = await this.getUserByUserID({ userInfo: userId });
-            console.log(userInfo);
-
-            if (userInfo) {
-                console.log('userId 중복!');
+            if (await this.getUserByUserID(userId)) {
                 throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
 
