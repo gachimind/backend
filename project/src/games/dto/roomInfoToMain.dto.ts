@@ -1,13 +1,12 @@
 import { IsNumber } from 'class-validator';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { RoomDataDto } from './room.data.dto';
+import { RoomDataInsertDto } from './room.data.insert.dto';
 
-export class RoomInfoToMainDto extends OmitType(RoomDataDto, [
+export class RoomInfoToMainDto extends OmitType(RoomDataInsertDto, [
     'discussionTime',
-    'readyTime',
     'speechTime',
+    'readyTime',
     'roomPassword',
-    'participants',
     'isGameReadyToStart',
 ] as const) {
     @IsNumber()

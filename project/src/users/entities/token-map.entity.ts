@@ -1,12 +1,24 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    OneToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
 export class TokenMap {
-    @PrimaryColumn()
-    userId: number;
+    @PrimaryGeneratedColumn()
+    tokenMapId: number;
 
-    @Column()
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
+    @JoinColumn({ name: 'userId' })
+    userId: User;
+
+    @Column({ unique: true })
     token: string;
 
     @CreateDateColumn()

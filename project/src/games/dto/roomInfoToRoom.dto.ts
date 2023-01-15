@@ -1,4 +1,4 @@
 import { OmitType } from '@nestjs/swagger';
-import { RoomDataDto } from './room.data.dto';
+import { RoomDataInsertDto } from './room.data.insert.dto';
 
-export class RoomInfoToRoomDto extends OmitType(RoomDataDto, ['roomPassword'] as const) {}
+export class RoomInfoToRoomDto extends OmitType(RoomDataInsertDto, ['roomPassword'] as const) {}

@@ -34,7 +34,7 @@ export class Room {
     @Column()
     isSecreteRoom: boolean;
 
-    @Column({ type: 'tinyint', width: 4 })
+    @Column({ type: 'int', width: 4 })
     roomPassword: number;
 
     @Column()

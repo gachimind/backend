@@ -20,6 +20,7 @@ import { PlayersService } from './players.service';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
 import { SocketIdMap } from './entities/socketIdMap.entity';
+import { Room } from './entities/room.entity';
 
 @WebSocketGateway({
     cors: {
@@ -32,15 +33,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         private readonly chatService: ChatService,
         private readonly playersService: PlayersService,
     ) {}
-
-    // !!token 검사하는 auth-guard로 따로 빼기!!
-    getToken(token) {
-        if (!token) {
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
-        }
-        // validation 로직 추가
-        return token;
-    }
 
     @WebSocketServer()
     public server: Server;
@@ -66,14 +58,20 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: AuthorizationRequestDto },
     ) {
-        const token = this.getToken(data.authorization);
+        const token = data.authorization;
+
+        if (!token) {
+            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+        }
 
         // 토큰 값이 유효한지는 service 레이어에서 db를 조회해서 검사
         await this.playersService.socketIdMapToLoginUser(token, socket.id);
         console.log('로그인 성공!');
+
         socket.emit('log-in', { message: '로그인 성공!' });
     }
 
+    /*
     @SubscribeMessage('log-out')
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
         const requestUser: SocketIdMap = await this.playersService.getUserBySocketId({
@@ -82,29 +80,31 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser) {
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
         }
-
-        // socketIdMap에서 삭제
+        // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId({ socketId: socket.id });
-        console.log('로그아웃 성공!');
-        socket.emit('log-out', { message: '로그아웃 성공!' });
 
         // 방에서 로그아웃 한 경우, room update
-        if (requestUser.player.roomId) {
-            const updateRoomInfo: RoomInfoToRoomDto | any = await this.roomService.leaveRoom(
-                requestUser,
-            );
+        const roomId: number = requestUser.player.roomId;
+        if (roomId) {
             // request user를 leave처리
-            socket.leave(`${updateRoomInfo.roomId}`);
+            socket.leave(`${roomId}`);
+
+            const room: RoomInfoToRoomDto = await this.roomService.getOneRoomByRoomId(roomId);
+            const { userId, socketId }: SocketIdMap = requestUser;
+
             // game room 안의 사람들에게 update-room event emit -> !!!namespace 설정하기!!!
-            const { currentRoom, ...restUserInfo } = requestUser;
-            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+            this.server.to(`${roomId}`).emit('update-room', {
+                data: { room, eventUserInfo: { ...requestUser }, event: 'leave' },
             });
             // main space에 room-list event emit -> !!!namespace 설정하기!!!
             const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
-            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
+            this.server.except(`${roomId}`).emit('room-list', { data });
         }
+
+        console.log('로그아웃 성공!');
+        socket.emit('log-out', { message: '로그아웃 성공!' });
     }
+    */
 
     @SubscribeMessage('create-room')
     async handleCreateRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
@@ -114,18 +114,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser) {
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
         }
-    
+
         // 방을 생성한 유저에게 새로 생성된 roomId 전달
-        const newRoomId: number|void = await this.roomService.createRoom(data);
-        //socket.emit('create-room', { data: { roomId: newRoomId } });
-        /*
+        const roomId: number | void = await this.roomService.createRoom(data);
+        console.log(roomId);
+        socket.emit('create-room', { data: { roomId } });
+
         // main space에 room list를 업데이트
         const updateRoomList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
         // !!! namespce 설정해줘야 함!!!
         this.server.emit('room-list', { data: updateRoomList });
     }
 
-    /*
     @SubscribeMessage('enter-room')
     async handleEnterRoomRequest(@ConnectedSocket() socket: Socket, @MessageBody() { data }: any) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
@@ -181,6 +181,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
     }
 
+    /*
     @SubscribeMessage('leave-room')
     async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
@@ -222,6 +223,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const message: string = data.message;
         const { nickname, currentRoom } = socketIdMap[socket.id];
         this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
+    }
+
     }
     */
 }

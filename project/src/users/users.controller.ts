@@ -22,6 +22,16 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
     // 에러핸들링 -> throw new HttpException(message, status)
 
+    @Post()
+    createTestUser(@Body() data) {
+        return this.usersService.createTestUser(data);
+    }
+
+    @Post('token')
+    createTokenMap(@Body() data) {
+        return this.usersService.createTestToken(data);
+    }
+
     // 카카오 로그인
     @Get('login/kakao')
     @UseGuards(KakaoAuthGuard)

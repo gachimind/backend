@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOperator } from 'typeorm';
 import { Room } from './entities/room.entity';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
 import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
@@ -9,7 +9,7 @@ import {
     SocketException,
     SocketExceptionStatus,
 } from 'src/common/exceptionFilters/ws-exception.filter';
-import { RoomDataInsertDto } from './dto/room.data.dto';
+import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { RoomParticipantsDto } from './dto/room.participants.dto';
@@ -25,7 +25,7 @@ export class RoomService {
     ) {}
 
     async getAllRoomList(): Promise<RoomInfoToMainDto[]> {
-        const roomList = await this.roomRepository.find();
+        const roomList = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
         console.log(roomList);
 
         return roomList.map((room) => {
@@ -42,6 +42,10 @@ export class RoomService {
         });
     }
 
+    async getOneRoomByRoomId(roomId: number): Promise<RoomInfoToRoomDto> {
+        return await this.roomRepository.findOneBy({ roomId });
+    }
+
     async createRoom(room: CreateRoomRequestDto): Promise<number | void> {
         if (!room.roomTitle) {
             room.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
@@ -53,9 +57,7 @@ export class RoomService {
         };
 
         const roomInsert = await this.roomRepository.insert(newRoom);
-        console.log(roomInsert);
-
-        //return await this.roomRepository.findOne({where: });
+        return roomInsert.identifiers[0].roomId;
     }
     /*
     async isRoomAvailable(

@@ -7,6 +7,8 @@ import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dt
 import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
+import { User } from 'src/users/entities/user.entity';
+import { request } from 'http';
 
 @Injectable()
 export class PlayersService {
@@ -23,12 +25,7 @@ export class PlayersService {
         return await this.socketIdMapRepository.findOneBy(socketId);
     }
 
-    async getUserIdBySocketId(socketId: { socketId: string }) {
-        const user = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.userId : null;
-    }
-
-    async getCurrentRoomBySocketId(socketId: { socketId: string }) {
+    async getCurrentRoomBySocketId(socketId: { socketId: string }): Promise<number | any> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOneBy(socketId);
         return user ? user.player.roomId : null;
     }
@@ -40,17 +37,17 @@ export class PlayersService {
     async socketIdMapToLoginUser(token: string, socketId: string) {
         try {
             // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
-            const requestUser: TokenMap = await this.tokenMapRepository.findOneOrFail({
-                where: { token },
-                select: { userId: true },
+            const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({
+                token,
             });
-            const userId: number = requestUser.userId;
-            if (!requestUser.userId) {
+            const userId: number = requestUser.userId.userId;
+
+            if (!userId) {
                 throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
             }
 
             // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
-            if (await this.getUserIdBySocketId({ socketId })) {
+            if (await this.getUserBySocketId({ socketId })) {
                 throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
 

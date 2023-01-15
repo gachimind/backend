@@ -14,7 +14,7 @@ export class SocketIdMap {
     @PrimaryColumn('varchar')
     socketId: string;
 
-    @OneToOne(() => User, { onDelete: 'CASCADE' })
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
     @JoinColumn({ name: 'userId' })
     userId: User | number;
 
