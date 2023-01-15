@@ -167,10 +167,10 @@ const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(39);
-const ws_exception_filter_1 = __webpack_require__(33);
-const session = __webpack_require__(40);
-const passport = __webpack_require__(41);
+const http_exception_filter_1 = __webpack_require__(41);
+const ws_exception_filter_1 = __webpack_require__(32);
+const session = __webpack_require__(42);
+const passport = __webpack_require__(43);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
@@ -241,9 +241,9 @@ exports.AppModule = void 0;
 const common_1 = __webpack_require__(7);
 const users_module_1 = __webpack_require__(8);
 const games_module_1 = __webpack_require__(24);
-const config_1 = __webpack_require__(36);
-const logger_middleware_1 = __webpack_require__(37);
-const app_controller_1 = __webpack_require__(38);
+const config_1 = __webpack_require__(38);
+const logger_middleware_1 = __webpack_require__(39);
+const app_controller_1 = __webpack_require__(40);
 const passport_1 = __webpack_require__(20);
 const typeorm_1 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(16);
@@ -669,9 +669,9 @@ __decorate([
 ], TokenMap.prototype, "tokenMapId", void 0);
 __decorate([
     (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
-], TokenMap.prototype, "userId", void 0);
+], TokenMap.prototype, "userInfo", void 0);
 __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
@@ -860,9 +860,9 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const games_gateway_1 = __webpack_require__(25);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(32);
+const chat_service_1 = __webpack_require__(35);
 const users_module_1 = __webpack_require__(8);
-const players_service_1 = __webpack_require__(35);
+const players_service_1 = __webpack_require__(36);
 const room_entity_1 = __webpack_require__(29);
 const player_entity_1 = __webpack_require__(30);
 const socketIdMap_entity_1 = __webpack_require__(31);
@@ -896,15 +896,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesGateway = void 0;
 const websockets_1 = __webpack_require__(26);
 const socket_io_1 = __webpack_require__(27);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(32);
-const ws_exception_filter_1 = __webpack_require__(33);
-const players_service_1 = __webpack_require__(35);
+const chat_service_1 = __webpack_require__(35);
+const ws_exception_filter_1 = __webpack_require__(32);
+const players_service_1 = __webpack_require__(36);
+const event_user_info_constructor_1 = __webpack_require__(37);
 let GamesGateway = class GamesGateway {
     constructor(roomService, chatService, playersService) {
         this.roomService = roomService;
@@ -920,7 +921,7 @@ let GamesGateway = class GamesGateway {
         socket.emit('room-list', { data });
     }
     async handleDisconnect(socket) {
-        await this.playersService.removeSocketBySocketId({ socketId: socket.id });
+        await this.playersService.removeSocketBySocketId(socket.id);
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
@@ -932,18 +933,71 @@ let GamesGateway = class GamesGateway {
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
+    async socketIdMapToLogOutUser(socket) {
+        this.socketAuthentication(socket);
+        this.handleLeaveRoomEvent(socket);
+        await this.playersService.removeSocketBySocketId(socket.id);
+        console.log('로그아웃 성공!');
+        socket.emit('log-out', { message: '로그아웃 성공!' });
+    }
     async handleCreateRoomRequest(socket, { data }) {
-        const requestUser = await this.playersService.getUserBySocketId({
-            socketId: socket.id,
-        });
-        if (!requestUser) {
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+        const requestUser = await this.socketAuthentication(socket);
+        if (requestUser.playerInfo) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
         const roomId = await this.roomService.createRoom(data);
         console.log(roomId);
         socket.emit('create-room', { data: { roomId } });
         const updateRoomList = await this.roomService.getAllRoomList();
         this.server.emit('room-list', { data: updateRoomList });
+    }
+    async handleEnterRoomRequest(socket, { data: requestRoom }) {
+        const requestUser = await this.socketAuthentication(socket);
+        if (requestUser.playerInfo) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
+        }
+        await this.roomService.enterRoom(requestUser, requestRoom);
+        socket.join(`${requestRoom.roomId}`);
+        await this.updateRoomAnnouncement(requestUser, requestRoom, 'enter');
+    }
+    async handleLeaveRoomEvent(socket) {
+        console.log('!!!leave room request!!!');
+        const requestUser = await this.socketAuthentication(socket);
+        if (!requestUser.playerInfo) {
+            console.log('palyerInfo 없음');
+            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'leave-room');
+        }
+        console.log('leave room, roomInfo', requestUser.playerInfo.roomInfo);
+        socket.leave(`${requestUser.playerInfo.roomInfo.roomId}`);
+        await this.playersService.removePlayerByUserId(requestUser.userInfo.userId);
+        await this.updateRoomAnnouncement(requestUser, requestUser.playerInfo.roomInfo, 'leave');
+    }
+    async sendChatRequest(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket);
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        this.server.to(`${requestUser.playerInfo.roomInfo.roomId}`).emit('receive-chat', {
+            data: { message: data.message, eventUserInfo },
+        });
+    }
+    async socketAuthentication(socket) {
+        const requestUser = await this.playersService.getUserBySocketId({
+            socketId: socket.id,
+        });
+        if (!requestUser) {
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+        }
+        return requestUser;
+    }
+    async updateRoomAnnouncement(requestUser, requestRoom, event) {
+        console.log('!!!update room announcement!!!');
+        console.log(requestUser, requestRoom);
+        const updateRoomInfo = await this.roomService.updateRoomInfoToRoom(requestRoom.roomId);
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        this.server.to(`${requestRoom.roomId}`).emit('update-room', {
+            data: { room: updateRoomInfo, eventUserInfo, event },
+        });
+        const roomInfoList = await this.roomService.getAllRoomList();
+        this.server.except(`${requestRoom.roomId}`).emit('room-list', { data: roomInfoList });
     }
 };
 __decorate([
@@ -971,13 +1025,43 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "socketIdMapToLoginUser", null);
 __decorate([
+    (0, websockets_1.SubscribeMessage)('log-out'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_h = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _h : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "socketIdMapToLogOutUser", null);
+__decorate([
     (0, websockets_1.SubscribeMessage)('create-room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_h = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _h : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_j = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _j : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleCreateRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('enter-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_k = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _k : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleEnterRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('leave-room'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_l = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _l : Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleLeaveRoomEvent", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('send-chat'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_m = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _m : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "sendChatRequest", null);
 GamesGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
@@ -1021,6 +1105,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RoomService = void 0;
@@ -1028,7 +1123,9 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(15);
 const room_entity_1 = __webpack_require__(29);
+const ws_exception_filter_1 = __webpack_require__(32);
 const player_entity_1 = __webpack_require__(30);
+const participants_list_mapper_1 = __webpack_require__(34);
 let RoomService = class RoomService {
     constructor(roomRepository, playerRepository) {
         this.roomRepository = roomRepository;
@@ -1036,22 +1133,31 @@ let RoomService = class RoomService {
     }
     async getAllRoomList() {
         const roomList = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
-        console.log(roomList);
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, player, isSecreteRoom, isGameOn } = room;
+            const { roomId, roomTitle, maxCount, round, playerInfo, isSecreteRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
                 round,
-                participants: player.length,
+                participants: playerInfo.length,
                 isSecreteRoom,
                 isGameOn,
             };
         });
     }
     async getOneRoomByRoomId(roomId) {
-        return await this.roomRepository.findOneBy({ roomId });
+        return await this.roomRepository.findOne({
+            where: { roomId },
+            relations: { playerInfo: { socketInfo: true } },
+        });
+    }
+    async updateRoomInfoToRoom(roomId) {
+        const room = await this.getOneRoomByRoomId(roomId);
+        const { roomPassword, createdAt, updatedAt, playerInfo } = room, roomInfoToRoom = __rest(room, ["roomPassword", "createdAt", "updatedAt", "playerInfo"]);
+        const participants = (0, participants_list_mapper_1.participantsListMapper)(playerInfo);
+        const roomInfo = Object.assign(Object.assign({}, roomInfoToRoom), { participants });
+        return roomInfo;
     }
     async createRoom(room) {
         if (!room.roomTitle) {
@@ -1060,6 +1166,38 @@ let RoomService = class RoomService {
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
         const roomInsert = await this.roomRepository.insert(newRoom);
         return roomInsert.identifiers[0].roomId;
+    }
+    async enterRoom(requestUser, requestRoom) {
+        try {
+            const room = await this.getOneRoomByRoomId(requestRoom.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
+            }
+            if (room.maxCount == room.playerInfo.length) {
+                throw new ws_exception_filter_1.SocketException('정원초과로 방 입장에 실패했습니다.', 400, 'enter-room');
+            }
+            if (room.isSecreteRoom) {
+                if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
+                    throw new ws_exception_filter_1.SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
+                }
+            }
+            let isHost;
+            if (room.playerInfo.length === 0)
+                isHost = true;
+            else
+                isHost = false;
+            await this.playerRepository.insert({
+                userInfo: requestUser.userInfo.userId,
+                socketInfo: requestUser.socketId,
+                roomInfo: requestRoom.roomId,
+                isReady: false,
+                isHost,
+            });
+        }
+        catch (err) {
+            console.error(err);
+            throw new ws_exception_filter_1.SocketException(err.message, err.status, 'enter-room');
+        }
     }
 };
 RoomService = __decorate([
@@ -1146,9 +1284,9 @@ __decorate([
     __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
 ], Room.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomId, { eager: true }),
+    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomInfo, { eager: true }),
     __metadata("design:type", Array)
-], Room.prototype, "player", void 0);
+], Room.prototype, "playerInfo", void 0);
 Room = __decorate([
     (0, typeorm_1.Entity)()
 ], Room);
@@ -1180,31 +1318,34 @@ const socketIdMap_entity_1 = __webpack_require__(31);
 let Player = class Player {
 };
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, (user) => user.userId, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
     (0, typeorm_1.PrimaryColumn)(),
-    __metadata("design:type", Object)
-], Player.prototype, "userId", void 0);
+    __metadata("design:type", Number)
+], Player.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'socketId' }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, (user) => user.userId, { eager: true, onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
+    __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
+], Player.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'socketInfo' }),
     __metadata("design:type", Object)
-], Player.prototype, "socketId", void 0);
+], Player.prototype, "socketInfo", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
         onDelete: 'CASCADE',
     }),
-    (0, typeorm_1.JoinColumn)({ name: 'roomId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'roomInfo' }),
     __metadata("design:type", Object)
-], Player.prototype, "roomId", void 0);
+], Player.prototype, "roomInfo", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
-], Player.prototype, "isGameOn", void 0);
+], Player.prototype, "isReady", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
-], Player.prototype, "isGameReadyToStart", void 0);
+], Player.prototype, "isHost", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
@@ -1248,17 +1389,17 @@ __decorate([
 ], SocketIdMap.prototype, "socketId", void 0);
 __decorate([
     (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", Object)
-], SocketIdMap.prototype, "userId", void 0);
+], SocketIdMap.prototype, "userInfo", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => player_entity_1.Player, (player) => player.socketInfo),
+    __metadata("design:type", typeof (_b = typeof player_entity_1.Player !== "undefined" && player_entity_1.Player) === "function" ? _b : Object)
+], SocketIdMap.prototype, "playerInfo", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
 ], SocketIdMap.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.OneToOne)(() => player_entity_1.Player, (player) => player.socketId, { eager: true }),
-    __metadata("design:type", typeof (_c = typeof player_entity_1.Player !== "undefined" && player_entity_1.Player) === "function" ? _c : Object)
-], SocketIdMap.prototype, "player", void 0);
 SocketIdMap = __decorate([
     (0, typeorm_1.Entity)()
 ], SocketIdMap);
@@ -1267,6 +1408,66 @@ exports.SocketIdMap = SocketIdMap;
 
 /***/ }),
 /* 32 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SocketExceptionFilter = exports.SocketException = void 0;
+const common_1 = __webpack_require__(7);
+const websockets_1 = __webpack_require__(26);
+const errors_1 = __webpack_require__(33);
+class SocketException extends errors_1.WsException {
+    constructor(message, status, eventName) {
+        super({ message, status, eventName });
+    }
+}
+exports.SocketException = SocketException;
+let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
+    catch(exception, host) {
+        super.catch(exception, host);
+    }
+};
+SocketExceptionFilter = __decorate([
+    (0, common_1.Catch)(SocketException)
+], SocketExceptionFilter);
+exports.SocketExceptionFilter = SocketExceptionFilter;
+
+
+/***/ }),
+/* 33 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/websockets/errors");
+
+/***/ }),
+/* 34 */
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.participantsListMapper = void 0;
+const participantsListMapper = (playerInfo) => {
+    return playerInfo.map((player) => {
+        const { user, socketInfo, isReady, isHost } = player;
+        const { userId, nickname, profileImg } = user;
+        const { socketId } = socketInfo;
+        return { socketId, userId, nickname, profileImg, isReady, isHost };
+    });
+};
+exports.participantsListMapper = participantsListMapper;
+
+
+/***/ }),
+/* 35 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1289,48 +1490,7 @@ exports.ChatService = ChatService;
 
 
 /***/ }),
-/* 33 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SocketExceptionFilter = exports.SocketException = void 0;
-const common_1 = __webpack_require__(7);
-const websockets_1 = __webpack_require__(26);
-const errors_1 = __webpack_require__(34);
-class SocketException extends errors_1.WsException {
-    constructor(message, status, eventName) {
-        super({ message, status, eventName });
-    }
-}
-exports.SocketException = SocketException;
-let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
-    catch(exception, host) {
-        super.catch(exception, host);
-    }
-};
-SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
-], SocketExceptionFilter);
-exports.SocketExceptionFilter = SocketExceptionFilter;
-
-
-/***/ }),
-/* 34 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("@nestjs/websockets/errors");
-
-/***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1353,7 +1513,7 @@ exports.PlayersService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(15);
-const ws_exception_filter_1 = __webpack_require__(33);
+const ws_exception_filter_1 = __webpack_require__(32);
 const token_map_entity_1 = __webpack_require__(17);
 const socketIdMap_entity_1 = __webpack_require__(31);
 const player_entity_1 = __webpack_require__(30);
@@ -1364,31 +1524,46 @@ let PlayersService = class PlayersService {
         this.playerRepository = playerRepository;
     }
     async getUserBySocketId(socketId) {
-        return await this.socketIdMapRepository.findOneBy(socketId);
+        const user = await this.socketIdMapRepository.findOne({
+            where: socketId,
+            relations: { playerInfo: { roomInfo: true } },
+        });
+        return user;
     }
-    async getCurrentRoomBySocketId(socketId) {
-        const user = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.player.roomId : null;
+    async getUserByUserID(userId) {
+        const user = await this.socketIdMapRepository.findOne({
+            where: userId,
+            relations: { playerInfo: { roomInfo: true } },
+        });
+        return user;
     }
     async removeSocketBySocketId(socketId) {
-        return await this.socketIdMapRepository.remove(socketId);
+        return await this.socketIdMapRepository.delete(socketId);
+    }
+    async removePlayerByUserId(userId) {
+        return await this.playerRepository.delete(userId);
     }
     async socketIdMapToLoginUser(token, socketId) {
         try {
             const requestUser = await this.tokenMapRepository.findOneBy({
                 token,
             });
-            const userId = requestUser.userId.userId;
+            const userId = requestUser.userInfo.userId;
+            console.log('userId from tokenMap: ', userId);
             if (!userId) {
                 throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
             }
             if (await this.getUserBySocketId({ socketId })) {
+                console.log('socketId 중복!');
                 throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
-            if (await this.socketIdMapRepository.findOneBy({ userId })) {
+            const userInfo = await this.getUserByUserID({ userInfo: userId });
+            console.log(userInfo);
+            if (userInfo) {
+                console.log('userId 중복!');
                 throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
-            const user = { socketId, userId };
+            const user = { socketId, userInfo: userId };
             return await this.socketIdMapRepository.insert(user);
         }
         catch (err) {
@@ -1408,14 +1583,33 @@ exports.PlayersService = PlayersService;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.eventUserInfoConstructor = void 0;
+function eventUserInfoConstructor(requestUser) {
+    return {
+        socketId: requestUser.socketId,
+        userId: requestUser.userInfo.userId,
+        nickname: requestUser.userInfo.nickname,
+        profileImg: requestUser.userInfo.profileImg,
+    };
+}
+exports.eventUserInfoConstructor = eventUserInfoConstructor;
+
+
+/***/ }),
+/* 38 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/config");
 
 /***/ }),
-/* 37 */
+/* 39 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1451,7 +1645,7 @@ exports.LoggerMiddleware = LoggerMiddleware;
 
 
 /***/ }),
-/* 38 */
+/* 40 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1486,7 +1680,7 @@ exports.AppController = AppController;
 
 
 /***/ }),
-/* 39 */
+/* 41 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1519,14 +1713,14 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 
 
 /***/ }),
-/* 40 */
+/* 42 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("express-session");
 
 /***/ }),
-/* 41 */
+/* 43 */
 /***/ ((module) => {
 
 "use strict";
@@ -1594,7 +1788,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("a3333347e252a33ea729")
+/******/ 		__webpack_require__.h = () => ("4d392694bae8e7106d6d")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

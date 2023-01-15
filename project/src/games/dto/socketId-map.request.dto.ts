@@ -20,5 +20,5 @@ export class LoginUserToSocketIdMapDto {
         required: true,
         description: 'userId',
     })
-    public userId: number | User;
+    public userInfo: number | User;
 }

@@ -15,8 +15,8 @@ export class TokenMap {
     tokenMapId: number;
 
     @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
-    @JoinColumn({ name: 'userId' })
-    userId: User;
+    @JoinColumn({ name: 'userInfo' })
+    userInfo: User;
 
     @Column({ unique: true })
     token: string;

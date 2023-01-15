@@ -4,6 +4,7 @@ import {
     CreateDateColumn,
     Entity,
     PrimaryColumn,
+    PrimaryGeneratedColumn,
     UpdateDateColumn,
     OneToOne,
     ManyToOne,
@@ -14,26 +15,28 @@ import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Player {
-    @OneToOne(() => User, (user) => user.userId, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
     @PrimaryColumn()
-    userId: User | number;
+    userInfo: number;
 
-    @OneToOne(() => SocketIdMap, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'socketId' })
-    socketId: SocketIdMap | number;
+    @OneToOne(() => User, (user) => user.userId, { eager: true, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userInfo' })
+    user: User;
+
+    @OneToOne(() => SocketIdMap, { onDelete: 'CASCADE', eager: true })
+    @JoinColumn({ name: 'socketInfo' })
+    socketInfo: SocketIdMap | string;
 
     @ManyToOne(() => Room, (room) => room.roomId, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'roomId' })
-    roomId: Room | number;
+    @JoinColumn({ name: 'roomInfo' })
+    roomInfo: Room | number;
 
     @Column()
-    isGameOn: boolean;
+    isReady: boolean;
 
     @Column()
-    isGameReadyToStart: boolean;
+    isHost: boolean;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -7,8 +7,6 @@ import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dt
 import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
-import { User } from 'src/users/entities/user.entity';
-import { request } from 'http';
 
 @Injectable()
 export class PlayersService {
@@ -22,16 +20,27 @@ export class PlayersService {
     ) {}
 
     async getUserBySocketId(socketId: { socketId: string }): Promise<SocketIdMap> {
-        return await this.socketIdMapRepository.findOneBy(socketId);
+        const user: SocketIdMap = await this.socketIdMapRepository.findOne({
+            where: socketId,
+            relations: { playerInfo: { roomInfo: true } },
+        });
+        return user;
     }
 
-    async getCurrentRoomBySocketId(socketId: { socketId: string }): Promise<number | any> {
-        const user: SocketIdMap = await this.socketIdMapRepository.findOneBy(socketId);
-        return user ? user.player.roomId : null;
+    async getUserByUserID(userId: { userInfo: number }): Promise<SocketIdMap> {
+        const user: SocketIdMap = await this.socketIdMapRepository.findOne({
+            where: userId,
+            relations: { playerInfo: { roomInfo: true } },
+        });
+        return user;
     }
 
-    async removeSocketBySocketId(socketId: { socketId: string }) {
-        return await this.socketIdMapRepository.remove(socketId);
+    async removeSocketBySocketId(socketId: string) {
+        return await this.socketIdMapRepository.delete(socketId);
+    }
+
+    async removePlayerByUserId(userId: number) {
+        return await this.playerRepository.delete(userId);
     }
 
     async socketIdMapToLoginUser(token: string, socketId: string) {
@@ -40,7 +49,8 @@ export class PlayersService {
             const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({
                 token,
             });
-            const userId: number = requestUser.userId.userId;
+            const userId: number = requestUser.userInfo.userId;
+            console.log('userId from tokenMap: ', userId);
 
             if (!userId) {
                 throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
@@ -48,16 +58,21 @@ export class PlayersService {
 
             // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
             if (await this.getUserBySocketId({ socketId })) {
+                console.log('socketId 중복!');
                 throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
 
             // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
-            if (await this.socketIdMapRepository.findOneBy({ userId })) {
+            const userInfo = await this.getUserByUserID({ userInfo: userId });
+            console.log(userInfo);
+
+            if (userInfo) {
+                console.log('userId 중복!');
                 throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
             }
 
             // 위의 검사를 통과했다면, socketIdMap에 매핑
-            const user: LoginUserToSocketIdMapDto = { socketId, userId };
+            const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
             return await this.socketIdMapRepository.insert(user);
         } catch (err) {
             console.error(err);

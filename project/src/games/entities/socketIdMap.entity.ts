@@ -15,12 +15,12 @@ export class SocketIdMap {
     socketId: string;
 
     @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
-    @JoinColumn({ name: 'userId' })
-    userId: User | number;
+    @JoinColumn({ name: 'userInfo' })
+    userInfo: User | number;
+
+    @OneToOne(() => Player, (player) => player.socketInfo)
+    playerInfo: Player;
 
     @CreateDateColumn()
     createdAt: Date;
-
-    @OneToOne(() => Player, (player) => player.socketId, { eager: true })
-    player: Player;
 }
