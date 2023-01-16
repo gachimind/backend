@@ -168,7 +168,6 @@ const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
 const http_exception_filter_1 = __webpack_require__(41);
-const ws_exception_filter_1 = __webpack_require__(32);
 const session = __webpack_require__(42);
 const passport = __webpack_require__(43);
 async function bootstrap() {
@@ -176,7 +175,6 @@ async function bootstrap() {
     const port = process.env.PORT || 3000;
     app.enableCors();
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
-    app.useGlobalFilters(new ws_exception_filter_1.SocketExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
@@ -860,9 +858,9 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const games_gateway_1 = __webpack_require__(25);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(35);
+const chat_service_1 = __webpack_require__(37);
 const users_module_1 = __webpack_require__(8);
-const players_service_1 = __webpack_require__(36);
+const players_service_1 = __webpack_require__(35);
 const room_entity_1 = __webpack_require__(29);
 const player_entity_1 = __webpack_require__(30);
 const socketIdMap_entity_1 = __webpack_require__(31);
@@ -902,15 +900,16 @@ exports.GamesGateway = void 0;
 const websockets_1 = __webpack_require__(26);
 const socket_io_1 = __webpack_require__(27);
 const room_service_1 = __webpack_require__(28);
-const chat_service_1 = __webpack_require__(35);
 const ws_exception_filter_1 = __webpack_require__(32);
-const players_service_1 = __webpack_require__(36);
-const event_user_info_constructor_1 = __webpack_require__(37);
+const players_service_1 = __webpack_require__(35);
+const event_user_info_constructor_1 = __webpack_require__(36);
+const chat_service_1 = __webpack_require__(37);
+const common_1 = __webpack_require__(7);
 let GamesGateway = class GamesGateway {
-    constructor(roomService, chatService, playersService) {
+    constructor(roomService, playersService, chatService) {
         this.roomService = roomService;
-        this.chatService = chatService;
         this.playersService = playersService;
+        this.chatService = chatService;
     }
     afterInit(server) {
         console.log('webSocketServer init');
@@ -921,7 +920,10 @@ let GamesGateway = class GamesGateway {
         socket.emit('room-list', { data });
     }
     async handleDisconnect(socket) {
-        await this.playersService.removeSocketBySocketId(socket.id);
+        const requestUser = await this.playersService.getUserBySocketId(socket.id);
+        if (requestUser) {
+            await this.socketIdMapToLogOutUser(socket);
+        }
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
@@ -935,9 +937,12 @@ let GamesGateway = class GamesGateway {
         socket.emit('log-in', { message: '로그인 성공!' });
     }
     async socketIdMapToLogOutUser(socket) {
-        this.socketAuthentication(socket);
-        await this.handleLeaveRoomEvent(socket);
+        const requestUser = await this.socketAuthentication(socket);
         await this.playersService.removeSocketBySocketId(socket.id);
+        if (requestUser.playerInfo) {
+            socket.leave(`${requestUser.playerInfo.roomInfo}`);
+            await this.updateRoomAnnouncement(requestUser, requestUser.playerInfo.roomInfo, 'log-out');
+        }
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
@@ -962,37 +967,37 @@ let GamesGateway = class GamesGateway {
         await this.updateRoomAnnouncement(requestUser, requestRoom, 'enter');
     }
     async handleLeaveRoomEvent(socket) {
-        console.log('!!!leave room request!!!');
         const requestUser = await this.socketAuthentication(socket);
         if (!requestUser.playerInfo) {
-            console.log('palyerInfo 없음');
             throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'leave-room');
         }
-        console.log('leave room, roomInfo', requestUser.playerInfo.roomInfo);
-        socket.leave(`${requestUser.playerInfo.roomInfo.roomId}`);
-        await this.playersService.removePlayerByUserId(requestUser.userInfo.userId);
+        socket.leave(`${requestUser.playerInfo.roomInfo}`);
+        await this.playersService.removePlayerByUserId(requestUser.userInfo);
         await this.updateRoomAnnouncement(requestUser, requestUser.playerInfo.roomInfo, 'leave');
     }
     async sendChatRequest(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket);
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
-        this.server.to(`${requestUser.playerInfo.roomInfo.roomId}`).emit('receive-chat', {
-            data: { message: data.message, eventUserInfo },
-        });
+        this.server
+            .to(`${requestUser.playerInfo.roomInfo}`)
+            .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
     }
     async socketAuthentication(socket) {
-        const requestUser = await this.playersService.getUserBySocketId({
-            socketId: socket.id,
-        });
+        const requestUser = await this.playersService.getUserBySocketId(socket.id);
         if (!requestUser) {
             throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
         }
         return requestUser;
     }
     async updateRoomAnnouncement(requestUser, requestRoom, event) {
-        console.log('!!!update room announcement!!!');
-        console.log(requestUser, requestRoom);
         const updateRoomInfo = await this.roomService.updateRoomInfoToRoom(requestRoom.roomId);
+        if (!updateRoomInfo.participants.length) {
+            await this.roomService.removeRoomByRoomId(updateRoomInfo.roomId);
+            const roomInfoList = await this.roomService.getAllRoomList();
+            return this.server
+                .except(`${requestRoom.roomId}`)
+                .emit('room-list', { data: roomInfoList });
+        }
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         this.server.to(`${requestRoom.roomId}`).emit('update-room', {
             data: { room: updateRoomInfo, eventUserInfo, event },
@@ -1064,12 +1069,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
 GamesGateway = __decorate([
+    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
     (0, websockets_1.WebSocketGateway)({
         cors: {
             origin: '*',
         },
     }),
-    __metadata("design:paramtypes", [typeof (_a = typeof room_service_1.RoomService !== "undefined" && room_service_1.RoomService) === "function" ? _a : Object, typeof (_b = typeof chat_service_1.ChatService !== "undefined" && chat_service_1.ChatService) === "function" ? _b : Object, typeof (_c = typeof players_service_1.PlayersService !== "undefined" && players_service_1.PlayersService) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof room_service_1.RoomService !== "undefined" && room_service_1.RoomService) === "function" ? _a : Object, typeof (_b = typeof players_service_1.PlayersService !== "undefined" && players_service_1.PlayersService) === "function" ? _b : Object, typeof (_c = typeof chat_service_1.ChatService !== "undefined" && chat_service_1.ChatService) === "function" ? _c : Object])
 ], GamesGateway);
 exports.GamesGateway = GamesGateway;
 
@@ -1152,6 +1158,9 @@ let RoomService = class RoomService {
             where: { roomId },
             relations: { playerInfo: { socketInfo: true } },
         });
+    }
+    async removeRoomByRoomId(roomId) {
+        return await this.roomRepository.delete(roomId);
     }
     async updateRoomInfoToRoom(roomId) {
         const room = await this.getOneRoomByRoomId(roomId);
@@ -1433,6 +1442,7 @@ exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         super.catch(exception, host);
+        console.error(exception);
     }
 };
 SocketExceptionFilter = __decorate([
@@ -1479,29 +1489,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ChatService = void 0;
-const common_1 = __webpack_require__(7);
-let ChatService = class ChatService {
-};
-ChatService = __decorate([
-    (0, common_1.Injectable)()
-], ChatService);
-exports.ChatService = ChatService;
-
-
-/***/ }),
-/* 36 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -1526,7 +1513,7 @@ let PlayersService = class PlayersService {
     }
     async getUserBySocketId(socketId) {
         const user = await this.socketIdMapRepository.findOne({
-            where: socketId,
+            where: { socketId },
             relations: { playerInfo: { roomInfo: true } },
         });
         return user;
@@ -1579,7 +1566,7 @@ exports.PlayersService = PlayersService;
 
 
 /***/ }),
-/* 37 */
+/* 36 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -1595,6 +1582,29 @@ function eventUserInfoConstructor(requestUser) {
     };
 }
 exports.eventUserInfoConstructor = eventUserInfoConstructor;
+
+
+/***/ }),
+/* 37 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChatService = void 0;
+const common_1 = __webpack_require__(7);
+let ChatService = class ChatService {
+};
+ChatService = __decorate([
+    (0, common_1.Injectable)()
+], ChatService);
+exports.ChatService = ChatService;
 
 
 /***/ }),
@@ -1784,7 +1794,7 @@ module.exports = require("passport");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("9d983472f3840be4e7ba")
+/******/ 		__webpack_require__.h = () => ("4725ae72725f14f30931")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

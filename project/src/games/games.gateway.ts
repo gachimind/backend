@@ -10,20 +10,23 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RoomService } from './room.service';
-import { ChatService } from './chat.service';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
 import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
-import { LoginUserToSocketIdMapDto } from './dto/socketId-map.request.dto';
-import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import {
+    SocketException,
+    SocketExceptionFilter,
+} from 'src/common/exceptionFilters/ws-exception.filter';
 import { PlayersService } from './players.service';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
 import { SocketIdMap } from './entities/socketIdMap.entity';
-import { Room } from './entities/room.entity';
 import { eventUserInfoConstructor } from './util/event.user.info.constructor';
 import { EventUserInfoDto } from './dto/evnet-user.info.dto';
+import { ChatService } from './chat.service';
+import { UseFilters } from '@nestjs/common';
 
+@UseFilters(SocketExceptionFilter)
 @WebSocketGateway({
     cors: {
         origin: '*',
@@ -32,8 +35,8 @@ import { EventUserInfoDto } from './dto/evnet-user.info.dto';
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly roomService: RoomService,
-        private readonly chatService: ChatService,
         private readonly playersService: PlayersService,
+        private readonly chatService: ChatService,
     ) {}
 
     @WebSocketServer()
@@ -50,8 +53,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     async handleDisconnect(@ConnectedSocket() socket: Socket) {
-        // 접속이 종료된 회원의 정보를 socketIdMap에서 삭제
-        await this.playersService.removeSocketBySocketId(socket.id);
+        const requestUser: SocketIdMap = await this.playersService.getUserBySocketId(socket.id);
+        if (requestUser) {
+            await this.socketIdMapToLogOutUser(socket);
+        }
         console.log('disconnected socket', socket.id);
     }
 
@@ -76,13 +81,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('log-out')
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
-        this.socketAuthentication(socket);
-
-        // 방에서 로그아웃 한 경우 leave-room event 재사용
-        await this.handleLeaveRoomEvent(socket);
-
+        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket);
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
+        if (requestUser.playerInfo) {
+            socket.leave(`${requestUser.playerInfo.roomInfo.roomId}`);
+            await this.updateRoomAnnouncement(
+                requestUser,
+                requestUser.playerInfo.roomInfo,
+                'log-out',
+            );
+        }
 
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
@@ -134,20 +144,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('leave-room')
     async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
-        console.log('!!!leave room request!!!');
-
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket);
+        // request user가 방에 있는지 확인
         if (!requestUser.playerInfo) {
-            console.log('palyerInfo 없음');
-
             throw new SocketException('잘못된 요청입니다.', 400, 'leave-room');
         }
-        console.log('leave room, roomInfo', requestUser.playerInfo.roomInfo);
-
         // request user를 leave처리
         socket.leave(`${requestUser.playerInfo.roomInfo.roomId}`);
-
         // request user를 player 테이블에서 삭제
         await this.playersService.removePlayerByUserId(requestUser.userInfo.userId);
 
@@ -162,15 +166,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const requestUser: SocketIdMap = await this.socketAuthentication(socket);
         const eventUserInfo = eventUserInfoConstructor(requestUser);
 
-        this.server.to(`${requestUser.playerInfo.roomInfo.roomId}`).emit('receive-chat', {
-            data: { message: data.message, eventUserInfo },
-        });
+        this.server
+            .to(`${requestUser.playerInfo.roomInfo.roomId}`)
+            .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
     }
 
     async socketAuthentication(socket: Socket) {
-        const requestUser: SocketIdMap = await this.playersService.getUserBySocketId({
-            socketId: socket.id,
-        });
+        const requestUser: SocketIdMap = await this.playersService.getUserBySocketId(socket.id);
         if (!requestUser) {
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
         }
@@ -182,6 +184,15 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const updateRoomInfo: RoomInfoToRoomDto = await this.roomService.updateRoomInfoToRoom(
             requestRoom.roomId,
         );
+        // 방 안에 player가 아무도 없다면, 방 폭파
+        if (!updateRoomInfo.participants.length) {
+            await this.roomService.removeRoomByRoomId(updateRoomInfo.roomId);
+            const roomInfoList = await this.roomService.getAllRoomList();
+            return this.server
+                .except(`${requestRoom.roomId}`)
+                .emit('room-list', { data: roomInfoList });
+        }
+
         const eventUserInfo: EventUserInfoDto = eventUserInfoConstructor(requestUser);
         this.server.to(`${requestRoom.roomId}`).emit('update-room', {
             data: { room: updateRoomInfo, eventUserInfo, event },

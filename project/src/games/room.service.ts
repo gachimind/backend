@@ -1,21 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOperator } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Room } from './entities/room.entity';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
 import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
-import {
-    SocketException,
-    SocketExceptionStatus,
-} from 'src/common/exceptionFilters/ws-exception.filter';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
-import { RoomParticipantsDto } from './dto/room.participants.dto';
 import { Player } from './entities/player.entity';
-import { User } from 'src/users/entities/user.entity';
-import { SocketIdMap } from './entities/socketIdMap.entity';
 import { participantsListMapper } from './util/participants-list.mapper';
 
 @Injectable()
@@ -50,6 +44,10 @@ export class RoomService {
             where: { roomId },
             relations: { playerInfo: { socketInfo: true } },
         });
+    }
+
+    async removeRoomByRoomId(roomId: number): Promise<number | any> {
+        return await this.roomRepository.delete(roomId);
     }
 
     async updateRoomInfoToRoom(roomId: number): Promise<RoomInfoToRoomDto> {

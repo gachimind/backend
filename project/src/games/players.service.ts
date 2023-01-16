@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Socket } from 'socket.io';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class PlayersService {
@@ -19,9 +19,9 @@ export class PlayersService {
         private readonly playerRepository: Repository<Player>,
     ) {}
 
-    async getUserBySocketId(socketId: { socketId: string }): Promise<SocketIdMap> {
+    async getUserBySocketId(socketId: string): Promise<SocketIdMap> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOne({
-            where: socketId,
+            where: { socketId },
             relations: { playerInfo: { roomInfo: true } },
         });
         return user;
@@ -36,11 +36,11 @@ export class PlayersService {
         return user;
     }
 
-    async removeSocketBySocketId(socketId: string) {
+    async removeSocketBySocketId(socketId: string): Promise<number | any> {
         return await this.socketIdMapRepository.delete(socketId);
     }
 
-    async removePlayerByUserId(userId: number) {
+    async removePlayerByUserId(userId: number | User): Promise<number | any> {
         return await this.playerRepository.delete(userId);
     }
 
