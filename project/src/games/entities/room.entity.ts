@@ -49,6 +49,6 @@ export class Room {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => Player, (player) => player.roomInfo, { eager: true })
-    playerInfo: Player[];
+    @OneToMany(() => Player, (player) => player.room, { eager: true })
+    players: Player[];
 }

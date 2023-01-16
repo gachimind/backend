@@ -15,14 +15,6 @@ export class UsersService {
         private readonly tokenMapRepository: Repository<TokenMap>,
     ) {}
 
-    async createTestUser(user) {
-        return await this.usersRepository.insert(user);
-    }
-
-    async createTestToken(user) {
-        return await this.tokenMapRepository.insert(user);
-    }
-
     // 카카오 로그인
     async validateUser(details: UserDetails) {
         const user = await this.usersRepository.findOneBy({

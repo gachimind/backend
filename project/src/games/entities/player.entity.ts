@@ -17,20 +17,23 @@ import { SocketIdMap } from './socketIdMap.entity';
 export class Player {
     @PrimaryColumn()
     userInfo: number;
-
-    @OneToOne(() => User, (user) => user.userId, { eager: true, onDelete: 'CASCADE' })
+    @OneToOne(() => User, { eager: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
+    @Column({ name: 'socketInfo' })
+    socketInfo: string;
     @OneToOne(() => SocketIdMap, { onDelete: 'CASCADE', eager: true })
     @JoinColumn({ name: 'socketInfo' })
-    socketInfo: SocketIdMap | string;
+    socket: SocketIdMap;
 
+    @Column({ name: 'roomInfo' })
+    roomInfo: number;
     @ManyToOne(() => Room, (room) => room.roomId, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({ name: 'roomInfo' })
-    roomInfo: Room | number;
+    room: Room;
 
     @Column()
     isReady: boolean;

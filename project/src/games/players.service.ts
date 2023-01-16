@@ -22,18 +22,33 @@ export class PlayersService {
     async getUserBySocketId(socketId: string): Promise<SocketIdMap> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOne({
             where: { socketId },
-            relations: { playerInfo: { roomInfo: true } },
+            relations: {
+                player: { room: true },
+            },
         });
         return user;
     }
 
     async getUserByUserID(userId: number): Promise<SocketIdMap> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOne({
-            where: { userInfo: { userId } },
-            relations: { playerInfo: { roomInfo: true } },
+            where: { userInfo: userId },
+            relations: { player: { room: true } },
         });
 
         return user;
+    }
+
+    async getPlayerBySocketId(socketInfo: string): Promise<Player> {
+        const player: Player = await this.playerRepository.findOne({
+            where: { socketInfo },
+            relations: { room: true },
+            select: { roomInfo: true },
+        });
+        return player;
+    }
+
+    async updatePlayerStatusByUserId(user) {
+        await this.playerRepository.save(user);
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
@@ -45,33 +60,26 @@ export class PlayersService {
     }
 
     async socketIdMapToLoginUser(token: string, socketId: string) {
-        try {
-            // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
-            const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({
-                token,
-            });
-            const userId: number = requestUser.userInfo.userId;
+        // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
+        const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({ token });
+        const userId: number = requestUser.userInfo;
 
-            if (!userId) {
-                throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
-            }
-
-            // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
-            if (await this.getUserBySocketId({ socketId })) {
-                throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-            }
-
-            // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
-            if (await this.getUserByUserID(userId)) {
-                throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
-            }
-
-            // 위의 검사를 통과했다면, socketIdMap에 매핑
-            const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
-            return await this.socketIdMapRepository.insert(user);
-        } catch (err) {
-            console.error(err);
-            throw new SocketException(err.message, 400, 'log-in');
+        if (!userId) {
+            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
         }
+
+        // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
+        if (await this.getUserBySocketId(socketId)) {
+            throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+        }
+
+        // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
+        if (await this.getUserByUserID(userId)) {
+            throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+        }
+
+        // 위의 검사를 통과했다면, socketIdMap에 매핑
+        const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
+        return await this.socketIdMapRepository.insert(user);
     }
 }

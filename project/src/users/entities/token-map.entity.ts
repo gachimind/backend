@@ -14,12 +14,14 @@ export class TokenMap {
     @PrimaryGeneratedColumn()
     tokenMapId: number;
 
-    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
-    @JoinColumn({ name: 'userInfo' })
-    userInfo: User;
-
     @Column({ unique: true })
     token: string;
+
+    @Column({ name: 'userInfo' })
+    userInfo: number;
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
+    @JoinColumn({ name: 'userInfo' })
+    user: User;
 
     @CreateDateColumn()
     createdAt: Date;

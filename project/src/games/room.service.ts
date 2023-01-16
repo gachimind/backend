@@ -25,14 +25,13 @@ export class RoomService {
         const roomList: Room[] = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
 
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, playerInfo, isSecreteRoom, isGameOn } =
-                room;
+            const { roomId, roomTitle, maxCount, round, players, isSecreteRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
                 round,
-                participants: playerInfo.length,
+                participants: players.length,
                 isSecreteRoom,
                 isGameOn,
             };
@@ -42,7 +41,7 @@ export class RoomService {
     async getOneRoomByRoomId(roomId: number): Promise<Room> {
         return await this.roomRepository.findOne({
             where: { roomId },
-            relations: { playerInfo: { socketInfo: true } },
+            relations: { players: { socket: true } },
         });
     }
 
@@ -53,19 +52,42 @@ export class RoomService {
     async updateRoomInfoToRoom(roomId: number): Promise<RoomInfoToRoomDto> {
         const room: Room = await this.getOneRoomByRoomId(roomId);
 
-        const { roomPassword, createdAt, updatedAt, playerInfo, ...roomInfoToRoom } = room;
-        const participants = participantsListMapper(playerInfo);
+        const {
+            roomTitle,
+            maxCount,
+            round,
+            readyTime,
+            speechTime,
+            discussionTime,
+            isSecreteRoom,
+            isGameOn,
+            isGameReadyToStart,
+            players,
+        } = room;
+        const participants = participantsListMapper(players);
         const roomInfo: RoomInfoToRoomDto = {
-            ...roomInfoToRoom,
+            roomId,
+            roomTitle,
+            maxCount,
+            round,
+            readyTime,
+            speechTime,
+            discussionTime,
+            isSecreteRoom,
+            isGameOn,
+            isGameReadyToStart,
             participants,
         };
 
         return roomInfo;
     }
 
-    async createRoom(room: CreateRoomRequestDto): Promise<number | void> {
+    async createRoom(room: CreateRoomRequestDto): Promise<number> {
         if (!room.roomTitle) {
             room.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
+        }
+        if (room.isSecreteRoom && !room.roomPassword) {
+            throw new SocketException('잘못된 요청입니다.', 400, 'create-room');
         }
         const newRoom: RoomDataInsertDto = {
             ...room,
@@ -81,41 +103,36 @@ export class RoomService {
         requestUser: LoginUserToSocketIdMapDto,
         requestRoom: EnterRoomRequestDto,
     ): Promise<void> {
-        try {
-            // 1. 방이 존재하는지 확인, db에서 방 정보 조회
-            const room: Room = await this.getOneRoomByRoomId(requestRoom.roomId);
+        // 1. 방이 존재하는지 확인, db에서 방 정보 조회
+        const room: Room = await this.getOneRoomByRoomId(requestRoom.roomId);
 
-            if (!room) {
+        if (!room) {
+            throw new SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
+        }
+
+        // 2. 정원 초과 확인
+        if (room.maxCount == room.players.length) {
+            throw new SocketException('정원초과로 방 입장에 실패했습니다.', 400, 'enter-room');
+        }
+
+        // 3. 비밀방이라면 비밀번호 확인
+        if (room.isSecreteRoom) {
+            if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
                 throw new SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
             }
-
-            // 2. 정원 초과 확인
-            if (room.maxCount == room.playerInfo.length) {
-                throw new SocketException('정원초과로 방 입장에 실패했습니다.', 400, 'enter-room');
-            }
-
-            // 3. 비밀방이라면 비밀번호 확인
-            if (room.isSecreteRoom) {
-                if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
-                    throw new SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
-                }
-            }
-
-            // 4. 검사를 모두 통과하면 유저를 방에 입장시킴
-            let isHost;
-            if (room.playerInfo.length === 0) isHost = true;
-            else isHost = false;
-
-            await this.playerRepository.insert({
-                userInfo: requestUser.userInfo.userId,
-                socketInfo: requestUser.socketId,
-                roomInfo: requestRoom.roomId,
-                isReady: false,
-                isHost,
-            });
-        } catch (err) {
-            console.error(err);
-            throw new SocketException(err.message, err.status, 'enter-room');
         }
+
+        // 4. 검사를 모두 통과하면 유저를 방에 입장시킴
+        let isHost;
+        if (room.players.length === 0) isHost = true;
+        else isHost = false;
+
+        await this.playerRepository.insert({
+            userInfo: requestUser.userInfo,
+            socketInfo: requestUser.socketId,
+            roomInfo: requestRoom.roomId,
+            isReady: false,
+            isHost,
+        });
     }
 }
