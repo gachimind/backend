@@ -53,8 +53,8 @@ export class UsersController {
     }
 
     // 회원 정보 상세 조회
-    @Get(':userId')
-    getUserDetailsByUserId(@Param('userId') userId: number) {
-        return this.usersService.getUserDetailsByUserId(userId);
+    @Get(':accessToken')
+    getUserDetailsByUserId(@Param('accessToken') accessToken: string) {
+        return this.usersService.getUserDetailsByUserId(accessToken);
     }
 }

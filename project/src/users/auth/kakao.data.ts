@@ -1,6 +1,6 @@
 export type UserDetails = {
     id: number;
-    userId: string;
+    userId: number;
     email: string;
     nickname: string;
     profileImg: string;

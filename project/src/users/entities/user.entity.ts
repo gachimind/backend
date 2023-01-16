@@ -6,6 +6,8 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+import { JoinColumn } from 'typeorm/decorator/relations/JoinColumn';
+import { OneToOne } from 'typeorm/decorator/relations/OneToOne';
 
 @Entity()
 export class User {
@@ -13,7 +15,7 @@ export class User {
     id: number;
 
     @Column({ unique: true, length: 50 })
-    userId: string;
+    userId: number;
 
     @Column({ length: 50 })
     email: string;
@@ -23,6 +25,9 @@ export class User {
 
     @Column('text')
     profileImg: string;
+
+    @Column({ unique: true })
+    accessToken: string;
 
     @CreateDateColumn()
     createdAt: Date;

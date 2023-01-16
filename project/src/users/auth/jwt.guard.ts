@@ -24,14 +24,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     // 토큰 검증
-    async validate(token: string) {
+    async validate(accessToken: string) {
         try {
-            const { userId } = await this.userService.tokenValidate(token);
+            const { userId } = await this.userService.tokenValidate(accessToken);
             return userId;
         } catch (error) {
             switch (error.message) {
                 // 토큰 오류 판단
-                case 'invalid token':
+                case 'invalid accessToken':
                     throw new HttpException('유효하지 않은 토큰입니다.', 401);
 
                 case 'jwt expired':

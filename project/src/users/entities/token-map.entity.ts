@@ -4,7 +4,7 @@ import { User } from './user.entity';
 @Entity()
 export class TokenMap {
     @PrimaryColumn()
-    token: string;
+    accessToken: string;
 
     @Column()
     userId: number;

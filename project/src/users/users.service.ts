@@ -30,14 +30,14 @@ export class UsersService {
         return this.usersRepository.save(user);
     }
     e;
-    async findUserById(userId: string) {
+    async findUserById(userId: number) {
         const user = await this.usersRepository.findOneBy({ userId });
         return user;
     }
 
     // 토큰 검증
-    async tokenValidate(token: string) {
-        return await this.jwtService.verify(token, {
+    async tokenValidate(accessToken: string) {
+        return await this.jwtService.verify(accessToken, {
             secret: process.env.TOKEN_SECRETE_KEY,
         });
     }
@@ -52,18 +52,19 @@ export class UsersService {
             secret: process.env.TOKEN_SECRETE_KEY,
             expiresIn: '24h',
         });
-        return accessToken;
+        return await this.usersRepository.save({ accessToken });
     }
 
     // 회원 정보 상세 조회
-    async getUserDetailsByUserId(userId: any): Promise<User> {
+    async getUserDetailsByUserId(accessToken: string): Promise<User> {
         const user = await this.usersRepository.findOne({
             select: { userId: true, email: true, nickname: true, profileImg: true },
-            where: { userId },
+            where: { accessToken },
         });
         if (!user) {
             throw new HttpException('회원 인증에 실패했습니다.', 402);
         }
+
         return user;
     }
 }
