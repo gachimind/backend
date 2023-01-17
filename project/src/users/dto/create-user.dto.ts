@@ -4,15 +4,6 @@ import { ApiProperty } from '@nestjs/swagger';
 // OAuth 서버에서 유저 정보를 넘겨 받아 우리 db에 생성할 때 사용
 //
 export class CreateUserDto {
-    @IsNumber()
-    @IsOptional()
-    @ApiProperty({
-        example: 1,
-        required: false,
-        description: 'OAuth 서버에서 받아온 회원의 id를 게임 서버 db에 저장',
-    })
-    readonly userId: number;
-
     @IsString()
     @IsEmail()
     @ApiProperty({

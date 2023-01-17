@@ -3,14 +3,14 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    PrimaryColumn,
+    PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
 export class User {
-    @PrimaryColumn()
-    userId: number; // kakaoId를 userId로 넣고 PK로 사용
+    @PrimaryGeneratedColumn()
+    userId: number; // 자동 생성
 
     @Column({ unique: true, length: 50 })
     email: string | null;

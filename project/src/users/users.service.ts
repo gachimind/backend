@@ -17,30 +17,44 @@ export class UsersService {
     ) {}
 
     async createUser(details: CreateUserDto): Promise<User> {
-        const user = await this.usersRepository.save(details);
-        return user;
+        return await this.usersRepository.save(details);
     }
 
-    async findUserByUserId(userId: number): Promise<User> {
-        return await this.usersRepository.findOne({ where: { userId } });
+    async findUserByNickNameOrEmail(nickname: string, email: string): Promise<User[]> {
+        console.log('findUserByNicknameOrEmail', { nickname, email });
+
+        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
     }
 
-    async validateUserByUserId(userDetails) {
-        let user: User = await this.findUserByUserId(userDetails.userId);
+    async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
+        const users: User[] = await this.findUserByNickNameOrEmail(
+            userData.nickname,
+            userData.email,
+        );
+        let user = users[0];
+        let isNewUser = false;
         if (!user) {
-            user = await this.createUser(userDetails);
+            user = await this.createUser(user);
+            isNewUser = true;
         }
-        return user;
+        return { user, isNewUser };
     }
 
     // AccessToken 생성
-    async createToken(user: User): Promise<string> {
-        const payload = { userId: user.userId };
+    async createToken(user: User, isNewUSer: boolean): Promise<string> {
+        const payload = {}; // 공갈빵 만들기
         const token: string = this.jwtService.sign({
             payload,
         });
-        console.log('UsersSevice, createToken() token:', token);
-        await this.tokenMapRepository.save({ userInfo: user.userId, token: token });
+        if (isNewUSer) {
+            await this.tokenMapRepository.save({
+                userInfo: user.userId,
+                token: token,
+            });
+        } else {
+            await this.tokenMapRepository.update({ user }, { token: token });
+        }
+
         return token;
     }
 

@@ -21,8 +21,6 @@ import { User } from './entities/user.entity';
 @Controller('api/users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
-    // 에러핸들링 -> throw new HttpException(message, status)
-
     // 카카로 로그인
     @Get('login/kakao')
     @UseGuards(KakaoAuthGuard)
@@ -34,11 +32,16 @@ export class UsersController {
     @UseGuards(KakaoAuthGuard)
     async kakaoLoginRedirect(
         @Param('code') code: string,
-        @Req() req,
+        @Req() req: { user: { user: User; isNewUser: boolean } },
         @Res({ passthrough: true }) res: Response,
     ): Promise<any> {
-        const token: string = await this.usersService.createToken(req.user);
-        res.redirect('http://localhost:3000/login?token=' + token);
+        if (!req.user) {
+            throw new HttpException('회원 인증에 실패하였습니다.', 401);
+        }
+        const { user, isNewUser } = req.user;
+        const token: string = await this.usersService.createToken(user, isNewUser);
+        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ });
+        res.redirect('http://localhost:3000/api');
     }
 
     @Get('status')
