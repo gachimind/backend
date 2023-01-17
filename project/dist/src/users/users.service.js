@@ -54,16 +54,16 @@ let UsersService = class UsersService {
             secret: process.env.TOKEN_SECRETE_KEY,
             expiresIn: '24h',
         });
-        await this.tokenMapRepository.create({
+        await this.tokenMapRepository.restore({
             userInfo: user.kakaoUserId,
             token: token,
         });
         return token;
     }
-    async getUserDetailsByToken(token, userInfo) {
+    async getUserDetailsByToken(token) {
         const user = await this.tokenMapRepository.findOne({
-            select: { userInfo },
             where: { token },
+            relations: ['User'],
         });
         if (!user) {
             throw new common_1.HttpException('회원 인증에 실패했습니다.', 402);

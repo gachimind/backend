@@ -13,7 +13,6 @@ import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.in
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
-import { userInfo } from 'os';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -41,10 +40,12 @@ export class UsersController {
       const createUser = await this.usersService.validateUser(req.user);
       const token = await this.usersService.createToken(createUser);
       res.redirect('http://localhost:3000/login?token=' + token);
+      return token;
     } else {
       // 유저가 있을때
       const token = await this.usersService.createToken(user);
       res.redirect('http://localhost:3000/login?token=' + token);
+      return token;
     }
   }
 
@@ -58,6 +59,6 @@ export class UsersController {
   // 회원 정보 상세 조회
   @Get(':token')
   getUserDetailsByToken(@Param('token') token: string) {
-    return this.usersService.getUserDetailsByToken(token, userInfo);
+    return this.usersService.getUserDetailsByToken(token);
   }
 }

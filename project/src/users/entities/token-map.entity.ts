@@ -1,31 +1,31 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
 export class TokenMap {
-    @PrimaryGeneratedColumn()
-    tokenMapId: number;
+  @PrimaryGeneratedColumn()
+  tokenMapId: number;
 
-    @Column({ unique: true })
-    token: string;
+  @Column({ unique: true })
+  token: string;
 
-    @Column({ name: 'userInfo' })
-    userInfo: number;
-    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
-    @JoinColumn({ name: 'userInfo' })
-    user: User;
+  @Column({ name: 'userInfo' })
+  userInfo: number;
+  @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
+  @JoinColumn({ name: 'userInfo' })
+  user: User;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

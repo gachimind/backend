@@ -14,7 +14,7 @@ const dataSource = new typeorm_1.DataSource({
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
     entities: [user_entity_1.User, token_map_entity_1.TokenMap, socketIdMap_entity_1.SocketIdMap, room_entity_1.Room, player_entity_1.Player],
-    synchronize: false,
+    synchronize: true,
     logging: true,
 });
 exports.default = dataSource;

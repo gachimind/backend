@@ -50,7 +50,7 @@ export class UsersService {
       secret: process.env.TOKEN_SECRETE_KEY,
       expiresIn: '24h',
     });
-    await this.tokenMapRepository.create({
+    await this.tokenMapRepository.restore({
       userInfo: user.kakaoUserId,
       token: token,
     });
@@ -58,10 +58,10 @@ export class UsersService {
   }
 
   // 회원 정보 상세 조회
-  async getUserDetailsByToken(token: string, userInfo: any): Promise<TokenMap> {
+  async getUserDetailsByToken(token: string): Promise<TokenMap> {
     const user = await this.tokenMapRepository.findOne({
-      select: { userInfo },
       where: { token },
+      relations: ['User'],
     });
     if (!user) {
       throw new HttpException('회원 인증에 실패했습니다.', 402);
