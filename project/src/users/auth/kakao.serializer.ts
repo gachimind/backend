@@ -15,7 +15,7 @@ export class SessionSerializer extends PassportSerializer {
     }
 
     async deserializeUser(payload: any, done: Function) {
-        const user = await this.usersService.findUserById(payload.kakaoUserId);
+        const user = await this.usersService.findUserById(payload.id);
         return user ? done(null, user) : done(null, null);
     }
 }

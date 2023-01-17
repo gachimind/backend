@@ -13,6 +13,7 @@ import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.in
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
+import { userInfo } from 'os';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -56,6 +57,6 @@ export class UsersController {
     // 회원 정보 상세 조회
     @Get(':token')
     getUserDetailsByToken(@Param('token') token: string) {
-        return this.usersService.getUserDetailsByToken(token);
+        return this.usersService.getUserDetailsByToken(token, userInfo);
     }
 }

@@ -1,4 +1,3 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Player } from 'src/games/entities/player.entity';
 import { SocketIdMap } from 'src/games/entities/socketIdMap.entity';
 import {
@@ -10,6 +9,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+import { TokenMap } from './token-map.entity';
 
 @Entity()
 export class User {
@@ -20,7 +20,7 @@ export class User {
     kakaoUserId: number;
 
     @Column({ unique: true, length: 50 })
-    email: string | null;
+    email: string;
 
     @Column({ unique: true, length: 30 })
     nickname: string;

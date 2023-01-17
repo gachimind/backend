@@ -25,7 +25,6 @@ export class UsersService {
         });
         if (user) return user;
         const newUser = this.usersRepository.create(details);
-        console.log(newUser);
         return newUser;
     }
 
@@ -51,7 +50,7 @@ export class UsersService {
             secret: process.env.TOKEN_SECRETE_KEY,
             expiresIn: '24h',
         });
-        await this.tokenMapRepository.save({
+        await this.tokenMapRepository.create({
             userInfo: user.kakaoUserId,
             token: token,
         });
@@ -59,8 +58,9 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회
-    async getUserDetailsByToken(token: string): Promise<TokenMap> {
+    async getUserDetailsByToken(token: string, userInfo: any): Promise<TokenMap> {
         const user = await this.tokenMapRepository.findOne({
+            select: { userInfo },
             where: { token },
         });
         if (!user) {
