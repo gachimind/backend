@@ -1,33 +1,32 @@
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Player } from 'src/games/entities/player.entity';
+import { SocketIdMap } from 'src/games/entities/socketIdMap.entity';
 import {
     Column,
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
-import { JoinColumn } from 'typeorm/decorator/relations/JoinColumn';
-import { OneToOne } from 'typeorm/decorator/relations/OneToOne';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id: number;
-
-    @Column({ unique: true, length: 50 })
     userId: number;
 
-    @Column({ length: 50 })
-    email: string;
+    @Column({ unique: true })
+    kakaoUserId: number;
 
-    @Column({ length: 30 })
+    @Column({ unique: true, length: 50 })
+    email: string | null;
+
+    @Column({ unique: true, length: 30 })
     nickname: string;
 
     @Column('text')
     profileImg: string;
-
-    @Column({ unique: true })
-    accessToken: string;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -3,7 +3,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.filter';
-import { SocketExceptionFilter } from './common/exceptionFilters/ws-exception.filter';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
@@ -14,7 +13,6 @@ async function bootstrap() {
     const port = process.env.PORT || 3000;
     app.enableCors();
     app.useGlobalFilters(new HttpExceptionFilter());
-    app.useGlobalFilters(new SocketExceptionFilter());
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
@@ -28,7 +26,7 @@ async function bootstrap() {
             saveUninitialized: false,
             resave: false,
             cookie: {
-                maxAge: 60000, // 토큰 1분 유지
+                maxAge: 60000,
             },
         }),
     );

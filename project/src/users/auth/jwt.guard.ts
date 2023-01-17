@@ -18,16 +18,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         }
 
         const tokenValue = authorization.replace('Bearer ', '');
-        const userId: number = await this.validate(tokenValue);
-        response.userId = userId;
+        const kakaoUserId: number = await this.validate(tokenValue);
+        response.kakaoUserId = kakaoUserId;
         return true;
     }
 
     // 토큰 검증
-    async validate(accessToken: string) {
+    async validate(token: string) {
         try {
-            const { userId } = await this.userService.tokenValidate(accessToken);
-            return userId;
+            const { kakaoUserId } = await this.userService.tokenValidate(token);
+            return kakaoUserId;
         } catch (error) {
             switch (error.message) {
                 // 토큰 오류 판단
