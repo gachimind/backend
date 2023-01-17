@@ -1,5 +1,6 @@
 export declare class User {
     userId: number;
+    kakaoUserId: number;
     email: string;
     nickname: string;
     profileImg: string;

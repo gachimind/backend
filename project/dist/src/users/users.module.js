@@ -16,11 +16,12 @@ const user_entity_1 = require("./entities/user.entity");
 const kakao_guards_1 = require("./auth/kakao.guards");
 const kakao_strategy_1 = require("./auth/kakao.strategy");
 const token_map_entity_1 = require("./entities/token-map.entity");
+const jwt_1 = require("@nestjs/jwt");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap]), jwt_1.JwtModule],
         controllers: [users_controller_1.UsersController],
         providers: [
             users_service_1.UsersService,

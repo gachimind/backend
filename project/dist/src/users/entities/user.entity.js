@@ -18,6 +18,10 @@ __decorate([
     __metadata("design:type", Number)
 ], User.prototype, "userId", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", Number)
+], User.prototype, "kakaoUserId", void 0);
+__decorate([
     (0, typeorm_1.Column)({ unique: true, length: 50 }),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
