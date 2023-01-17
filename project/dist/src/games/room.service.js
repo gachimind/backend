@@ -94,12 +94,11 @@ let RoomService = class RoomService {
         if (room.players.length > 1) {
             const isAllPlayerReadyToStart = (() => {
                 for (const player of room.players) {
-                    if (!player.isReady)
+                    if (!player.isHost && !player.isReady)
                         return false;
                 }
                 return true;
             })();
-            console.log('isAllPlayerReadyToStart?', isAllPlayerReadyToStart);
             if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
                 await this.updateRoomStatusByRoomId({
                     roomId: roomId,
