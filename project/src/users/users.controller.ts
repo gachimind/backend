@@ -41,7 +41,7 @@ export class UsersController {
         const { user, isNewUser } = req.user;
         const token: string = await this.usersService.createToken(user, isNewUser);
         res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ });
-        res.redirect('http://localhost:3000/api');
+        res.redirect('http://localhost:3000');
     }
 
     @Get('status')
