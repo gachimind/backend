@@ -36,18 +36,22 @@ export class UsersController {
         @Req() req,
         @Res({ passthrough: true }) res: Response,
     ): Promise<any> {
-        const user = await this.usersService.findUserById(req.user.kakaoUserId);
-        if (user === null) {
-            // 유저가 없을때 회원가입 -> 로그인
-            const createUser = await this.usersService.validateUser(req.user);
-            const token = await this.usersService.createToken(createUser);
-            res.redirect('http://localhost:3000/login?token=' + token);
-            return token;
-        } else {
-            // 유저가 있을때
-            const token = await this.usersService.createToken(user);
-            res.redirect('http://localhost:3000/login?token=' + token);
-            return token;
+        try {
+            const user = await this.usersService.findUserById(req.user.kakaoUserId);
+            if (user === null) {
+                // 유저가 없을때 회원가입 -> 로그인
+                const createUser = await this.usersService.validateUser(req.user);
+                const token = await this.usersService.createToken(createUser);
+                res.redirect('http://localhost:3000/login?token=' + token);
+                return token;
+            } else {
+                // 유저가 있을때
+                const token = await this.usersService.createToken(user);
+                res.redirect('http://localhost:3000/login?token=' + token);
+                return token;
+            }
+        } catch (err) {
+            console.error(err);
         }
     }
 

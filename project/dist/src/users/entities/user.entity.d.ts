@@ -1,7 +1,7 @@
 export declare class User {
     userId: number;
     kakaoUserId: number;
-    email: string;
+    email: string | null;
     nickname: string;
     profileImg: string;
     createdAt: Date;

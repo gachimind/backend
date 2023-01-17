@@ -20,7 +20,7 @@ export class User {
     kakaoUserId: number;
 
     @Column({ unique: true, length: 50 })
-    email: string;
+    email: string | null;
 
     @Column({ unique: true, length: 30 })
     nickname: string;

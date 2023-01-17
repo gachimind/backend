@@ -26,17 +26,22 @@ let UsersController = class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
     async kakaoLoginRedirect(code, req, res) {
-        const user = await this.usersService.findUserById(req.user.kakaoUserId);
-        if (user === null) {
-            const createUser = await this.usersService.validateUser(req.user);
-            const token = await this.usersService.createToken(createUser);
-            res.redirect('http://localhost:3000/login?token=' + token);
-            return token;
+        try {
+            const user = await this.usersService.findUserById(req.user.kakaoUserId);
+            if (user === null) {
+                const createUser = await this.usersService.validateUser(req.user);
+                const token = await this.usersService.createToken(createUser);
+                res.redirect('http://localhost:3000/login?token=' + token);
+                return token;
+            }
+            else {
+                const token = await this.usersService.createToken(user);
+                res.redirect('http://localhost:3000/login?token=' + token);
+                return token;
+            }
         }
-        else {
-            const token = await this.usersService.createToken(user);
-            res.redirect('http://localhost:3000/login?token=' + token);
-            return token;
+        catch (err) {
+            console.error(err);
         }
     }
     user(request) {
