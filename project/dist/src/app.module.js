@@ -37,7 +37,7 @@ AppModule = __decorate([
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
                 entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap],
-                synchronize: true,
+                synchronize: false,
                 logging: true,
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
