@@ -9,7 +9,7 @@ export class CreateUserDto {
     @ApiProperty({
         example: 1,
         required: false,
-        description: 'OAuth 서버에서 받아온 회원의 email을 게임 서버 db에 저장',
+        description: 'OAuth 서버에서 받아온 회원의 id를 게임 서버 db에 저장',
     })
     readonly userId: number;
 

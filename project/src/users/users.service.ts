@@ -1,15 +1,10 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UserDetails } from './auth/kakao.data';
-import { TokenMap } from './entities/token-map.entity';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { JwtAuthGuard } from './auth/jwt.guard';
-import { KakaoAuthGuard } from './auth/kakao.guards';
-import { TokenDetails } from './auth/token.data';
-import { throws } from 'assert';
+import { User } from './entities/user.entity';
+import { TokenMap } from './entities/token-map.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,44 +13,40 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
-        private readonly jwtService: JwtService,
-        private readonly configService: ConfigService,
+        private jwtService: JwtService,
     ) {}
 
-    // 카카오 로그인하고 유저 정보 저장
-    async validateUser(details: UserDetails) {
-        const user = await this.usersRepository.findOneBy({
-            kakaoUserId: details.kakaoUserId,
-        });
-        if (user) return user;
-        const newUser = this.usersRepository.save(details);
-        return newUser;
+    async createUser(details: CreateUserDto): Promise<User> {
+        const user = await this.usersRepository.save(details);
+        return user;
     }
 
-    async findUserById(kakaoUserId: number) {
-        const user = await this.usersRepository.findOneBy({ kakaoUserId });
+    async findUserByUserId(userId: number): Promise<User> {
+        return await this.usersRepository.findOne({ where: { userId } });
+    }
+
+    async validateUserByUserId(userDetails) {
+        let user: User = await this.findUserByUserId(userDetails.userId);
+        if (!user) {
+            user = await this.createUser(userDetails);
+        }
         return user;
+    }
+
+    // AccessToken 생성
+    async createToken(user: User): Promise<string> {
+        const payload = { userId: user.userId };
+        const token: string = this.jwtService.sign({
+            payload,
+        });
+        console.log('UsersSevice, createToken() token:', token);
+        await this.tokenMapRepository.save({ userInfo: user.userId, token: token });
+        return token;
     }
 
     // 토큰 검증
     async tokenValidate(token: string) {
-        return await this.jwtService.verify(token, {
-            secret: process.env.TOKEN_SECRETE_KEY,
-        });
-    }
-
-    // AccessToken 생성
-    async createToken(user: User) {
-        // const payload = {
-        //     kakaoUserId: user.kakaoUserId,
-        //     tokenType: 'accessToken',
-        // };
-        const token: string = this.jwtService.sign({
-            secret: process.env.TOKEN_SECRETE_KEY,
-            expiresIn: '24h',
-        });
-        await this.tokenMapRepository.save({ userInfo: user.userId, token: token });
-        return token;
+        return await this.jwtService.verify(token);
     }
 
     // 회원 정보 상세 조회

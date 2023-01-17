@@ -15,6 +15,7 @@ import { UsersService } from './users.service';
 import { Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 import { JwtAuthGuard } from './auth/jwt.guard';
+import { User } from './entities/user.entity';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -36,23 +37,8 @@ export class UsersController {
         @Req() req,
         @Res({ passthrough: true }) res: Response,
     ): Promise<any> {
-        try {
-            const user = await this.usersService.findUserById(req.user.kakaoUserId);
-            if (user === null) {
-                // 유저가 없을때 회원가입 -> 로그인
-                const createUser = await this.usersService.validateUser(req.user);
-                const token = await this.usersService.createToken(createUser);
-                res.redirect('http://localhost:3000/login?token=' + token);
-                return token;
-            } else {
-                // 유저가 있을때
-                const token = await this.usersService.createToken(user);
-                res.redirect('http://localhost:3000/login?token=' + token);
-                return token;
-            }
-        } catch (err) {
-            console.error(err);
-        }
+        const token: string = await this.usersService.createToken(req.user);
+        res.redirect('http://localhost:3000/login?token=' + token);
     }
 
     @Get('status')
@@ -61,12 +47,11 @@ export class UsersController {
         return true;
     }
 
-    // 회원 정보 상세 조회
-    // @Get('/me')
+    // // 회원 정보 상세 조회
     // @UseGuards(JwtAuthGuard)
-    // findUser = await this.usersService.findUserById(req.user.kakaoUserId);
-
-    // getUserDetailsByToken(@Header('token') token: string) {
+    // @Get('/me')
+    // getUserDetailsByToken(@Req() req) {
+    //     const token = req.token;
     //     return this.usersService.getUserDetailsByToken(token);
     // }
 }

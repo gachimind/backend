@@ -2,28 +2,22 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users.service';
-import { HttpException } from '@nestjs/common';
+import { Req } from '@nestjs/common/decorators';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly configService: ConfigService,
-  ) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get('JWT_SECRET_KEY'),
-      ignoreExpiration: false,
-    });
-  }
-
-  async validate(payload) {
-    const user = await this.usersService.findUserById(payload.kakaoUserId);
-    if (user) {
-      return user;
-    } else {
-      throw new HttpException('해당하는 유저가 존재하지 않습니다.', 402);
+    constructor(configService: ConfigService) {
+        super({
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+            secretOrKey: configService.get<string>('TOKEN_SECRETE_KEY'),
+            ignoreExpiration: false,
+        });
     }
-  }
+
+    async validate(@Req() req, payload) {
+        // 원하는 로직 추가할 수 있음.
+        console.log('jwt strategy, token 값 찾기', req.user);
+
+        return { userId: payload.userId }; // useGuards()를 사용한 http method의 req.user 값으로 들어옴
+    }
 }

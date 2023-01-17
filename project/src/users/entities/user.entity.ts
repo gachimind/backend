@@ -1,23 +1,16 @@
-import { Player } from 'src/games/entities/player.entity';
-import { SocketIdMap } from 'src/games/entities/socketIdMap.entity';
 import {
     Column,
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    OneToOne,
-    PrimaryGeneratedColumn,
+    PrimaryColumn,
     UpdateDateColumn,
 } from 'typeorm';
-import { TokenMap } from './token-map.entity';
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn()
-    userId: number;
-
-    @Column({ unique: true })
-    kakaoUserId: number;
+    @PrimaryColumn()
+    userId: number; // kakaoId를 userId로 넣고 PK로 사용
 
     @Column({ unique: true, length: 50 })
     email: string | null;
