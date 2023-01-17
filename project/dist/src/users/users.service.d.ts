@@ -14,5 +14,4 @@ export declare class UsersService {
     findUserById(kakaoUserId: number): Promise<User>;
     tokenValidate(token: string): Promise<any>;
     createToken(user: User): Promise<string>;
-    getUserDetailsByToken(token: string): Promise<TokenMap>;
 }

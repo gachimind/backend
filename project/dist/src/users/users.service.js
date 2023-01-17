@@ -33,7 +33,7 @@ let UsersService = class UsersService {
         });
         if (user)
             return user;
-        const newUser = this.usersRepository.create(details);
+        const newUser = this.usersRepository.save(details);
         return newUser;
     }
     async findUserById(kakaoUserId) {
@@ -46,29 +46,12 @@ let UsersService = class UsersService {
         });
     }
     async createToken(user) {
-        const payload = {
-            kakaoUserId: user.kakaoUserId,
-            tokenType: 'accessToken',
-        };
-        const token = this.jwtService.sign(payload, {
+        const token = this.jwtService.sign({
             secret: process.env.TOKEN_SECRETE_KEY,
             expiresIn: '24h',
         });
-        await this.tokenMapRepository.restore({
-            userInfo: user.kakaoUserId,
-            token: token,
-        });
+        await this.tokenMapRepository.save({ userInfo: user.userId, token: token });
         return token;
-    }
-    async getUserDetailsByToken(token) {
-        const user = await this.tokenMapRepository.findOne({
-            where: { token },
-            relations: ['User'],
-        });
-        if (!user) {
-            throw new common_1.HttpException('회원 인증에 실패했습니다.', 402);
-        }
-        return user;
     }
 };
 UsersService = __decorate([

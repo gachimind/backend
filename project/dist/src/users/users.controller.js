@@ -44,9 +44,6 @@ let UsersController = class UsersController {
             throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
         return true;
     }
-    getUserDetailsByToken(token) {
-        return this.usersService.getUserDetailsByToken(token);
-    }
 };
 __decorate([
     (0, common_1.Get)('login/kakao'),
@@ -72,13 +69,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
-__decorate([
-    (0, common_1.Get)(':token'),
-    __param(0, (0, common_1.Param)('token')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
     (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)('api/users'),

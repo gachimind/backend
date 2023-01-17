@@ -8,5 +8,4 @@ export declare class UsersController {
     };
     kakaoLoginRedirect(code: string, req: any, res: Response): Promise<any>;
     user(request: Request): boolean;
-    getUserDetailsByToken(token: string): Promise<import("./entities/token-map.entity").TokenMap>;
 }

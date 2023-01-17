@@ -6,6 +6,7 @@ import {
     Res,
     UseGuards,
     Param,
+    Header,
     HttpException,
 } from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
@@ -13,6 +14,7 @@ import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.in
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
+import { JwtAuthGuard } from './auth/jwt.guard';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -56,8 +58,11 @@ export class UsersController {
     }
 
     // 회원 정보 상세 조회
-    @Get(':token')
-    getUserDetailsByToken(@Param('token') token: string) {
-        return this.usersService.getUserDetailsByToken(token);
-    }
+    // @Get('/me')
+    // @UseGuards(JwtAuthGuard)
+    // findUser = await this.usersService.findUserById(req.user.kakaoUserId);
+
+    // getUserDetailsByToken(@Header('token') token: string) {
+    //     return this.usersService.getUserDetailsByToken(token);
+    // }
 }
