@@ -1,5 +1,5 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsString } from 'class-validator';
 import { CreateRoomRequestDto } from './create-room.request.dto';
 
 export class RoomDataInsertDto extends OmitType(CreateRoomRequestDto, ['roomTitle'] as const) {
