@@ -90,25 +90,7 @@ let GamesGateway = class GamesGateway {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
         await this.playersService.setPlayerReady(requestUser.player);
-        let room = await this.roomService.getOneRoomByRoomId(requestUser.player.roomInfo);
-        console.log(room);
-        if (room.players.length > 1) {
-            const isAllPlayerReadyToStart = (() => {
-                for (const player of room.players) {
-                    if (!player.isReady)
-                        return false;
-                }
-                return true;
-            })();
-            console.log('isAllPlayerReadyToStart?', isAllPlayerReadyToStart);
-            if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
-                await this.roomService.updateRoomStatusByRoomId({
-                    roomId: room.roomId,
-                    isGameReadyToStart: isAllPlayerReadyToStart,
-                });
-            }
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
-        }
+        const room = await this.roomService.updateIsGameReadyToStart(requestUser.player.roomInfo);
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         const updateRoomInfo = (0, update_room_info_to_room_constructor_1.updateRoomInfoToRoomConstructor)(room);
         this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {

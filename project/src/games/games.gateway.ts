@@ -166,29 +166,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.playersService.setPlayerReady(requestUser.player);
 
         // 3. db에서 room 정보를 조회해 player 모두 ready인지 확인
-        let room: Room = await this.roomService.getOneRoomByRoomId(requestUser.player.roomInfo);
-        console.log(room);
-
-        if (room.players.length > 1) {
-            const isAllPlayerReadyToStart = (() => {
-                // players가 모두 ready 상태이면, isGameReadyToStart를 트리거
-                for (const player of room.players) {
-                    if (!player.isReady) return false;
-                }
-                return true;
-            })();
-            console.log('isAllPlayerReadyToStart?', isAllPlayerReadyToStart);
-
-            // player가 2명 이상이고, 플레이어 준비 상태에 따라 room 정보 갱신
-
-            if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
-                await this.roomService.updateRoomStatusByRoomId({
-                    roomId: room.roomId,
-                    isGameReadyToStart: isAllPlayerReadyToStart,
-                });
-            }
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
-        }
+        const room: Room = await this.roomService.updateIsGameReadyToStart(
+            requestUser.player.roomInfo,
+        );
 
         // 방 안에 update room info announce
         const eventUserInfo = eventUserInfoConstructor(requestUser);

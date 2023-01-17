@@ -88,6 +88,27 @@ let RoomService = class RoomService {
             isHost,
         });
     }
+    async updateIsGameReadyToStart(roomId) {
+        let room = await this.getOneRoomByRoomId(roomId);
+        if (room.players.length > 1) {
+            const isAllPlayerReadyToStart = (() => {
+                for (const player of room.players) {
+                    if (!player.isReady)
+                        return false;
+                }
+                return true;
+            })();
+            console.log('isAllPlayerReadyToStart?', isAllPlayerReadyToStart);
+            if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
+                await this.updateRoomStatusByRoomId({
+                    roomId: roomId,
+                    isGameReadyToStart: isAllPlayerReadyToStart,
+                });
+            }
+            room = await this.getOneRoomByRoomId(roomId);
+        }
+        return room;
+    }
 };
 RoomService = __decorate([
     (0, common_1.Injectable)(),
