@@ -1,17 +1,12 @@
 import { UsersService } from './users.service';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     handleLogin(): {
         msg: string;
     };
-    handleRedirect(code: string): {
-        msg: string;
-    };
-    user(request: Request): {
-        message: string;
-        status: number;
-    };
-    getUserDetailsByUserId(userId: number): Promise<import("./entities/user.entity").User>;
+    kakaoLoginRedirect(code: string, req: any, res: Response): Promise<any>;
+    user(request: Request): boolean;
+    getUserDetailsByToken(token: string): Promise<import("./entities/token-map.entity").TokenMap>;
 }

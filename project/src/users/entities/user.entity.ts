@@ -16,6 +16,9 @@ export class User {
     @PrimaryGeneratedColumn()
     userId: number;
 
+    @Column({ unique: true })
+    kakaoUserId: number;
+
     @Column({ unique: true, length: 50 })
     email: string;
 

@@ -7,9 +7,10 @@ import { User } from './entities/user.entity';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 import { KakaoStrategy } from './auth/kakao.strategy';
 import { TokenMap } from './entities/token-map.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([User, TokenMap])],
+    imports: [TypeOrmModule.forFeature([User, TokenMap]), JwtModule],
     controllers: [UsersController],
     providers: [
         UsersService,
