@@ -17,14 +17,14 @@ export class SocketException extends WsException {
 export class SocketExceptionFilter extends BaseWsExceptionFilter {
     catch(exception: SocketException, host: ArgumentsHost) {
         super.catch(exception, host);
-
-        // client에 어떻게 메세지 내려가는지 확인 해야 함
-        // const ctx = host.switchToWs();
-        // const response = ctx.getClient();
-        // console.log('ws-exception response', response.id);
-        // const errorMessage = exception.message;
-        // const status = exception.status;
-        // const eventName = exception.eventName;
-        // response.emit(`${eventName}`, { errorMessage, status });
+        const ctx = host.switchToWs();
+        const socket = ctx.getClient();
+        socket.emit('error', {
+            data: {
+                errorMessage: exception.message,
+                status: exception.status,
+                event: exception.eventName,
+            },
+        });
     }
 }
