@@ -87,7 +87,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: AuthorizationRequestDto },
     ) {
-        throw new SocketException('test', 400, 'handle-connection');
         // 토큰 유무 검사
         const token = data.authorization;
         if (!token) {

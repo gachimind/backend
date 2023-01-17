@@ -1,6 +1,7 @@
 import { Catch, ArgumentsHost } from '@nestjs/common';
 import { BaseWsExceptionFilter } from '@nestjs/websockets';
 import { WsException } from '@nestjs/websockets/errors';
+import { stat } from 'fs';
 
 // 400 = bad request | 401 = unauthorized | 403 = forbidden | 404 = not found | 500 = internal server error
 export type SocketExceptionStatus = 400 | 401 | 403 | 404 | 500;
@@ -10,6 +11,9 @@ export class SocketException extends WsException {
     eventName;
     constructor(message: string, status: SocketExceptionStatus, eventName: string) {
         super({ message, status, eventName });
+        this.message = message;
+        this.status = status;
+        this.eventName = eventName;
     }
 }
 
@@ -20,7 +24,7 @@ export class SocketExceptionFilter extends BaseWsExceptionFilter {
         const ctx = host.switchToWs();
         const socket = ctx.getClient();
         socket.emit('error', {
-            data: {
+            error: {
                 errorMessage: exception.message,
                 status: exception.status,
                 event: exception.eventName,
