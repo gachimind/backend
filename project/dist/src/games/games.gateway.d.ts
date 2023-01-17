@@ -26,6 +26,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleEnterRoomRequest(socket: Socket, { data: requestRoom }: {
         data: EnterRoomRequestDto;
     }): Promise<void>;
+    handleReadyEvent(socket: Socket): Promise<void>;
     handleLeaveRoomEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
         data: {

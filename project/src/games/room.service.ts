@@ -7,10 +7,8 @@ import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
-import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
-import { participantsListMapper } from './util/participants-list.mapper';
 
 @Injectable()
 export class RoomService {
@@ -49,37 +47,8 @@ export class RoomService {
         return await this.roomRepository.delete(roomId);
     }
 
-    async updateRoomInfoToRoom(roomId: number): Promise<RoomInfoToRoomDto> {
-        const room: Room = await this.getOneRoomByRoomId(roomId);
-
-        const {
-            roomTitle,
-            maxCount,
-            round,
-            readyTime,
-            speechTime,
-            discussionTime,
-            isSecreteRoom,
-            isGameOn,
-            isGameReadyToStart,
-            players,
-        } = room;
-        const participants = participantsListMapper(players);
-        const roomInfo: RoomInfoToRoomDto = {
-            roomId,
-            roomTitle,
-            maxCount,
-            round,
-            readyTime,
-            speechTime,
-            discussionTime,
-            isSecreteRoom,
-            isGameOn,
-            isGameReadyToStart,
-            participants,
-        };
-
-        return roomInfo;
+    async updateRoomStatusByRoomId(data: any): Promise<Room> {
+        return this.roomRepository.save(data);
     }
 
     async createRoom(room: CreateRoomRequestDto): Promise<number> {

@@ -19,7 +19,6 @@ const typeorm_2 = require("typeorm");
 const room_entity_1 = require("./entities/room.entity");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const player_entity_1 = require("./entities/player.entity");
-const participants_list_mapper_1 = require("./util/participants-list.mapper");
 let RoomService = class RoomService {
     constructor(roomRepository, playerRepository) {
         this.roomRepository = roomRepository;
@@ -49,24 +48,8 @@ let RoomService = class RoomService {
     async removeRoomByRoomId(roomId) {
         return await this.roomRepository.delete(roomId);
     }
-    async updateRoomInfoToRoom(roomId) {
-        const room = await this.getOneRoomByRoomId(roomId);
-        const { roomTitle, maxCount, round, readyTime, speechTime, discussionTime, isSecreteRoom, isGameOn, isGameReadyToStart, players, } = room;
-        const participants = (0, participants_list_mapper_1.participantsListMapper)(players);
-        const roomInfo = {
-            roomId,
-            roomTitle,
-            maxCount,
-            round,
-            readyTime,
-            speechTime,
-            discussionTime,
-            isSecreteRoom,
-            isGameOn,
-            isGameReadyToStart,
-            participants,
-        };
-        return roomInfo;
+    async updateRoomStatusByRoomId(data) {
+        return this.roomRepository.save(data);
     }
     async createRoom(room) {
         if (!room.roomTitle) {

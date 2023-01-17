@@ -51,7 +51,7 @@ let PlayersService = class PlayersService {
         return player;
     }
     async updatePlayerStatusByUserId(user) {
-        await this.playerRepository.save(user);
+        return await this.playerRepository.save(user);
     }
     async removeSocketBySocketId(socketId) {
         return await this.socketIdMapRepository.delete(socketId);
@@ -73,6 +73,16 @@ let PlayersService = class PlayersService {
         }
         const user = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.insert(user);
+    }
+    async setPlayerReady(player) {
+        let user;
+        if (!player.isReady) {
+            user = { userInfo: player.userInfo, isReady: true };
+        }
+        else {
+            user = { userInfo: player.userInfo, isReady: false };
+        }
+        return await this.updatePlayerStatusByUserId(user);
     }
 };
 PlayersService = __decorate([
