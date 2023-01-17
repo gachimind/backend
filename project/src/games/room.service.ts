@@ -40,6 +40,7 @@ export class RoomService {
         return await this.roomRepository.findOne({
             where: { roomId },
             relations: { players: { socket: true } },
+            order: { players: { createdAt: 'ASC' } },
         });
     }
 
