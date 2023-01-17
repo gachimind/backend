@@ -20,7 +20,6 @@ const token_map_entity_1 = require("./users/entities/token-map.entity");
 const room_entity_1 = require("./games/entities/room.entity");
 const player_entity_1 = require("./games/entities/player.entity");
 const socketIdMap_entity_1 = require("./games/entities/socketIdMap.entity");
-const jwt_1 = require("@nestjs/jwt");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -43,7 +42,6 @@ AppModule = __decorate([
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
             }),
-            jwt_1.JwtModule,
             users_module_1.UsersModule,
             games_module_1.GamesModule,
             passport_1.PassportModule.register({ session: true }),

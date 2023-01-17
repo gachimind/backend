@@ -17,39 +17,33 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_kakao_oauth2_1 = require("passport-kakao-oauth2");
 const users_service_1 = require("../users.service");
-const typeorm_1 = require("typeorm");
-const typeorm_2 = require("@nestjs/typeorm");
-const user_entity_1 = require("../entities/user.entity");
 let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
-    constructor(usersService, userRepository) {
+    constructor(usersService) {
         super({
             clientID: process.env.CLIENT_ID,
             clientSecret: process.env.SECRET_KEY,
             callbackURL: process.env.CALLBACK,
         });
         this.usersService = usersService;
-        this.userRepository = userRepository;
     }
     async validate(accessToken, refreshToken, profile, done) {
         const kakaoUserId = profile._json.id;
         const email = profile._json.kakao_account.email;
         const nickname = profile._json.properties.nickname;
         const profileImg = profile._json.properties.profile_image;
-        const payload = {
+        const user = await this.usersService.validateUser({
             kakaoUserId,
             email,
             nickname,
             profileImg,
-        };
-        done(null, payload);
+        });
+        return user || null;
     }
 };
 KakaoStrategy = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('USER_SERVICE')),
-    __param(1, (0, typeorm_2.InjectRepository)(user_entity_1.User)),
-    __metadata("design:paramtypes", [users_service_1.UsersService,
-        typeorm_1.Repository])
+    __metadata("design:paramtypes", [users_service_1.UsersService])
 ], KakaoStrategy);
 exports.KakaoStrategy = KakaoStrategy;
 //# sourceMappingURL=kakao.strategy.js.map

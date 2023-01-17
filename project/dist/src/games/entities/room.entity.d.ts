@@ -1,5 +1,4 @@
 import { Player } from './player.entity';
-import { SocketIdMap } from './socketIdMap.entity';
 export declare class Room {
     roomId: number;
     roomTitle: string;
@@ -14,6 +13,5 @@ export declare class Room {
     isGameReadyToStart: boolean;
     createdAt: Date;
     updatedAt: Date;
-    socketId: SocketIdMap[];
-    playerId: Player[];
+    players: Player[];
 }

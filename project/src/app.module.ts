@@ -20,32 +20,32 @@ import { SocketIdMap } from './games/entities/socketIdMap.entity';
 // ConfigModule.forRoot({ isGlobal: true, load: [getEnv] })
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        TypeOrmModule.forRoot({
-            type: 'mysql',
-            host: process.env.MYSQL_HOST,
-            port: 3306,
-            username: process.env.MYSQL_USERNAME,
-            password: process.env.MYSQL_PASSWORD,
-            database: process.env.MYSQL_DATABASE,
-            entities: [User, TokenMap, Room, Player, SocketIdMap],
-            //migrations: [__dirname + '/migrations/*.ts'],
-            // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
-            synchronize: true,
-            logging: true,
-            keepConnectionAlive: true,
-            charset: 'utf8mb4_general_ci',
-        }),
-        UsersModule,
-        GamesModule,
-        PassportModule.register({ session: true }),
-    ],
-    controllers: [AppController],
-    providers: [ConfigService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.MYSQL_HOST,
+      port: 3306,
+      username: process.env.MYSQL_USERNAME,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE,
+      entities: [User, TokenMap, Room, Player, SocketIdMap],
+      //migrations: [__dirname + '/migrations/*.ts'],
+      // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
+      synchronize: true,
+      logging: true,
+      keepConnectionAlive: true,
+      charset: 'utf8mb4_general_ci',
+    }),
+    UsersModule,
+    GamesModule,
+    PassportModule.register({ session: true }),
+  ],
+  controllers: [AppController],
+  providers: [ConfigService],
 })
 export class AppModule implements NestModule {
-    configure(consumer: MiddlewareConsumer): any {
-        consumer.apply(LoggerMiddleware).forRoutes('*');
-    }
+  configure(consumer: MiddlewareConsumer): any {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
 }

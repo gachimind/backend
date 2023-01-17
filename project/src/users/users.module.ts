@@ -10,18 +10,18 @@ import { TokenMap } from './entities/token-map.entity';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([User, TokenMap]), JwtModule],
-    controllers: [UsersController],
-    providers: [
-        UsersService,
-        SessionSerializer,
-        KakaoAuthGuard,
-        KakaoStrategy,
-        {
-            provide: 'USER_SERVICE',
-            useClass: UsersService,
-        },
-    ],
-    exports: [TypeOrmModule],
+  imports: [TypeOrmModule.forFeature([User, TokenMap]), JwtModule],
+  controllers: [UsersController],
+  providers: [
+    UsersService,
+    SessionSerializer,
+    KakaoAuthGuard,
+    KakaoStrategy,
+    {
+      provide: 'USER_SERVICE',
+      useClass: UsersService,
+    },
+  ],
+  exports: [TypeOrmModule],
 })
 export class UsersModule {}

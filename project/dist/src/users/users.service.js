@@ -34,7 +34,6 @@ let UsersService = class UsersService {
         if (user)
             return user;
         const newUser = this.usersRepository.create(details);
-        console.log(newUser);
         return newUser;
     }
     async findUserById(kakaoUserId) {
@@ -55,14 +54,15 @@ let UsersService = class UsersService {
             secret: process.env.TOKEN_SECRETE_KEY,
             expiresIn: '24h',
         });
-        await this.tokenMapRepository.save({
+        await this.tokenMapRepository.create({
             userInfo: user.kakaoUserId,
             token: token,
         });
         return token;
     }
-    async getUserDetailsByToken(token) {
+    async getUserDetailsByToken(token, userInfo) {
         const user = await this.tokenMapRepository.findOne({
+            select: { userInfo },
             where: { token },
         });
         if (!user) {

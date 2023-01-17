@@ -18,6 +18,7 @@ const undefinedToNull_interceptor_1 = require("../common/interceptors/undefinedT
 const resultToData_interceptor_1 = require("../common/interceptors/resultToData.interceptor");
 const users_service_1 = require("./users.service");
 const kakao_guards_1 = require("./auth/kakao.guards");
+const os_1 = require("os");
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -43,7 +44,7 @@ let UsersController = class UsersController {
         return true;
     }
     getUserDetailsByToken(token) {
-        return this.usersService.getUserDetailsByToken(token);
+        return this.usersService.getUserDetailsByToken(token, os_1.userInfo);
     }
 };
 __decorate([
