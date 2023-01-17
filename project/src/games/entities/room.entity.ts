@@ -6,9 +6,7 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
-import { socketIdMap } from '../players.service';
 import { Player } from './player.entity';
-import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Room {
@@ -36,7 +34,7 @@ export class Room {
     @Column()
     isSecreteRoom: boolean;
 
-    @Column({ type: 'tinyint', width: 4 })
+    @Column({ type: 'int', width: 4 })
     roomPassword: number;
 
     @Column()
@@ -51,9 +49,6 @@ export class Room {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => SocketIdMap, (socket) => socket.currentRoom)
-    socketId: SocketIdMap[];
-
-    @OneToMany(() => Player, (player) => player.roomId)
-    playerId: Player[];
+    @OneToMany(() => Player, (player) => player.room, { eager: true })
+    players: Player[];
 }

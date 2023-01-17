@@ -1,9 +1,9 @@
 import { User } from '../../users/entities/user.entity';
-import { Room } from './room.entity';
+import { Player } from './player.entity';
 export declare class SocketIdMap {
     socketId: string;
-    userId: User;
+    userInfo: number;
+    user: User;
+    player: Player;
     createdAt: Date;
-    updatedAt: Date;
-    currentRoom: Room;
 }

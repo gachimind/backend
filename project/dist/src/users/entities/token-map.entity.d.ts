@@ -1,6 +1,9 @@
+import { User } from './user.entity';
 export declare class TokenMap {
+    tokenMapId: number;
     token: string;
-    userId: number;
+    userInfo: number;
+    user: User;
     createdAt: Date;
     updatedAt: Date;
 }

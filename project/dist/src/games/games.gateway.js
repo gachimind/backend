@@ -11,30 +11,21 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GamesGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const room_service_1 = require("./room.service");
-const chat_service_1 = require("./chat.service");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const players_service_1 = require("./players.service");
+const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
+const chat_service_1 = require("./chat.service");
+const common_1 = require("@nestjs/common");
 let GamesGateway = class GamesGateway {
-    constructor(roomService, chatService, playersService) {
+    constructor(roomService, playersService, chatService) {
         this.roomService = roomService;
-        this.chatService = chatService;
         this.playersService = playersService;
+        this.chatService = chatService;
     }
     afterInit(server) {
         console.log('webSocketServer init');
@@ -43,117 +34,113 @@ let GamesGateway = class GamesGateway {
         console.log('connected socket', socket.id);
         const data = await this.roomService.getAllRoomList();
         socket.emit('room-list', { data });
+        await this.roomService.removeRoomByRoomId(8);
     }
     async handleDisconnect(socket) {
-        await this.playersService.handleDisconnect(socket);
+        const requestUser = await this.playersService.getUserBySocketId(socket.id);
+        if (!requestUser)
+            return console.log('disconnected socket', socket.id);
+        await this.playersService.removeSocketBySocketId(socket.id);
+        if (requestUser.player) {
+            const isRoomDeleted = await this.updateRoomStatus(requestUser, requestUser.player.roomInfo);
+            await this.updateRoomAnnouncement(requestUser, requestUser.player.roomInfo, 'leave', isRoomDeleted);
+        }
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
-        if (!data.authorization) {
-            socket.emit('log-in', { errorMessage: '잘못된 접근입니다.', status: 401 });
+        const token = data.authorization;
+        if (!token) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
         }
-        const token = data.authorization;
-        await this.playersService.socketIdMapToLoginUser(token, socket);
+        await this.playersService.socketIdMapToLoginUser(token, socket.id);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
     async socketIdMapToLogOutUser(socket) {
-        const requestUser = players_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('leave-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
-        }
-        if (requestUser.currentRoom) {
-            const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
-            socket.leave(`${updateRoomInfo.roomId}`);
-            const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
-            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
-            });
-            const data = await this.roomService.getAllRoomList();
-            this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
-        }
-        await this.playersService.socketIdMapToLogOutUser(socket);
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (requestUser.player)
+            await this.handleUserToLeaveRoom(requestUser, socket);
+        await this.playersService.removeSocketBySocketId(socket.id);
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
     async handleCreateRoomRequest(socket, { data }) {
-        const requestUser = players_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('create-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
-        const newRoomId = await this.roomService.createRoom(data);
-        socket.emit('create-room', { data: { roomId: newRoomId } });
+        const roomId = await this.roomService.createRoom(data);
+        socket.emit('create-room', { data: { roomId } });
         const updateRoomList = await this.roomService.getAllRoomList();
         this.server.emit('room-list', { data: updateRoomList });
     }
-    async handleEnterRoomRequest(socket, { data }) {
-        const requestUser = players_service_1.socketIdMap[socket.id];
-        if (!requestUser) {
-            socket.emit('enter-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'enter-room');
-        }
-        if (requestUser.currentRoom) {
-            socket.emit('enter-room', {
-                errorMessage: '잘못된 접근입니다.',
-                status: 400,
-            });
+    async handleEnterRoomRequest(socket, { data: requestRoom }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (requestUser.player) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
-        const requestRoom = data;
-        const isRoomAvailable = await this.roomService.isRoomAvailable(requestUser, requestRoom);
-        if (!isRoomAvailable.availability) {
-            socket.emit('enter-room', {
-                errorMessage: isRoomAvailable.message,
-                status: isRoomAvailable.status,
-            });
-            throw new ws_exception_filter_1.SocketException(isRoomAvailable.message, isRoomAvailable.status, 'enter-room');
-        }
-        const updateRoomInfo = await this.roomService.updateRoomParticipants(socket.id, requestUser, isRoomAvailable.room);
-        socket.join(`${updateRoomInfo.roomId}`);
-        const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
-        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-            data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'enter' },
-        });
-        const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
+        await this.roomService.enterRoom(requestUser, requestRoom);
+        socket.join(`${requestRoom.roomId}`);
+        await this.updateRoomAnnouncement(requestUser, requestRoom.roomId, 'enter');
     }
     async handleLeaveRoomEvent(socket) {
-        const requestUser = players_service_1.socketIdMap[socket.id];
+        const requestUser = await this.socketAuthentication(socket.id);
+        await this.handleUserToLeaveRoom(requestUser, socket);
+    }
+    async sendChatRequest(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        console.log(requestUser);
+        this.server
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+    }
+    async socketAuthentication(socketId) {
+        const requestUser = await this.playersService.getUserBySocketId(socketId);
         if (!requestUser) {
-            socket.emit('leave-room', {
-                errorMessage: '로그인이 필요한 서비스입니다.',
-                status: 401,
-            });
-            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
+            throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
         }
-        const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
-        await this.playersService.handleLeaveRoom(socket.id);
-        socket.leave(`${updateRoomInfo.roomId}`);
-        if (updateRoomInfo) {
-            const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
-            this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-                data: { room: updateRoomInfo, eventUserInfo: restUserInfo, event: 'leave' },
+        return requestUser;
+    }
+    async handleUserToLeaveRoom(requestUser, socket) {
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'leave-room');
+        }
+        await this.RemovePlayerFormRoom(requestUser, socket);
+        const isRoomDeleted = await this.updateRoomStatus(requestUser, requestUser.player.roomInfo);
+        await this.updateRoomAnnouncement(requestUser, requestUser.player.roomInfo, 'leave', isRoomDeleted);
+    }
+    async RemovePlayerFormRoom(requestUser, socket) {
+        socket.leave(`${requestUser.player.roomInfo}`);
+        await this.playersService.removePlayerByUserId(requestUser.userInfo);
+    }
+    async updateRoomStatus(requestUser, roomId) {
+        const updateRoom = await this.roomService.getOneRoomByRoomId(roomId);
+        console.log('updateRoomStatus:', updateRoom);
+        if (!updateRoom.players.length) {
+            console.log('방에 아무도 없음!!!');
+            await this.roomService.removeRoomByRoomId(updateRoom.roomId);
+            return true;
+        }
+        else if (requestUser.player.isHost) {
+            const newHostUser = {
+                userInfo: updateRoom.players[0].userInfo,
+                isHost: true,
+            };
+            await this.playersService.updatePlayerStatusByUserId(newHostUser);
+            return false;
+        }
+    }
+    async updateRoomAnnouncement(requestUser, roomId, event, isRoomDeleted) {
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        if (!isRoomDeleted) {
+            const updateRoomInfo = await this.roomService.updateRoomInfoToRoom(roomId);
+            this.server.to(`${roomId}`).emit('update-room', {
+                data: { room: updateRoomInfo, eventUserInfo, event },
             });
         }
         const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
-    }
-    async sendChatRequest(socket, { data }) {
-        const message = data.message;
-        const { nickname, currentRoom } = players_service_1.socketIdMap[socket.id];
-        this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
+        this.server.except(`${roomId}`).emit('room-list', { data: roomInfoList });
     }
 };
 __decorate([
@@ -219,14 +206,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
 GamesGateway = __decorate([
+    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
     (0, websockets_1.WebSocketGateway)({
         cors: {
             origin: '*',
         },
     }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
-        chat_service_1.ChatService,
-        players_service_1.PlayersService])
+        players_service_1.PlayersService,
+        chat_service_1.ChatService])
 ], GamesGateway);
 exports.GamesGateway = GamesGateway;
 //# sourceMappingURL=games.gateway.js.map

@@ -18,9 +18,11 @@ const typeorm_1 = require("@nestjs/typeorm");
 const common_2 = require("@nestjs/common");
 const typeorm_2 = require("typeorm");
 const user_entity_1 = require("./entities/user.entity");
+const token_map_entity_1 = require("./entities/token-map.entity");
 let UsersService = class UsersService {
-    constructor(usersRepository) {
+    constructor(usersRepository, tokenMapRepository) {
         this.usersRepository = usersRepository;
+        this.tokenMapRepository = tokenMapRepository;
     }
     async validateUser(details) {
         const user = await this.usersRepository.findOneBy({
@@ -49,7 +51,9 @@ let UsersService = class UsersService {
 UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository])
 ], UsersService);
 exports.UsersService = UsersService;
 //# sourceMappingURL=users.service.js.map

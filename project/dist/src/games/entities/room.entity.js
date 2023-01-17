@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Room = void 0;
 const typeorm_1 = require("typeorm");
 const player_entity_1 = require("./player.entity");
-const socketIdMap_entity_1 = require("./socketIdMap.entity");
 let Room = class Room {
 };
 __decorate([
@@ -48,7 +47,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Room.prototype, "isSecreteRoom", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'tinyint', width: 4 }),
+    (0, typeorm_1.Column)({ type: 'int', width: 4 }),
     __metadata("design:type", Number)
 ], Room.prototype, "roomPassword", void 0);
 __decorate([
@@ -68,13 +67,9 @@ __decorate([
     __metadata("design:type", Date)
 ], Room.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => socketIdMap_entity_1.SocketIdMap, (socket) => socket.currentRoom),
+    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.room, { eager: true }),
     __metadata("design:type", Array)
-], Room.prototype, "socketId", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.roomId),
-    __metadata("design:type", Array)
-], Room.prototype, "playerId", void 0);
+], Room.prototype, "players", void 0);
 Room = __decorate([
     (0, typeorm_1.Entity)()
 ], Room);

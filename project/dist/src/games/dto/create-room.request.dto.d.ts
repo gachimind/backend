@@ -1,5 +1,5 @@
 export declare class CreateRoomRequestDto {
-    readonly roomTitle: string;
+    roomTitle: string;
     readonly maxCount: number;
     readonly round: number;
     readonly readyTime: number;

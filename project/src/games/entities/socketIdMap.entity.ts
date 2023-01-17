@@ -1,35 +1,21 @@
 import { User } from '../../users/entities/user.entity';
-import {
-    JoinColumn,
-    CreateDateColumn,
-    Entity,
-    PrimaryColumn,
-    UpdateDateColumn,
-    OneToOne,
-    ManyToOne,
-    Column,
-} from 'typeorm';
-import { Room } from './room.entity';
+import { JoinColumn, CreateDateColumn, Entity, PrimaryColumn, OneToOne, Column } from 'typeorm';
+import { Player } from './player.entity';
 
 @Entity()
 export class SocketIdMap {
-    @PrimaryColumn()
+    @PrimaryColumn('varchar')
     socketId: string;
 
-    @OneToOne(() => User)
-    @JoinColumn({ name: 'userId' })
-    userId: User;
+    @Column({ name: 'userInfo' })
+    userInfo: number;
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
+    @JoinColumn({ name: 'userInfo' })
+    user: User;
+
+    @OneToOne(() => Player, (player) => player.socket)
+    player: Player;
 
     @CreateDateColumn()
     createdAt: Date;
-
-    @UpdateDateColumn()
-    updatedAt: Date;
-
-    @ManyToOne(() => Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
-    @JoinColumn({ name: 'currentRoom' })
-    currentRoom: Room;
 }
