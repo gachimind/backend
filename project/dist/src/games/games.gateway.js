@@ -91,9 +91,42 @@ let GamesGateway = class GamesGateway {
         const requestUser = await this.socketAuthentication(socket.id);
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         console.log(requestUser);
-        this.server
+        socket
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+    }
+    async handleIce(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        const { ice } = data;
+        socket
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
+    }
+    async handleOffer(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        const { sessionDescription } = data;
+        socket
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
+    }
+    async handleAnswer(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        const { sessionDescription, answerReceiveSocketId } = data;
+        socket
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
+    }
+    async handler(socket) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        socket
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
+    }
+    async handleChangeStream(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        socket.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
+            data: { socketId: socket.id, video: data.video, audio: data.audio },
+        });
     }
     async socketAuthentication(socketId) {
         const requestUser = await this.playersService.getUserBySocketId(socketId);
@@ -205,6 +238,45 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-ice'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleIce", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-offer'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleOffer", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-answer'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleAnswer", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-leave'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handler", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('update-userstream'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
     (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
     (0, websockets_1.WebSocketGateway)({

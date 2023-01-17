@@ -32,6 +32,22 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             message: string;
         };
     }): Promise<void>;
+    handleIce(socket: Socket, { data }: {
+        data: {
+            candidateReceiveSocketId: string;
+            ice: string;
+        };
+    }): Promise<void>;
+    handleOffer(socket: Socket, { data }: {
+        data: any;
+    }): Promise<void>;
+    handleAnswer(socket: Socket, { data }: {
+        data: any;
+    }): Promise<void>;
+    handler(socket: Socket): Promise<void>;
+    handleChangeStream(socket: Socket, { data }: {
+        data: any;
+    }): Promise<void>;
     socketAuthentication(socketId: string): Promise<SocketIdMap>;
     handleUserToLeaveRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
     RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
