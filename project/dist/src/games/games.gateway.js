@@ -48,6 +48,7 @@ let GamesGateway = class GamesGateway {
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
+        throw new ws_exception_filter_1.SocketException('test', 400, 'handle-connection');
         const token = data.authorization;
         if (!token) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
@@ -90,10 +91,57 @@ let GamesGateway = class GamesGateway {
     async sendChatRequest(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
-        console.log(requestUser);
         this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+    }
+    async handleIce(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { candidateReceiveSocketId, ice } = data;
+        socket.broadcast
+            .to(candidateReceiveSocketId)
+            .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
+    }
+    async handleOffer(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, offerReceiveSocketId } = data;
+        socket.broadcast
+            .to(offerReceiveSocketId)
+            .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
+    }
+    async handleAnswer(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, answerReceiveSocketId } = data;
+        socket.broadcast
+            .to(answerReceiveSocketId)
+            .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
+    }
+    async handler(socket) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
+    }
+    async handleChangeStream(socket, { data }) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
+            data: { socketId: socket.id, video: data.video, audio: data.audio },
+        });
     }
     async socketAuthentication(socketId) {
         const requestUser = await this.playersService.getUserBySocketId(socketId);
@@ -116,9 +164,7 @@ let GamesGateway = class GamesGateway {
     }
     async updateRoomStatus(requestUser, roomId) {
         const updateRoom = await this.roomService.getOneRoomByRoomId(roomId);
-        console.log('updateRoomStatus:', updateRoom);
         if (!updateRoom.players.length) {
-            console.log('방에 아무도 없음!!!');
             await this.roomService.removeRoomByRoomId(updateRoom.roomId);
             return true;
         }
@@ -205,6 +251,45 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-ice'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleIce", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-offer'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleOffer", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-answer'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleAnswer", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-leave'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handler", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('update-userstream'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
     (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
     (0, websockets_1.WebSocketGateway)({

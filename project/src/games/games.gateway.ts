@@ -87,6 +87,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: AuthorizationRequestDto },
     ) {
+        throw new SocketException('test', 400, 'handle-connection');
         // 토큰 유무 검사
         const token = data.authorization;
         if (!token) {
@@ -166,11 +167,71 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     ) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
         const eventUserInfo = eventUserInfoConstructor(requestUser);
-        console.log(requestUser);
-
         this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+    }
+
+    @SubscribeMessage('webrtc-ice')
+    async handleIce(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody()
+        { data },
+    ) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { candidateReceiveSocketId, ice } = data;
+        socket.broadcast
+            .to(candidateReceiveSocketId)
+            .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
+    }
+
+    @SubscribeMessage('webrtc-offer')
+    async handleOffer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, offerReceiveSocketId } = data;
+        socket.broadcast
+            .to(offerReceiveSocketId)
+            .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
+    }
+
+    @SubscribeMessage('webrtc-answer')
+    async handleAnswer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, answerReceiveSocketId } = data;
+        socket.broadcast
+            .to(answerReceiveSocketId)
+            .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
+    }
+
+    @SubscribeMessage('webrtc-leave')
+    async handler(@ConnectedSocket() socket: Socket) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server
+            .to(`${requestUser.player.roomInfo}`)
+            .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
+    }
+
+    @SubscribeMessage('update-userstream')
+    async handleChangeStream(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
+            data: { socketId: socket.id, video: data.video, audio: data.audio },
+        });
     }
 
     async socketAuthentication(socketId: string) {
@@ -210,11 +271,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async updateRoomStatus(requestUser: SocketIdMap, roomId: number): Promise<boolean> {
         const updateRoom: Room = await this.roomService.getOneRoomByRoomId(roomId);
-        console.log('updateRoomStatus:', updateRoom);
 
         // 방 안에 request user만 남아있었다면, 방 폭파
         if (!updateRoom.players.length) {
-            console.log('방에 아무도 없음!!!');
             await this.roomService.removeRoomByRoomId(updateRoom.roomId);
             return true;
         }

@@ -28,4 +28,5 @@ export class TokenMap {
 
     @UpdateDateColumn()
     updatedAt: Date;
+    123;
 }
