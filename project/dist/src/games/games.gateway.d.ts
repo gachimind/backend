@@ -33,10 +33,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         };
     }): Promise<void>;
     handleIce(socket: Socket, { data }: {
-        data: {
-            candidateReceiveSocketId: string;
-            ice: string;
-        };
+        data: any;
     }): Promise<void>;
     handleOffer(socket: Socket, { data }: {
         data: any;

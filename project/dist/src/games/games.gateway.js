@@ -48,6 +48,7 @@ let GamesGateway = class GamesGateway {
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
+        throw new ws_exception_filter_1.SocketException('test', 400, 'handle-connection');
         const token = data.authorization;
         if (!token) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
@@ -90,41 +91,55 @@ let GamesGateway = class GamesGateway {
     async sendChatRequest(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
-        console.log(requestUser);
-        socket
+        this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
     }
     async handleIce(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
-        const { ice } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { candidateReceiveSocketId, ice } = data;
+        socket.broadcast
+            .to(candidateReceiveSocketId)
             .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
     }
     async handleOffer(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
-        const { sessionDescription } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, offerReceiveSocketId } = data;
+        socket.broadcast
+            .to(offerReceiveSocketId)
             .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
     }
     async handleAnswer(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
         const { sessionDescription, answerReceiveSocketId } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        socket.broadcast
+            .to(answerReceiveSocketId)
             .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
     }
     async handler(socket) {
         const requestUser = await this.socketAuthentication(socket.id);
-        socket
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
     }
     async handleChangeStream(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
-        socket.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        this.server.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
             data: { socketId: socket.id, video: data.video, audio: data.audio },
         });
     }
@@ -149,9 +164,7 @@ let GamesGateway = class GamesGateway {
     }
     async updateRoomStatus(requestUser, roomId) {
         const updateRoom = await this.roomService.getOneRoomByRoomId(roomId);
-        console.log('updateRoomStatus:', updateRoom);
         if (!updateRoom.players.length) {
-            console.log('방에 아무도 없음!!!');
             await this.roomService.removeRoomByRoomId(updateRoom.roomId);
             return true;
         }

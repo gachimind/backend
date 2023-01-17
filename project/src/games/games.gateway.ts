@@ -87,6 +87,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: AuthorizationRequestDto },
     ) {
+        throw new SocketException('test', 400, 'handle-connection');
         // 토큰 유무 검사
         const token = data.authorization;
         if (!token) {
@@ -175,51 +176,48 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     async handleIce(
         @ConnectedSocket() socket: Socket,
         @MessageBody()
-        { data }: { data: { candidateReceiveSocketId: string; ice: string } },
+        { data },
     ) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
-        const { ice } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { candidateReceiveSocketId, ice } = data;
+        socket.broadcast
+            .to(candidateReceiveSocketId)
             .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
-
-        // socket.to(roomId).emit 처리하면 되는거 아닌지??
-        // socket.broadcast
-        //     .to(candidateReceiveSocketId)
-        //     .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-offer')
     async handleOffer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
-        const { sessionDescription } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
+        const { sessionDescription, offerReceiveSocketId } = data;
+        socket.broadcast
+            .to(offerReceiveSocketId)
             .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
-
-        // socket.to(roomId).emit 처리하면 되는거 아닌지??
-        // socket.broadcast
-        //     .to(offerReceiveSocketId)
-        //     .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-answer')
     async handleAnswer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
         const { sessionDescription, answerReceiveSocketId } = data;
-        socket
-            .to(`${requestUser.player.roomInfo}`)
+        socket.broadcast
+            .to(answerReceiveSocketId)
             .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
-
-        // socket.to(roomId).emit 처리하면 되는거 아닌지??
-        // socket.broadcast
-        //     .to(answerReceiveSocketId)
-        //     .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-leave')
     async handler(@ConnectedSocket() socket: Socket) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
         this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
@@ -228,6 +226,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('update-userstream')
     async handleChangeStream(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+        }
         this.server.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
             data: { socketId: socket.id, video: data.video, audio: data.audio },
         });
