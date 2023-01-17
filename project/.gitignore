@@ -1,4 +1,5 @@
 .env
+seeding.ts
 
 # compiled output
 /node_modules

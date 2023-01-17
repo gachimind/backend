@@ -1,5 +1,6 @@
 import { IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Room } from '../entities/room.entity';
 
 export class EnterRoomRequestDto {
     @IsNumber()
