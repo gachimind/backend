@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InGameUsersService = exports.socketIdMap = void 0;
+exports.PlayersService = exports.socketIdMap = void 0;
 const common_1 = require("@nestjs/common");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 exports.socketIdMap = {};
@@ -31,7 +31,7 @@ const fakeDBUserTable = [
         profileImg: 'https://t3.ftcdn.net/jpg/02/95/94/94/360_F_295949484_8BrlWkTrPXTYzgMn3UebDl1O13PcVNMU.jpg',
     },
 ];
-let InGameUsersService = class InGameUsersService {
+let PlayersService = class PlayersService {
     handleDisconnect(socket) {
         exports.socketIdMap[socket.id] = null;
     }
@@ -72,8 +72,8 @@ let InGameUsersService = class InGameUsersService {
         return console.log(exports.socketIdMap[socketId]);
     }
 };
-InGameUsersService = __decorate([
+PlayersService = __decorate([
     (0, common_1.Injectable)()
-], InGameUsersService);
-exports.InGameUsersService = InGameUsersService;
-//# sourceMappingURL=inGame-users.service.js.map
+], PlayersService);
+exports.PlayersService = PlayersService;
+//# sourceMappingURL=players.service.js.map

@@ -29,12 +29,12 @@ const socket_io_1 = require("socket.io");
 const room_service_1 = require("./room.service");
 const chat_service_1 = require("./chat.service");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
-const inGame_users_service_1 = require("./inGame-users.service");
+const players_service_1 = require("./players.service");
 let GamesGateway = class GamesGateway {
-    constructor(roomService, chatService, inGameUsersService) {
+    constructor(roomService, chatService, playersService) {
         this.roomService = roomService;
         this.chatService = chatService;
-        this.inGameUsersService = inGameUsersService;
+        this.playersService = playersService;
     }
     afterInit(server) {
         console.log('webSocketServer init');
@@ -45,7 +45,7 @@ let GamesGateway = class GamesGateway {
         socket.emit('room-list', { data });
     }
     async handleDisconnect(socket) {
-        await this.inGameUsersService.handleDisconnect(socket);
+        await this.playersService.handleDisconnect(socket);
         console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
@@ -54,12 +54,12 @@ let GamesGateway = class GamesGateway {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
         }
         const token = data.authorization;
-        await this.inGameUsersService.socketIdMapToLoginUser(token, socket);
+        await this.playersService.socketIdMapToLoginUser(token, socket);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
     async socketIdMapToLogOutUser(socket) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        const requestUser = players_service_1.socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('leave-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -77,12 +77,12 @@ let GamesGateway = class GamesGateway {
             const data = await this.roomService.getAllRoomList();
             this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data });
         }
-        await this.inGameUsersService.socketIdMapToLogOutUser(socket);
+        await this.playersService.socketIdMapToLogOutUser(socket);
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
     async handleCreateRoomRequest(socket, { data }) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        const requestUser = players_service_1.socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('create-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -96,7 +96,7 @@ let GamesGateway = class GamesGateway {
         this.server.emit('room-list', { data: updateRoomList });
     }
     async handleEnterRoomRequest(socket, { data }) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        const requestUser = players_service_1.socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('enter-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -130,7 +130,7 @@ let GamesGateway = class GamesGateway {
         this.server.except(`${updateRoomInfo.roomId}`).emit('room-list', { data: roomInfoList });
     }
     async handleLeaveRoomEvent(socket) {
-        const requestUser = inGame_users_service_1.socketIdMap[socket.id];
+        const requestUser = players_service_1.socketIdMap[socket.id];
         if (!requestUser) {
             socket.emit('leave-room', {
                 errorMessage: '로그인이 필요한 서비스입니다.',
@@ -139,7 +139,7 @@ let GamesGateway = class GamesGateway {
             throw new ws_exception_filter_1.SocketException('로그인이 필요한 서비스입니다.', 403, 'leave-room');
         }
         const updateRoomInfo = await this.roomService.leaveRoom(requestUser);
-        await this.inGameUsersService.handleLeaveRoom(socket.id);
+        await this.playersService.handleLeaveRoom(socket.id);
         socket.leave(`${updateRoomInfo.roomId}`);
         if (updateRoomInfo) {
             const { currentRoom } = requestUser, restUserInfo = __rest(requestUser, ["currentRoom"]);
@@ -152,7 +152,7 @@ let GamesGateway = class GamesGateway {
     }
     async sendChatRequest(socket, { data }) {
         const message = data.message;
-        const { nickname, currentRoom } = inGame_users_service_1.socketIdMap[socket.id];
+        const { nickname, currentRoom } = players_service_1.socketIdMap[socket.id];
         this.server.to(`${currentRoom}`).emit('receive-chat', { data: { nickname, message } });
     }
 };
@@ -226,7 +226,7 @@ GamesGateway = __decorate([
     }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         chat_service_1.ChatService,
-        inGame_users_service_1.InGameUsersService])
+        players_service_1.PlayersService])
 ], GamesGateway);
 exports.GamesGateway = GamesGateway;
 //# sourceMappingURL=games.gateway.js.map
