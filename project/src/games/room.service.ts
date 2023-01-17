@@ -109,18 +109,17 @@ export class RoomService {
     async updateIsGameReadyToStart(roomId: number): Promise<Room> {
         let room: Room = await this.getOneRoomByRoomId(roomId);
 
+        // player가 2명 이상일때만 player의 isReady state을 검사
         if (room.players.length > 1) {
             const isAllPlayerReadyToStart = (() => {
-                // players가 모두 ready 상태이면, isGameReadyToStart를 트리거
+                // host를 제외하고, 모든 player가 ready 상태이면, isAllPlayerReadyToStart를 true로 반환
                 for (const player of room.players) {
-                    if (!player.isReady) return false;
+                    if (!player.isHost && !player.isReady) return false;
                 }
                 return true;
             })();
-            console.log('isAllPlayerReadyToStart?', isAllPlayerReadyToStart);
 
-            // player가 2명 이상이고, 플레이어 준비 상태에 따라 room 정보 갱신
-
+            // 플레이어 준비 상태에 따라 room 정보 갱신
             if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
                 await this.updateRoomStatusByRoomId({
                     roomId: roomId,
