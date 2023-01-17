@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Player = void 0;
+const user_entity_1 = require("../../users/entities/user.entity");
 const typeorm_1 = require("typeorm");
 const room_entity_1 = require("./room.entity");
 const socketIdMap_entity_1 = require("./socketIdMap.entity");
@@ -18,28 +19,40 @@ let Player = class Player {
 __decorate([
     (0, typeorm_1.PrimaryColumn)(),
     __metadata("design:type", Number)
-], Player.prototype, "userId", void 0);
+], Player.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap),
-    (0, typeorm_1.JoinColumn)({ name: 'socketId' }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { eager: true, onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
+    __metadata("design:type", user_entity_1.User)
+], Player.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'socketInfo' }),
+    __metadata("design:type", String)
+], Player.prototype, "socketInfo", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'socketInfo' }),
     __metadata("design:type", socketIdMap_entity_1.SocketIdMap)
-], Player.prototype, "socketId", void 0);
+], Player.prototype, "socket", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'roomInfo' }),
+    __metadata("design:type", Number)
+], Player.prototype, "roomInfo", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
         onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
     }),
-    (0, typeorm_1.JoinColumn)({ name: 'roomId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'roomInfo' }),
     __metadata("design:type", room_entity_1.Room)
-], Player.prototype, "roomId", void 0);
+], Player.prototype, "room", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
-], Player.prototype, "isGameOn", void 0);
+], Player.prototype, "isReady", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
-], Player.prototype, "isGameReadyToStart", void 0);
+], Player.prototype, "isHost", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

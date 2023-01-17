@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./src/users/entities/user.entity");
-require("dotenv/config");
 const token_map_entity_1 = require("./src/users/entities/token-map.entity");
 const room_entity_1 = require("./src/games/entities/room.entity");
 const player_entity_1 = require("./src/games/entities/player.entity");
 const socketIdMap_entity_1 = require("./src/games/entities/socketIdMap.entity");
+require("dotenv/config");
 const dataSource = new typeorm_1.DataSource({
     type: 'mysql',
     host: process.env.MYSQL_HOST,

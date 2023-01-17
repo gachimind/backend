@@ -9,30 +9,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LoginUserToSocketDto = void 0;
+exports.AuthorizationRequestDto = void 0;
 const class_validator_1 = require("class-validator");
-const create_user_dto_1 = require("./create-user.dto");
 const swagger_1 = require("@nestjs/swagger");
-class LoginUserToSocketDto extends (0, swagger_1.OmitType)(create_user_dto_1.CreateUserDto, ['email']) {
+class AuthorizationRequestDto {
 }
 __decorate([
-    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)({
-        example: 1,
-        required: true,
-        description: 'userId',
+        example: 'token value',
+        required: false,
+        description: '로그인을 요청하는 모든 유저는 authorization을 emit',
     }),
-    __metadata("design:type", Number)
-], LoginUserToSocketDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, swagger_1.ApiProperty)({
-        example: 1,
-        required: true,
-        description: '유저가 현재 위치한 방의 roomId',
-    }),
-    __metadata("design:type", Number)
-], LoginUserToSocketDto.prototype, "currentRoom", void 0);
-exports.LoginUserToSocketDto = LoginUserToSocketDto;
-//# sourceMappingURL=login-user.dto.js.map
+    __metadata("design:type", String)
+], AuthorizationRequestDto.prototype, "authorization", void 0);
+exports.AuthorizationRequestDto = AuthorizationRequestDto;
+//# sourceMappingURL=authorization.dto.js.map

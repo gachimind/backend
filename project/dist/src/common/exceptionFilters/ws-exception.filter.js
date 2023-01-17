@@ -19,6 +19,7 @@ exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         super.catch(exception, host);
+        console.error(exception);
     }
 };
 SocketExceptionFilter = __decorate([

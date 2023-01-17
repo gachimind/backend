@@ -17,6 +17,7 @@ export class SocketException extends WsException {
 export class SocketExceptionFilter extends BaseWsExceptionFilter {
     catch(exception: SocketException, host: ArgumentsHost) {
         super.catch(exception, host);
+        console.error(exception);
 
         // client에 어떻게 메세지 내려가는지 확인 해야 함
         // const ctx = host.switchToWs();
