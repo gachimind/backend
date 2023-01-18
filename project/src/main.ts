@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.filter';
 import * as session from 'express-session';
 import * as passport from 'passport';
+import * as cookieParser from 'cookie-parser';
 
 declare const module: any;
 
@@ -12,6 +13,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const port = process.env.PORT || 3000;
     app.enableCors();
+    app.use(cookieParser());
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalPipes(
         new ValidationPipe({

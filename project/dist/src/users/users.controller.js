@@ -31,11 +31,12 @@ let UsersController = class UsersController {
         if (!req.user) {
             throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser } = req.user;
+        const { user, isNewUser } = await this.usersService.validateUser(req.user);
         const token = await this.usersService.createToken(user, isNewUser);
-        const redirectUrl = this.configService.get('REDIRECT');
-        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 });
-        res.redirect(redirectUrl);
+        return res
+            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
     user(request) {
         if (!request.user)

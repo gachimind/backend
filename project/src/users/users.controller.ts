@@ -6,7 +6,6 @@ import {
     Res,
     UseGuards,
     Param,
-    Header,
     HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -17,6 +16,7 @@ import { Request, Response } from 'express';
 import { KakaoAuthGuard } from './auth/kakao.guards';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
@@ -36,17 +36,19 @@ export class UsersController {
     @UseGuards(KakaoAuthGuard)
     async kakaoLoginRedirect(
         @Param('code') code: string,
-        @Req() req: { user: { user: User; isNewUser: boolean } },
+        @Req() req: { user: CreateUserDto },
         @Res({ passthrough: true }) res: Response,
-    ): Promise<any> {
+    ) {
         if (!req.user) {
             throw new HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser } = req.user;
+        const { user, isNewUser }: { user: User; isNewUser: boolean } =
+            await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user, isNewUser);
-        const redirectUrl = this.configService.get('REDIRECT');
-        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ });
-        res.redirect(redirectUrl);
+        return res
+            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
 
     @Get('status')
