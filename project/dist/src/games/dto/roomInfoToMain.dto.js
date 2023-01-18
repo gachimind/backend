@@ -12,13 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoomInfoToMainDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const room_data_dto_1 = require("./room.data.dto");
-class RoomInfoToMainDto extends (0, swagger_1.OmitType)(room_data_dto_1.RoomDataDto, [
+const room_data_insert_dto_1 = require("./room.data.insert.dto");
+class RoomInfoToMainDto extends (0, swagger_1.OmitType)(room_data_insert_dto_1.RoomDataInsertDto, [
     'discussionTime',
-    'readyTime',
     'speechTime',
+    'readyTime',
     'roomPassword',
-    'participants',
     'isGameReadyToStart',
 ]) {
 }

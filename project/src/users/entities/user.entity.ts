@@ -1,11 +1,15 @@
+import { Player } from 'src/games/entities/player.entity';
+import { SocketIdMap } from 'src/games/entities/socketIdMap.entity';
 import {
     Column,
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
+    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+import { TokenMap } from './token-map.entity';
 
 @Entity()
 export class User {

@@ -1,4 +1,14 @@
-import { Controller, Get, UseInterceptors, Req, UseGuards, Param } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    UseInterceptors,
+    Req,
+    UseGuards,
+    Param,
+    Post,
+    Delete,
+    Body,
+} from '@nestjs/common';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { HttpException } from '@nestjs/common';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';

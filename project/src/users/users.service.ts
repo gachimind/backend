@@ -4,12 +4,15 @@ import { HttpException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserDetails } from './auth/kakao.data';
+import { TokenMap } from './entities/token-map.entity';
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
+        @InjectRepository(TokenMap)
+        private readonly tokenMapRepository: Repository<TokenMap>,
     ) {}
 
     // 카카오 로그인

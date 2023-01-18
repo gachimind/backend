@@ -11,16 +11,26 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenMap = void 0;
 const typeorm_1 = require("typeorm");
+const user_entity_1 = require("./user.entity");
 let TokenMap = class TokenMap {
 };
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], TokenMap.prototype, "tokenMapId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], TokenMap.prototype, "token", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'userInfo' }),
     __metadata("design:type", Number)
-], TokenMap.prototype, "userId", void 0);
+], TokenMap.prototype, "userInfo", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
+    __metadata("design:type", user_entity_1.User)
+], TokenMap.prototype, "user", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

@@ -9,29 +9,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EnterRoomRequestDto = void 0;
+exports.EventUserInfoDto = void 0;
 const class_validator_1 = require("class-validator");
-const swagger_1 = require("@nestjs/swagger");
-class EnterRoomRequestDto {
+class EventUserInfoDto {
 }
 __decorate([
-    (0, class_validator_1.IsNumber)(),
-    (0, swagger_1.ApiProperty)({
-        example: 1,
-        required: true,
-        description: '방 생성시 서버에서 자동 생성하는 방의 고유번호',
-    }),
-    __metadata("design:type", Number)
-], EnterRoomRequestDto.prototype, "roomId", void 0);
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EventUserInfoDto.prototype, "socketId", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, swagger_1.ApiProperty)({
-        example: 8282,
-        required: false,
-        description: '비밀방 비밀번호 - 숫자 4자리',
-    }),
     __metadata("design:type", Number)
-], EnterRoomRequestDto.prototype, "roomPassword", void 0);
-exports.EnterRoomRequestDto = EnterRoomRequestDto;
-//# sourceMappingURL=enter-room.dto.js.map
+], EventUserInfoDto.prototype, "userId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EventUserInfoDto.prototype, "nickname", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EventUserInfoDto.prototype, "profileImg", void 0);
+exports.EventUserInfoDto = EventUserInfoDto;
+//# sourceMappingURL=evnet-user.info.dto.js.map

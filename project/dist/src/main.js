@@ -5,7 +5,6 @@ const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const http_exception_filter_1 = require("./common/exceptionFilters/http-exception.filter");
-const ws_exception_filter_1 = require("./common/exceptionFilters/ws-exception.filter");
 const session = require("express-session");
 const passport = require("passport");
 async function bootstrap() {
@@ -13,7 +12,6 @@ async function bootstrap() {
     const port = process.env.PORT || 3000;
     app.enableCors();
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
-    app.useGlobalFilters(new ws_exception_filter_1.SocketExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,

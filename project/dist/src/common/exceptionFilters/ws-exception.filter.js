@@ -13,12 +13,24 @@ const errors_1 = require("@nestjs/websockets/errors");
 class SocketException extends errors_1.WsException {
     constructor(message, status, eventName) {
         super({ message, status, eventName });
+        this.message = message;
+        this.status = status;
+        this.eventName = eventName;
     }
 }
 exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         super.catch(exception, host);
+        const ctx = host.switchToWs();
+        const socket = ctx.getClient();
+        socket.emit('error', {
+            error: {
+                errorMessage: exception.message,
+                status: exception.status,
+                event: exception.eventName,
+            },
+        });
     }
 };
 SocketExceptionFilter = __decorate([

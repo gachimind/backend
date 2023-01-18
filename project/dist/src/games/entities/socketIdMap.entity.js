@@ -12,34 +12,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocketIdMap = void 0;
 const user_entity_1 = require("../../users/entities/user.entity");
 const typeorm_1 = require("typeorm");
-const room_entity_1 = require("./room.entity");
+const player_entity_1 = require("./player.entity");
 let SocketIdMap = class SocketIdMap {
 };
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryColumn)('varchar'),
     __metadata("design:type", String)
 ], SocketIdMap.prototype, "socketId", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.Column)({ name: 'userInfo' }),
+    __metadata("design:type", Number)
+], SocketIdMap.prototype, "userInfo", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
-], SocketIdMap.prototype, "userId", void 0);
+], SocketIdMap.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => player_entity_1.Player, (player) => player.socket),
+    __metadata("design:type", player_entity_1.Player)
+], SocketIdMap.prototype, "player", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], SocketIdMap.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", Date)
-], SocketIdMap.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    }),
-    (0, typeorm_1.JoinColumn)({ name: 'currentRoom' }),
-    __metadata("design:type", room_entity_1.Room)
-], SocketIdMap.prototype, "currentRoom", void 0);
 SocketIdMap = __decorate([
     (0, typeorm_1.Entity)()
 ], SocketIdMap);
