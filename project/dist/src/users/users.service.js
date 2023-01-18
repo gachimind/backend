@@ -15,37 +15,51 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const common_2 = require("@nestjs/common");
 const typeorm_2 = require("typeorm");
+const jwt_1 = require("@nestjs/jwt");
 const user_entity_1 = require("./entities/user.entity");
 const token_map_entity_1 = require("./entities/token-map.entity");
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository) {
+    constructor(usersRepository, tokenMapRepository, jwtService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
+        this.jwtService = jwtService;
     }
-    async validateUser(details) {
-        const user = await this.usersRepository.findOneBy({
-            email: details.email,
-        });
-        if (user)
-            return user;
-        const newUser = this.usersRepository.create(details);
-        return this.usersRepository.save(newUser);
+    async createUser(details) {
+        return await this.usersRepository.save(details);
     }
-    async findUserById(userId) {
-        const user = await this.usersRepository.findOneBy({ userId });
-        return user;
+    async findUserByNickNameOrEmail(nickname, email) {
+        console.log('findUserByNicknameOrEmail', { nickname, email });
+        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
     }
-    async getUserDetailsByUserId(userId) {
-        const user = await this.usersRepository.findOne({
-            select: { userId: true, email: true, nickname: true, profileImg: true },
-            where: { userId },
-        });
+    async validateUser(userData) {
+        const users = await this.findUserByNickNameOrEmail(userData.nickname, userData.email);
+        let user = users[0];
+        let isNewUser = false;
         if (!user) {
-            throw new common_2.HttpException('회원 인증에 실패했습니다.', 402);
+            user = await this.createUser(user);
+            isNewUser = true;
         }
-        return user;
+        return { user, isNewUser };
+    }
+    async createToken(user, isNewUSer) {
+        const payload = {};
+        const token = this.jwtService.sign({
+            payload,
+        });
+        if (isNewUSer) {
+            await this.tokenMapRepository.save({
+                userInfo: user.userId,
+                token: token,
+            });
+        }
+        else {
+            await this.tokenMapRepository.update({ user }, { token: token });
+        }
+        return token;
+    }
+    async tokenValidate(token) {
+        return await this.jwtService.verify(token);
     }
 };
 UsersService = __decorate([
@@ -53,7 +67,8 @@ UsersService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        jwt_1.JwtService])
 ], UsersService);
 exports.UsersService = UsersService;
 //# sourceMappingURL=users.service.js.map

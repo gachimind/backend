@@ -1,23 +1,19 @@
-import { Player } from 'src/games/entities/player.entity';
-import { SocketIdMap } from 'src/games/entities/socketIdMap.entity';
 import {
     Column,
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
-import { TokenMap } from './token-map.entity';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    userId: number;
+    userId: number; // 자동 생성
 
     @Column({ unique: true, length: 50 })
-    email: string;
+    email: string | null;
 
     @Column({ unique: true, length: 30 })
     nickname: string;

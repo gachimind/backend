@@ -39,6 +39,10 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
 ], TokenMap.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)(),
+    __metadata("design:type", Date)
+], TokenMap.prototype, "deletedAt", void 0);
 TokenMap = __decorate([
     (0, typeorm_1.Entity)()
 ], TokenMap);

@@ -1,6 +1,6 @@
 export declare class User {
     userId: number;
-    email: string;
+    email: string | null;
     nickname: string;
     profileImg: string;
     createdAt: Date;

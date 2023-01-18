@@ -1,3 +1,4 @@
+import { userInfo } from 'os';
 import {
     Column,
     CreateDateColumn,
@@ -6,6 +7,7 @@ import {
     OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
+    DeleteDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -28,5 +30,7 @@ export class TokenMap {
 
     @UpdateDateColumn()
     updatedAt: Date;
-    123;
+
+    @DeleteDateColumn()
+    deletedAt: Date | null;
 }
