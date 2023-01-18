@@ -106,9 +106,9 @@ export class RoomService {
         });
     }
 
+    // 업데이트가 발생한 방의 정보를 받아, isGameReadyToStart 정보 갱신
     async updateIsGameReadyToStart(roomId: number): Promise<Room> {
         let room: Room = await this.getOneRoomByRoomId(roomId);
-
         // player가 2명 이상일때만 player의 isReady state을 검사
         if (room.players.length > 1) {
             const isAllPlayerReadyToStart = (() => {
@@ -122,11 +122,11 @@ export class RoomService {
             // 플레이어 준비 상태에 따라 room 정보 갱신
             if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
                 await this.updateRoomStatusByRoomId({
-                    roomId: roomId,
+                    roomId: room.roomId,
                     isGameReadyToStart: isAllPlayerReadyToStart,
                 });
             }
-            room = await this.getOneRoomByRoomId(roomId);
+            room = await this.getOneRoomByRoomId(room.roomId);
         }
         return room;
     }

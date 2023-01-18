@@ -21,7 +21,7 @@ const players_service_1 = require("./players.service");
 const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
 const chat_service_1 = require("./chat.service");
 const common_1 = require("@nestjs/common");
-const update_room_info_to_room_constructor_1 = require("./util/update-room.info.to.room.constructor");
+const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService) {
         this.roomService = roomService;
@@ -35,7 +35,6 @@ let GamesGateway = class GamesGateway {
         console.log('connected socket', socket.id);
         const data = await this.roomService.getAllRoomList();
         socket.emit('room-list', { data });
-        await this.roomService.removeRoomByRoomId(8);
     }
     async handleDisconnect(socket) {
         const requestUser = await this.playersService.getUserBySocketId(socket.id);
@@ -43,10 +42,10 @@ let GamesGateway = class GamesGateway {
             return console.log('disconnected socket', socket.id);
         await this.playersService.removeSocketBySocketId(socket.id);
         if (requestUser.player) {
-            const isRoomDeleted = await this.updateRoomStatus(requestUser, requestUser.player.roomInfo);
-            await this.updateRoomAnnouncement(requestUser, requestUser.player.roomInfo, 'leave', isRoomDeleted);
+            const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
+            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
-        console.log('disconnected socket', socket.id);
+        return console.log('disconnected socket', socket.id);
     }
     async socketIdMapToLoginUser(socket, { data }) {
         const token = data.authorization;
@@ -59,9 +58,11 @@ let GamesGateway = class GamesGateway {
     }
     async socketIdMapToLogOutUser(socket) {
         const requestUser = await this.socketAuthentication(socket.id);
-        if (requestUser.player)
-            await this.handleUserToLeaveRoom(requestUser, socket);
         await this.playersService.removeSocketBySocketId(socket.id);
+        if (requestUser.player) {
+            const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
+            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+        }
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
@@ -72,8 +73,7 @@ let GamesGateway = class GamesGateway {
         }
         const roomId = await this.roomService.createRoom(data);
         socket.emit('create-room', { data: { roomId } });
-        const updateRoomList = await this.roomService.getAllRoomList();
-        this.server.emit('room-list', { data: updateRoomList });
+        await this.updateRoomListToMain();
     }
     async handleEnterRoomRequest(socket, { data: requestRoom }) {
         const requestUser = await this.socketAuthentication(socket.id);
@@ -82,31 +82,40 @@ let GamesGateway = class GamesGateway {
         }
         await this.roomService.enterRoom(requestUser, requestRoom);
         socket.join(`${requestRoom.roomId}`);
-        await this.updateRoomAnnouncement(requestUser, requestRoom.roomId, 'enter');
+        const updateRoom = await this.updateRoom(requestRoom.roomId);
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
     async handleReadyEvent(socket) {
         const requestUser = await this.socketAuthentication(socket.id);
-        if (!requestUser.player) {
+        if (!requestUser.player || requestUser.player.isHost) {
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
         await this.playersService.setPlayerReady(requestUser.player);
         const room = await this.roomService.updateIsGameReadyToStart(requestUser.player.roomInfo);
-        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
-        const updateRoomInfo = (0, update_room_info_to_room_constructor_1.updateRoomInfoToRoomConstructor)(room);
-        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-            data: { room: updateRoomInfo, eventUserInfo, event: 'ready' },
-        });
+        await this.updateRoomInfoToRoom(requestUser, room, 'ready');
     }
     async handleLeaveRoomEvent(socket) {
         const requestUser = await this.socketAuthentication(socket.id);
-        await this.handleUserToLeaveRoom(requestUser, socket);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'leave-room');
+        }
+        await this.RemovePlayerFormRoom(requestUser, socket);
+        const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
     async sendChatRequest(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'send-chat');
+        }
+        let type = 'chat';
+        if (requestUser.player.room.isGameOn) {
+            type = 'answer';
+        }
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         this.server
             .to(`${requestUser.player.roomInfo}`)
-            .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+            .emit('receive-chat', { data: { message: data.message, eventUserInfo, type } });
     }
     async handleIce(socket, { data }) {
         const requestUser = await this.socketAuthentication(socket.id);
@@ -163,43 +172,51 @@ let GamesGateway = class GamesGateway {
         }
         return requestUser;
     }
-    async handleUserToLeaveRoom(requestUser, socket) {
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'leave-room');
-        }
-        await this.RemovePlayerFormRoom(requestUser, socket);
-        const isRoomDeleted = await this.updateRoomStatus(requestUser, requestUser.player.roomInfo);
-        await this.updateRoomAnnouncement(requestUser, requestUser.player.roomInfo, 'leave', isRoomDeleted);
-    }
     async RemovePlayerFormRoom(requestUser, socket) {
         socket.leave(`${requestUser.player.roomInfo}`);
         await this.playersService.removePlayerByUserId(requestUser.userInfo);
     }
-    async updateRoomStatus(requestUser, roomId) {
-        const updateRoom = await this.roomService.getOneRoomByRoomId(roomId);
-        if (!updateRoom.players.length) {
-            await this.roomService.removeRoomByRoomId(updateRoom.roomId);
-            return true;
-        }
-        else if (requestUser.player.isHost) {
-            const newHostUser = {
-                userInfo: updateRoom.players[0].userInfo,
-                isHost: true,
-            };
-            await this.playersService.updatePlayerStatusByUserId(newHostUser);
-            return false;
-        }
+    async updateHostPlayer(updateRoom) {
+        const newHostPlayer = {
+            userInfo: updateRoom.players[0].userInfo,
+            isHost: true,
+        };
+        await this.playersService.updatePlayerStatusByUserId(newHostPlayer);
+        return false;
     }
-    async updateRoomAnnouncement(requestUser, roomId, event, isRoomDeleted) {
-        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
-        if (!isRoomDeleted) {
-            const updateRoomInfo = (0, update_room_info_to_room_constructor_1.updateRoomInfoToRoomConstructor)(await this.roomService.getOneRoomByRoomId(roomId));
-            this.server.to(`${roomId}`).emit('update-room', {
-                data: { room: updateRoomInfo, eventUserInfo, event },
-            });
+    async updateRoom(roomId) {
+        const room = await this.roomService.getOneRoomByRoomId(roomId);
+        if (!room.players.length) {
+            await this.roomService.removeRoomByRoomId(roomId);
+            return { room, state: 'deleted' };
         }
-        const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${roomId}`).emit('room-list', { data: roomInfoList });
+        if (!room.players[0].isHost) {
+            await this.updateHostPlayer(room);
+        }
+        const updateRoom = await this.roomService.updateIsGameReadyToStart(room.roomId);
+        return { room: updateRoom, state: 'updated' };
+    }
+    async announceUpdateRoomInfo(roomUpdate, requestUser, event) {
+        if (roomUpdate.state === 'updated') {
+            await this.updateRoomInfoToRoom(requestUser, roomUpdate.room, event);
+        }
+        await this.updateRoomListToMain();
+    }
+    async updateRoomInfoToRoom(requestUser, room, event) {
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        const updateRoom = (0, update_room_info_constructor_1.updateRoomInfoConstructor)(room);
+        this.server.to(`${updateRoom.roomId}`).emit('update-room', {
+            data: { room: updateRoom, eventUserInfo, event },
+        });
+    }
+    async updateRoomListToMain() {
+        const roomList = await this.roomService.getAllRoomList();
+        const roomIdList = (() => {
+            return roomList.map((room) => {
+                return `${room.roomId}`;
+            });
+        })();
+        this.server.except(roomIdList).emit('room-list', { data: roomList });
     }
 };
 __decorate([

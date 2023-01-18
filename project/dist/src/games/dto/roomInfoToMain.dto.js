@@ -24,6 +24,15 @@ class RoomInfoToMainDto extends (0, swagger_1.OmitType)(room_data_insert_dto_1.R
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, swagger_1.ApiProperty)({
+        example: 1,
+        required: true,
+        description: 'room 데이터 엔티티의 PK',
+    }),
+    __metadata("design:type", Number)
+], RoomInfoToMainDto.prototype, "roomId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, swagger_1.ApiProperty)({
         example: 3,
         required: true,
         description: '방정보 db에는 participants가 참여자 닉네임 배열로 되어 있고, client에 전단할때는 해당 배열의 length를 전달',

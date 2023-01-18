@@ -101,11 +101,11 @@ let RoomService = class RoomService {
             })();
             if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
                 await this.updateRoomStatusByRoomId({
-                    roomId: roomId,
+                    roomId: room.roomId,
                     isGameReadyToStart: isAllPlayerReadyToStart,
                 });
             }
-            room = await this.getOneRoomByRoomId(roomId);
+            room = await this.getOneRoomByRoomId(room.roomId);
         }
         return room;
     }

@@ -26,7 +26,8 @@ import { EventUserInfoDto } from './dto/evnet-user.info.dto';
 import { ChatService } from './chat.service';
 import { UseFilters } from '@nestjs/common';
 import { Room } from './entities/room.entity';
-import { updateRoomInfoToRoomConstructor } from './util/update-room.info.to.room.constructor';
+import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
+import { UpdateRoomDto } from './dto/update-room.dto';
 
 @UseFilters(SocketExceptionFilter)
 @WebSocketGateway({
@@ -52,7 +53,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         console.log('connected socket', socket.id);
         const data: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
         socket.emit('room-list', { data });
-        await this.roomService.removeRoomByRoomId(8);
     }
 
     async handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -65,22 +65,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
 
-        // 유저가 마지막으로 게임 방 안에 있었던 경우 처리
+        // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
         if (requestUser.player) {
-            // request user가 마지막 사람이었는지 확인하고 방삭제 or 방장 변경
-            const isRoomDeleted: boolean = await this.updateRoomStatus(
-                requestUser,
+            // 유저가 나간 뒤 방 정보 갱신
+            const updateRoom: { room: Room; state: string } = await this.updateRoom(
                 requestUser.player.roomInfo,
             );
-            // update된 방의 정보를 공유
-            await this.updateRoomAnnouncement(
-                requestUser,
-                requestUser.player.roomInfo,
-                'leave',
-                isRoomDeleted,
-            );
+            // 업데이트 된 방 정보 announce
+            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
-        console.log('disconnected socket', socket.id);
+        return console.log('disconnected socket', socket.id);
     }
 
     @SubscribeMessage('log-in')
@@ -103,9 +97,17 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
-        if (requestUser.player) await this.handleUserToLeaveRoom(requestUser, socket);
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
+
+        // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
+        if (requestUser.player) {
+            // 유저가 나간 뒤 방 정보 갱신
+            const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+            // 업데이트 된 방 정보 announce
+            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+        }
+
         console.log('로그아웃 성공!');
         socket.emit('log-out', { message: '로그아웃 성공!' });
     }
@@ -128,9 +130,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.emit('create-room', { data: { roomId } });
 
         // main space에 room list를 업데이트
-        const updateRoomList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
-        // !!! namespce 설정해줘야 함!!!
-        this.server.emit('room-list', { data: updateRoomList });
+        await this.updateRoomListToMain();
     }
 
     @SubscribeMessage('enter-room')
@@ -150,18 +150,21 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.roomService.enterRoom(requestUser, requestRoom);
         socket.join(`${requestRoom.roomId}`);
 
-        await this.updateRoomAnnouncement(requestUser, requestRoom.roomId, 'enter');
+        // 3. 방 정보를 업데이트
+        const updateRoom: { room: Room; state: string } = await this.updateRoom(requestRoom.roomId);
+
+        // 4. 업데이트 된 방 정보를 announce
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
 
     @SubscribeMessage('ready')
     async handleReadyEvent(@ConnectedSocket() socket: Socket) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
 
-        // 1. 입장을 요청한 유저가 방에 속해있는지 확인 -> player 정보가 없으면 에러
-        if (!requestUser.player) {
+        // 1. 입장을 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
+        if (!requestUser.player || requestUser.player.isHost) {
             throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
-
         // 2. ready event를 emit한 Player 정보를 업데이트
         await this.playersService.setPlayerReady(requestUser.player);
 
@@ -169,20 +172,27 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const room: Room = await this.roomService.updateIsGameReadyToStart(
             requestUser.player.roomInfo,
         );
-
         // 방 안에 update room info announce
-        const eventUserInfo = eventUserInfoConstructor(requestUser);
-        const updateRoomInfo: RoomInfoToRoomDto = updateRoomInfoToRoomConstructor(room);
-        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
-            data: { room: updateRoomInfo, eventUserInfo, event: 'ready' },
-        });
+        await this.updateRoomInfoToRoom(requestUser, room, 'ready');
     }
 
     @SubscribeMessage('leave-room')
     async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
-        await this.handleUserToLeaveRoom(requestUser, socket);
+
+        // request user가 player인지 확인 -> 아니면 에러 반환
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 요청입니다.', 400, 'leave-room');
+        }
+        // request user의 player 정보 삭제
+        await this.RemovePlayerFormRoom(requestUser, socket);
+
+        // 유저가 나간 뒤 방 정보 갱신
+        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+
+        // 업데이트 된 방 정보 announce
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
 
     @SubscribeMessage('send-chat')
@@ -191,10 +201,21 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @MessageBody() { data }: { data: { message: string } },
     ) {
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 요청입니다.', 400, 'send-chat');
+        }
+
+        let type = 'chat';
+        if (requestUser.player.room.isGameOn) {
+            // answer 검사 로직 여기에 구현
+            type = 'answer';
+        }
+
         const eventUserInfo = eventUserInfoConstructor(requestUser);
         this.server
             .to(`${requestUser.player.roomInfo}`)
-            .emit('receive-chat', { data: { message: data.message, eventUserInfo } });
+            .emit('receive-chat', { data: { message: data.message, eventUserInfo, type } });
     }
 
     @SubscribeMessage('webrtc-ice')
@@ -267,25 +288,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         return requestUser;
     }
 
-    async handleUserToLeaveRoom(requestUser: SocketIdMap, socket: Socket) {
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 요청입니다.', 400, 'leave-room');
-        }
-        // request user를 방에서 삭제
-        await this.RemovePlayerFormRoom(requestUser, socket);
-        // request user가 마지막 사람이었는지 확인하고 방삭제 or 방장 변경
-        const isRoomDeleted: boolean = await this.updateRoomStatus(
-            requestUser,
-            requestUser.player.roomInfo,
-        );
-        // update된 방의 정보를 공유
-        await this.updateRoomAnnouncement(
-            requestUser,
-            requestUser.player.roomInfo,
-            'leave',
-            isRoomDeleted,
-        );
-    }
+    // ###################### ALTER PLAYER ##############################
 
     async RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket) {
         // request user를 leave처리
@@ -294,46 +297,69 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.playersService.removePlayerByUserId(requestUser.userInfo);
     }
 
-    async updateRoomStatus(requestUser: SocketIdMap, roomId: number): Promise<boolean> {
-        const updateRoom: Room = await this.roomService.getOneRoomByRoomId(roomId);
-
-        // 방 안에 request user만 남아있었다면, 방 폭파
-        if (!updateRoom.players.length) {
-            await this.roomService.removeRoomByRoomId(updateRoom.roomId);
-            return true;
-        }
-        // 방 안에 누가 남아있고, 나간 유저가 방장이었다면, playerInfo 배열의 0번째 index player를 방장으로 업데이트
-        else if (requestUser.player.isHost) {
-            const newHostUser = {
-                userInfo: updateRoom.players[0].userInfo,
-                isHost: true,
-            };
-            await this.playersService.updatePlayerStatusByUserId(newHostUser);
-            return false;
-        }
+    async updateHostPlayer(updateRoom: Room) {
+        // updateRoom.players[0]번째 player를 방장으로 갱신
+        const newHostPlayer = {
+            userInfo: updateRoom.players[0].userInfo,
+            isHost: true,
+        };
+        await this.playersService.updatePlayerStatusByUserId(newHostPlayer);
+        return false;
     }
 
-    async updateRoomAnnouncement(
-        requestUser: SocketIdMap,
-        roomId: number,
-        event: string,
-        isRoomDeleted: boolean | void,
-    ) {
-        // eventUserInfo 생성
-        const eventUserInfo: EventUserInfoDto = eventUserInfoConstructor(requestUser);
+    // ###################### ALTER ROOM ###########################
 
-        // 방이 남아있다면, 방 안의 사람들에게 방 정보 업데이트 !!! namespace!!!
-        if (!isRoomDeleted) {
-            const updateRoomInfo: RoomInfoToRoomDto = updateRoomInfoToRoomConstructor(
-                await this.roomService.getOneRoomByRoomId(roomId),
-            );
-            this.server.to(`${roomId}`).emit('update-room', {
-                data: { room: updateRoomInfo, eventUserInfo, event },
-            });
+    // [logic] update room while isGameOn is false
+    // enter/leave/log-out/disconnect 이벤트 발생시 방 상태 업데이트 로직
+    async updateRoom(roomId: number): Promise<UpdateRoomDto> {
+        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
+        // 1. 방에 player가 없다면 방 폭파 -> 폭파한 방의 id 리턴
+        if (!room.players.length) {
+            await this.roomService.removeRoomByRoomId(roomId);
+            return { room, state: 'deleted' };
         }
+        // 2. players list의 첫번째 player가 호스트가 아니라면, 호스트 처리
+        if (!room.players[0].isHost) {
+            await this.updateHostPlayer(room);
+        }
+        // 3. 방 안에 남은 Player의 ready 상태를 검사해 isGameReadyToStart 트리거
+        const updateRoom = await this.roomService.updateIsGameReadyToStart(room.roomId);
+        return { room: updateRoom, state: 'updated' };
+    }
 
+    // ###################### update Room announcement #######################
+
+    // [logic] enter/leave/log-out/disconnect 이벤트 발생시 room announcement 처리
+    async announceUpdateRoomInfo(
+        roomUpdate: UpdateRoomDto,
+        requestUser: SocketIdMap,
+        event: string,
+    ) {
+        // updateRoom announce 처리
+        if (roomUpdate.state === 'updated') {
+            await this.updateRoomInfoToRoom(requestUser, roomUpdate.room, event);
+        }
+        await this.updateRoomListToMain();
+    }
+
+    // 업데이트된 방의 정보를 해당 방의 player에게 announce
+    async updateRoomInfoToRoom(requestUser: SocketIdMap, room: Room, event: string) {
+        const eventUserInfo: EventUserInfoDto = eventUserInfoConstructor(requestUser);
+        const updateRoom: RoomInfoToRoomDto = updateRoomInfoConstructor(room);
+        this.server.to(`${updateRoom.roomId}`).emit('update-room', {
+            data: { room: updateRoom, eventUserInfo, event },
+        });
+    }
+
+    // main페이지에 있는 유저에게 room의 갱신 정보 announce
+    async updateRoomListToMain() {
         // main space에 room-list event emit -> !!!namespace 설정하기!!!
-        const roomInfoList = await this.roomService.getAllRoomList();
-        this.server.except(`${roomId}`).emit('room-list', { data: roomInfoList });
+        const roomList: RoomInfoToMainDto[] = await this.roomService.getAllRoomList();
+        const roomIdList: string[] = (() => {
+            return roomList.map((room) => {
+                return `${room.roomId}`;
+            });
+        })();
+        this.server.except(roomIdList).emit('room-list', { data: roomList });
     }
 }

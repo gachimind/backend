@@ -2,7 +2,7 @@ import { RoomParticipantsDto } from '../dto/room.participants.dto';
 import { RoomInfoToRoomDto } from '../dto/roomInfoToRoom.dto';
 import { Room } from '../entities/room.entity';
 
-export function updateRoomInfoToRoomConstructor(room: Room): RoomInfoToRoomDto {
+export function updateRoomInfoConstructor(room: Room): RoomInfoToRoomDto {
     const {
         roomId,
         roomTitle,
