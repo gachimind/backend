@@ -26,6 +26,7 @@ import { EventUserInfoDto } from './dto/evnet-user.info.dto';
 import { ChatService } from './chat.service';
 import { UseFilters } from '@nestjs/common';
 import { Room } from './entities/room.entity';
+import { updateRoomInfoToRoomConstructor } from './util/update-room.info.to.room.constructor';
 
 @UseFilters(SocketExceptionFilter)
 @WebSocketGateway({
@@ -140,7 +141,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
 
-        // 1. 입장을 요청한 유저가 다른 방에 속해있지 않은지 확인
+        // 1. 입장을 요청한 유저가 방에 속해있는지 확인 -> player 정보가 있으면 에러
         if (requestUser.player) {
             throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
         }
@@ -150,6 +151,31 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.join(`${requestRoom.roomId}`);
 
         await this.updateRoomAnnouncement(requestUser, requestRoom.roomId, 'enter');
+    }
+
+    @SubscribeMessage('ready')
+    async handleReadyEvent(@ConnectedSocket() socket: Socket) {
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+
+        // 1. 입장을 요청한 유저가 방에 속해있는지 확인 -> player 정보가 없으면 에러
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
+        }
+
+        // 2. ready event를 emit한 Player 정보를 업데이트
+        await this.playersService.setPlayerReady(requestUser.player);
+
+        // 3. db에서 room 정보를 조회해 player 모두 ready인지 확인
+        const room: Room = await this.roomService.updateIsGameReadyToStart(
+            requestUser.player.roomInfo,
+        );
+
+        // 방 안에 update room info announce
+        const eventUserInfo = eventUserInfoConstructor(requestUser);
+        const updateRoomInfo: RoomInfoToRoomDto = updateRoomInfoToRoomConstructor(room);
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+            data: { room: updateRoomInfo, eventUserInfo, event: 'ready' },
+        });
     }
 
     @SubscribeMessage('leave-room')
@@ -298,8 +324,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 방이 남아있다면, 방 안의 사람들에게 방 정보 업데이트 !!! namespace!!!
         if (!isRoomDeleted) {
-            const updateRoomInfo: RoomInfoToRoomDto = await this.roomService.updateRoomInfoToRoom(
-                roomId,
+            const updateRoomInfo: RoomInfoToRoomDto = updateRoomInfoToRoomConstructor(
+                await this.roomService.getOneRoomByRoomId(roomId),
             );
             this.server.to(`${roomId}`).emit('update-room', {
                 data: { room: updateRoomInfo, eventUserInfo, event },

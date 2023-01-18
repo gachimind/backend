@@ -21,6 +21,7 @@ const players_service_1 = require("./players.service");
 const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
 const chat_service_1 = require("./chat.service");
 const common_1 = require("@nestjs/common");
+const update_room_info_to_room_constructor_1 = require("./util/update-room.info.to.room.constructor");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService) {
         this.roomService = roomService;
@@ -82,6 +83,19 @@ let GamesGateway = class GamesGateway {
         await this.roomService.enterRoom(requestUser, requestRoom);
         socket.join(`${requestRoom.roomId}`);
         await this.updateRoomAnnouncement(requestUser, requestRoom.roomId, 'enter');
+    }
+    async handleReadyEvent(socket) {
+        const requestUser = await this.socketAuthentication(socket.id);
+        if (!requestUser.player) {
+            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, 'enter-room');
+        }
+        await this.playersService.setPlayerReady(requestUser.player);
+        const room = await this.roomService.updateIsGameReadyToStart(requestUser.player.roomInfo);
+        const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
+        const updateRoomInfo = (0, update_room_info_to_room_constructor_1.updateRoomInfoToRoomConstructor)(room);
+        this.server.to(`${updateRoomInfo.roomId}`).emit('update-room', {
+            data: { room: updateRoomInfo, eventUserInfo, event: 'ready' },
+        });
     }
     async handleLeaveRoomEvent(socket) {
         const requestUser = await this.socketAuthentication(socket.id);
@@ -179,7 +193,7 @@ let GamesGateway = class GamesGateway {
     async updateRoomAnnouncement(requestUser, roomId, event, isRoomDeleted) {
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         if (!isRoomDeleted) {
-            const updateRoomInfo = await this.roomService.updateRoomInfoToRoom(roomId);
+            const updateRoomInfo = (0, update_room_info_to_room_constructor_1.updateRoomInfoToRoomConstructor)(await this.roomService.getOneRoomByRoomId(roomId));
             this.server.to(`${roomId}`).emit('update-room', {
                 data: { room: updateRoomInfo, eventUserInfo, event },
             });
@@ -235,6 +249,13 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleEnterRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('ready'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleReadyEvent", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('leave-room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
