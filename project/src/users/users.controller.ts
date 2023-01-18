@@ -13,12 +13,11 @@ import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToN
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
-import { KakaoAuthGuard } from './auth/kakao.guards';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthGuard } from '@nestjs/passport';
 
-@UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
 export class UsersController {
     constructor(
@@ -27,13 +26,13 @@ export class UsersController {
     ) {}
     // 카카로 로그인
     @Get('login/kakao')
-    @UseGuards(KakaoAuthGuard)
+    @UseGuards(AuthGuard('kakao'))
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
     @Get('login/kakao/redirect')
-    @UseGuards(KakaoAuthGuard)
+    @UseGuards(AuthGuard('kakao'))
     async kakaoLoginRedirect(
         @Param('code') code: string,
         @Req() req: { user: CreateUserDto },
@@ -51,6 +50,7 @@ export class UsersController {
             .redirect(this.configService.get('REDIRECT'));
     }
 
+    @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     @Get('status')
     user(@Req() request: Request) {
         if (!request.user) throw new HttpException('토큰 값이 일치하지 않습니다.', 401);
@@ -58,6 +58,7 @@ export class UsersController {
     }
 
     // // 회원 정보 상세 조회
+    // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     // @UseGuards(JwtAuthGuard)
     // @Get('/me')
     // getUserDetailsByToken(@Req() req) {

@@ -18,7 +18,7 @@ const config_1 = require("@nestjs/config");
 const undefinedToNull_interceptor_1 = require("../common/interceptors/undefinedToNull.interceptor");
 const resultToData_interceptor_1 = require("../common/interceptors/resultToData.interceptor");
 const users_service_1 = require("./users.service");
-const kakao_guards_1 = require("./auth/kakao.guards");
+const passport_1 = require("@nestjs/passport");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
         this.usersService = usersService;
@@ -46,14 +46,14 @@ let UsersController = class UsersController {
 };
 __decorate([
     (0, common_1.Get)('login/kakao'),
-    (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "handleLogin", null);
 __decorate([
     (0, common_1.Get)('login/kakao/redirect'),
-    (0, common_1.UseGuards)(kakao_guards_1.KakaoAuthGuard),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     __param(0, (0, common_1.Param)('code')),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
@@ -62,6 +62,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
+    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Get)('status'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -69,7 +70,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
 UsersController = __decorate([
-    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         config_1.ConfigService])
