@@ -9,6 +9,7 @@ import {
     Header,
     HttpException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
@@ -20,7 +21,10 @@ import { User } from './entities/user.entity';
 @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private configService: ConfigService,
+    ) {}
     // 카카로 로그인
     @Get('login/kakao')
     @UseGuards(KakaoAuthGuard)
@@ -40,8 +44,9 @@ export class UsersController {
         }
         const { user, isNewUser } = req.user;
         const token: string = await this.usersService.createToken(user, isNewUser);
+        const redirectUrl = this.configService.get('REDIRECT');
         res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ });
-        res.redirect('http://localhost:3000');
+        res.redirect(redirectUrl);
     }
 
     @Get('status')

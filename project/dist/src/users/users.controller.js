@@ -14,13 +14,15 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const undefinedToNull_interceptor_1 = require("../common/interceptors/undefinedToNull.interceptor");
 const resultToData_interceptor_1 = require("../common/interceptors/resultToData.interceptor");
 const users_service_1 = require("./users.service");
 const kakao_guards_1 = require("./auth/kakao.guards");
 let UsersController = class UsersController {
-    constructor(usersService) {
+    constructor(usersService, configService) {
         this.usersService = usersService;
+        this.configService = configService;
     }
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
@@ -31,8 +33,9 @@ let UsersController = class UsersController {
         }
         const { user, isNewUser } = req.user;
         const token = await this.usersService.createToken(user, isNewUser);
+        const redirectUrl = this.configService.get('REDIRECT');
         res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 });
-        res.redirect('http://localhost:3000');
+        res.redirect(redirectUrl);
     }
     user(request) {
         if (!request.user)
@@ -67,7 +70,8 @@ __decorate([
 UsersController = __decorate([
     (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)('api/users'),
-    __metadata("design:paramtypes", [users_service_1.UsersService])
+    __metadata("design:paramtypes", [users_service_1.UsersService,
+        config_1.ConfigService])
 ], UsersController);
 exports.UsersController = UsersController;
 //# sourceMappingURL=users.controller.js.map
