@@ -11,6 +11,14 @@ export class RoomInfoToMainDto extends OmitType(RoomDataInsertDto, [
 ] as const) {
     @IsNumber()
     @ApiProperty({
+        example: 1,
+        required: true,
+        description: 'room 데이터 엔티티의 PK',
+    })
+    public roomId: number;
+
+    @IsNumber()
+    @ApiProperty({
         example: 3,
         required: true,
         description:

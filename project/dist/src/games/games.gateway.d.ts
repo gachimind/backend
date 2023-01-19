@@ -7,6 +7,8 @@ import { PlayersService } from './players.service';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { ChatService } from './chat.service';
+import { Room } from './entities/room.entity';
+import { UpdateRoomDto } from './dto/update-room.dto';
 export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomService;
     private readonly playersService;
@@ -26,6 +28,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleEnterRoomRequest(socket: Socket, { data: requestRoom }: {
         data: EnterRoomRequestDto;
     }): Promise<void>;
+    handleReadyEvent(socket: Socket): Promise<void>;
     handleLeaveRoomEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
         data: {
@@ -46,8 +49,10 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string): Promise<SocketIdMap>;
-    handleUserToLeaveRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
     RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
-    updateRoomStatus(requestUser: SocketIdMap, roomId: number): Promise<boolean>;
-    updateRoomAnnouncement(requestUser: SocketIdMap, roomId: number, event: string, isRoomDeleted: boolean | void): Promise<void>;
+    updateHostPlayer(updateRoom: Room): Promise<boolean>;
+    updateRoom(roomId: number): Promise<UpdateRoomDto>;
+    announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap, event: string): Promise<void>;
+    updateRoomInfoToRoom(requestUser: SocketIdMap, room: Room, event: string): Promise<void>;
+    updateRoomListToMain(): Promise<void>;
 }

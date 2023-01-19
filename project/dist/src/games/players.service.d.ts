@@ -11,8 +11,9 @@ export declare class PlayersService {
     getUserBySocketId(socketId: string): Promise<SocketIdMap>;
     getUserByUserID(userId: number): Promise<SocketIdMap>;
     getPlayerBySocketId(socketInfo: string): Promise<Player>;
-    updatePlayerStatusByUserId(user: any): Promise<void>;
+    updatePlayerStatusByUserId(user: any): Promise<Player>;
     removeSocketBySocketId(socketId: string): Promise<number | any>;
     removePlayerByUserId(userId: number | User): Promise<number | any>;
     socketIdMapToLoginUser(token: string, socketId: string): Promise<import("typeorm").InsertResult>;
+    setPlayerReady(player: Player): Promise<Player>;
 }

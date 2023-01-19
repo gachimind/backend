@@ -47,8 +47,8 @@ export class PlayersService {
         return player;
     }
 
-    async updatePlayerStatusByUserId(user) {
-        await this.playerRepository.save(user);
+    async updatePlayerStatusByUserId(user): Promise<Player> {
+        return await this.playerRepository.save(user);
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
@@ -81,5 +81,15 @@ export class PlayersService {
         // 위의 검사를 통과했다면, socketIdMap에 매핑
         const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.insert(user);
+    }
+
+    async setPlayerReady(player: Player): Promise<Player> {
+        let user;
+        if (!player.isReady) {
+            user = { userInfo: player.userInfo, isReady: true };
+        } else {
+            user = { userInfo: player.userInfo, isReady: false };
+        }
+        return await this.updatePlayerStatusByUserId(user);
     }
 }

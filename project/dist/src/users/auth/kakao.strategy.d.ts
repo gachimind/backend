@@ -1,8 +1,7 @@
-import { UsersService } from '../users.service';
+import { ConfigService } from '@nestjs/config';
 declare const KakaoStrategy_base: new (...args: any[]) => any;
 export declare class KakaoStrategy extends KakaoStrategy_base {
-    private readonly usersService;
-    constructor(usersService: UsersService);
-    validate(accessToken: string, refreshToken: string, profile: any, done: any): Promise<any>;
+    constructor(configService: ConfigService);
+    validate(accessToken: string, refreshToken: string, profile: any, done: any): Promise<void>;
 }
 export {};

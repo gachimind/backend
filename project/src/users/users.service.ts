@@ -1,10 +1,10 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HttpException } from '@nestjs/common';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
-import { UserDetails } from './auth/kakao.data';
 import { TokenMap } from './entities/token-map.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,39 +13,67 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
+        private jwtService: JwtService,
     ) {}
 
-    // 카카오 로그인
-    async validateUser(details: UserDetails) {
-        const user = await this.usersRepository.findOneBy({
-            email: details.email,
-        });
-        if (user) return user;
-        const newUser = this.usersRepository.create(details);
-        return this.usersRepository.save(newUser);
+    async createUser(details: CreateUserDto): Promise<User> {
+        return await this.usersRepository.save(details);
     }
 
-    async findUserById(userId: number) {
-        const user = await this.usersRepository.findOneBy({ userId });
-        return user;
+    async findUserByNickNameOrEmail(nickname: string, email: string): Promise<User[]> {
+        console.log('findUserByNicknameOrEmail', { nickname, email });
+
+        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
+    }
+
+    async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
+        const users: User[] = await this.findUserByNickNameOrEmail(
+            userData.nickname,
+            userData.email,
+        );
+
+        // db에 유저 정보가 없는 경우 처리
+        if (!users || !users.length) {
+            const user: User = await this.createUser(userData);
+            const isNewUser = true;
+            return { user, isNewUser };
+        }
+
+        return { user: users[0], isNewUser: false };
+    }
+
+    // AccessToken 생성
+    async createToken(user: User, isNewUSer: boolean): Promise<string> {
+        const payload = {}; // 공갈빵 만들기
+        const token: string = this.jwtService.sign({
+            payload,
+        });
+        if (isNewUSer) {
+            await this.tokenMapRepository.save({
+                userInfo: user.userId,
+                token: token,
+            });
+        } else {
+            await this.tokenMapRepository.update({ user }, { token: token });
+        }
+
+        return token;
+    }
+
+    // 토큰 검증
+    async tokenValidate(token: string) {
+        return await this.jwtService.verify(token);
     }
 
     // 회원 정보 상세 조회
-    // async getUserDetailsByUserId(userId: number): Promise<User> {
-    //     const user = await this.usersRepository.findOne({ where: { userId } });
+    // async getUserDetailsByToken(token: string): Promise<TokenMap> {
+    //     const user = await this.tokenMapRepository.findOne({
+    //         where: { token },
+    //         relations: ['User'],
+    //     });
     //     if (!user) {
     //         throw new HttpException('회원 인증에 실패했습니다.', 402);
     //     }
     //     return user;
     // }
-    async getUserDetailsByUserId(userId: number): Promise<User> {
-        const user = await this.usersRepository.findOne({
-            select: { userId: true, email: true, nickname: true, profileImg: true },
-            where: { userId },
-        });
-        if (!user) {
-            throw new HttpException('회원 인증에 실패했습니다.', 402);
-        }
-        return user;
-    }
 }

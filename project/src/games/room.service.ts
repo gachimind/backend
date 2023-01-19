@@ -7,10 +7,8 @@ import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
-import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
-import { participantsListMapper } from './util/participants-list.mapper';
 
 @Injectable()
 export class RoomService {
@@ -42,6 +40,7 @@ export class RoomService {
         return await this.roomRepository.findOne({
             where: { roomId },
             relations: { players: { socket: true } },
+            order: { players: { createdAt: 'ASC' } },
         });
     }
 
@@ -49,37 +48,8 @@ export class RoomService {
         return await this.roomRepository.delete(roomId);
     }
 
-    async updateRoomInfoToRoom(roomId: number): Promise<RoomInfoToRoomDto> {
-        const room: Room = await this.getOneRoomByRoomId(roomId);
-
-        const {
-            roomTitle,
-            maxCount,
-            round,
-            readyTime,
-            speechTime,
-            discussionTime,
-            isSecreteRoom,
-            isGameOn,
-            isGameReadyToStart,
-            players,
-        } = room;
-        const participants = participantsListMapper(players);
-        const roomInfo: RoomInfoToRoomDto = {
-            roomId,
-            roomTitle,
-            maxCount,
-            round,
-            readyTime,
-            speechTime,
-            discussionTime,
-            isSecreteRoom,
-            isGameOn,
-            isGameReadyToStart,
-            participants,
-        };
-
-        return roomInfo;
+    async updateRoomStatusByRoomId(data: any): Promise<Room> {
+        return this.roomRepository.save(data);
     }
 
     async createRoom(room: CreateRoomRequestDto): Promise<number> {
@@ -134,5 +104,30 @@ export class RoomService {
             isReady: false,
             isHost,
         });
+    }
+
+    // 업데이트가 발생한 방의 정보를 받아, isGameReadyToStart 정보 갱신
+    async updateIsGameReadyToStart(roomId: number): Promise<Room> {
+        let room: Room = await this.getOneRoomByRoomId(roomId);
+        // player가 2명 이상일때만 player의 isReady state을 검사
+        if (room.players.length > 1) {
+            const isAllPlayerReadyToStart = (() => {
+                // host를 제외하고, 모든 player가 ready 상태이면, isAllPlayerReadyToStart를 true로 반환
+                for (const player of room.players) {
+                    if (!player.isHost && !player.isReady) return false;
+                }
+                return true;
+            })();
+
+            // 플레이어 준비 상태에 따라 room 정보 갱신
+            if (isAllPlayerReadyToStart !== room.isGameReadyToStart) {
+                await this.updateRoomStatusByRoomId({
+                    roomId: room.roomId,
+                    isGameReadyToStart: isAllPlayerReadyToStart,
+                });
+            }
+            room = await this.getOneRoomByRoomId(room.roomId);
+        }
+        return room;
     }
 }

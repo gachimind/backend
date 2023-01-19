@@ -15,7 +15,11 @@ export class SessionSerializer extends PassportSerializer {
     }
 
     async deserializeUser(payload: any, done: Function) {
-        const user = await this.usersService.findUserById(payload.id);
+        // payload가 토큰 payload를 의미하는지?? 확인 필요!!
+        const user = await this.usersService.findUserByNickNameOrEmail(
+            payload.nickname,
+            payload.email,
+        );
         return user ? done(null, user) : done(null, null);
     }
 }
