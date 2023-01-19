@@ -34,13 +34,12 @@ let UsersService = class UsersService {
     }
     async validateUser(userData) {
         const users = await this.findUserByNickNameOrEmail(userData.nickname, userData.email);
-        let user = users[0];
-        let isNewUser = false;
-        if (!user) {
-            user = await this.createUser(user);
-            isNewUser = true;
+        if (!users || !users.length) {
+            const user = await this.createUser(userData);
+            const isNewUser = true;
+            return { user, isNewUser };
         }
-        return { user, isNewUser };
+        return { user: users[0], isNewUser: false };
     }
     async createToken(user, isNewUSer) {
         const payload = {};

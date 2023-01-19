@@ -4,7 +4,6 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { SessionSerializer } from './auth/kakao.serializer';
 import { User } from './entities/user.entity';
-import { KakaoAuthGuard } from './auth/kakao.guards';
 import { KakaoStrategy } from './auth/kakao.strategy';
 import { TokenMap } from './entities/token-map.entity';
 import { JwtModule } from '@nestjs/jwt';
@@ -28,7 +27,6 @@ import { JwtStrategy } from './auth/jwt.strategy';
     providers: [
         UsersService,
         SessionSerializer,
-        KakaoAuthGuard,
         KakaoStrategy,
         JwtStrategy,
         {

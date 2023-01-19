@@ -13,7 +13,6 @@ const users_controller_1 = require("./users.controller");
 const users_service_1 = require("./users.service");
 const kakao_serializer_1 = require("./auth/kakao.serializer");
 const user_entity_1 = require("./entities/user.entity");
-const kakao_guards_1 = require("./auth/kakao.guards");
 const kakao_strategy_1 = require("./auth/kakao.strategy");
 const token_map_entity_1 = require("./entities/token-map.entity");
 const jwt_1 = require("@nestjs/jwt");
@@ -39,7 +38,6 @@ UsersModule = __decorate([
         providers: [
             users_service_1.UsersService,
             kakao_serializer_1.SessionSerializer,
-            kakao_guards_1.KakaoAuthGuard,
             kakao_strategy_1.KakaoStrategy,
             jwt_strategy_1.JwtStrategy,
             {

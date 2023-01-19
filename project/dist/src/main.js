@@ -7,10 +7,12 @@ const common_1 = require("@nestjs/common");
 const http_exception_filter_1 = require("./common/exceptionFilters/http-exception.filter");
 const session = require("express-session");
 const passport = require("passport");
+const cookieParser = require("cookie-parser");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
     app.enableCors();
+    app.use(cookieParser());
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,

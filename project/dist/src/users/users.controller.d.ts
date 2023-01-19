@@ -1,17 +1,16 @@
+import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
-import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 export declare class UsersController {
     private readonly usersService;
-    constructor(usersService: UsersService);
+    private configService;
+    constructor(usersService: UsersService, configService: ConfigService);
     handleLogin(): {
         msg: string;
     };
     kakaoLoginRedirect(code: string, req: {
-        user: {
-            user: User;
-            isNewUser: boolean;
-        };
-    }, res: Response): Promise<any>;
+        user: CreateUserDto;
+    }, res: Response): Promise<void>;
     user(request: Request): boolean;
 }

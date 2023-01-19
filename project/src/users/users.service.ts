@@ -31,13 +31,15 @@ export class UsersService {
             userData.nickname,
             userData.email,
         );
-        let user = users[0];
-        let isNewUser = false;
-        if (!user) {
-            user = await this.createUser(user);
-            isNewUser = true;
+
+        // db에 유저 정보가 없는 경우 처리
+        if (!users || !users.length) {
+            const user: User = await this.createUser(userData);
+            const isNewUser = true;
+            return { user, isNewUser };
         }
-        return { user, isNewUser };
+
+        return { user: users[0], isNewUser: false };
     }
 
     // AccessToken 생성

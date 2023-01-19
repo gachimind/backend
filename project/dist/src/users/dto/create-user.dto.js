@@ -17,6 +17,7 @@ class CreateUserDto {
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsOptional)(),
     (0, swagger_1.ApiProperty)({
         example: 'test@email.com',
         required: true,

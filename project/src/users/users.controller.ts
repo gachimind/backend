@@ -6,44 +6,51 @@ import {
     Res,
     UseGuards,
     Param,
-    Header,
     HttpException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
 import { ResultToDataInterceptor } from 'src/common/interceptors/resultToData.interceptor';
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
-import { KakaoAuthGuard } from './auth/kakao.guards';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
+import { AuthGuard } from '@nestjs/passport';
 
-@UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
 @Controller('api/users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private configService: ConfigService,
+    ) {}
     // 카카로 로그인
     @Get('login/kakao')
-    @UseGuards(KakaoAuthGuard)
+    @UseGuards(AuthGuard('kakao'))
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
     @Get('login/kakao/redirect')
-    @UseGuards(KakaoAuthGuard)
+    @UseGuards(AuthGuard('kakao'))
     async kakaoLoginRedirect(
         @Param('code') code: string,
-        @Req() req: { user: { user: User; isNewUser: boolean } },
+        @Req() req: { user: CreateUserDto },
         @Res({ passthrough: true }) res: Response,
-    ): Promise<any> {
+    ) {
         if (!req.user) {
             throw new HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser } = req.user;
+        const { user, isNewUser }: { user: User; isNewUser: boolean } =
+            await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user, isNewUser);
-        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ });
-        res.redirect('http://localhost:3000');
+        return res
+            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
 
+    @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     @Get('status')
     user(@Req() request: Request) {
         if (!request.user) throw new HttpException('토큰 값이 일치하지 않습니다.', 401);
@@ -51,6 +58,7 @@ export class UsersController {
     }
 
     // // 회원 정보 상세 조회
+    // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     // @UseGuards(JwtAuthGuard)
     // @Get('/me')
     // getUserDetailsByToken(@Req() req) {
