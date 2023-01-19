@@ -63,7 +63,7 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @Get('/me')
     getUserDetailsByToken(@Req() req, @Res() res: Response, @Headers() headers: string) {
-        const token = headers.replace('Bearer ', '');
+        const token = headers.replace('Bearer%', '');
         return this.usersService.getUserInfoByToken(token);
     }
 }

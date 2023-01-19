@@ -1,4 +1,12 @@
 "use strict";
+exports.id = 0;
+exports.ids = null;
+exports.modules = {
+
+/***/ 23:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,11 +19,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SessionSerializer = void 0;
-const common_1 = require("@nestjs/common");
-const passport_1 = require("@nestjs/passport");
-const users_service_1 = require("../users.service");
+const common_1 = __webpack_require__(7);
+const passport_1 = __webpack_require__(22);
+const users_service_1 = __webpack_require__(15);
 let SessionSerializer = class SessionSerializer extends passport_1.PassportSerializer {
     constructor(usersService) {
         super();
@@ -25,14 +34,27 @@ let SessionSerializer = class SessionSerializer extends passport_1.PassportSeria
         done(null, user);
     }
     async deserializeUser(payload, done) {
-        const user = await this.usersService.findUserByNickNameOrEmail(payload.nickname, payload.email);
+        const user = await this.usersService.findUserByNickNameOrEmail(payload.kakaoUserId, payload.nickname, payload.email);
         return user ? done(null, user) : done(null, null);
     }
 };
 SessionSerializer = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, common_1.Inject)('USER_SERVICE')),
-    __metadata("design:paramtypes", [users_service_1.UsersService])
+    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object])
 ], SessionSerializer);
 exports.SessionSerializer = SessionSerializer;
-//# sourceMappingURL=kakao.serializer.js.map
+
+
+/***/ })
+
+};
+exports.runtime =
+/******/ function(__webpack_require__) { // webpackRuntimeModules
+/******/ /* webpack/runtime/getFullHash */
+/******/ (() => {
+/******/ 	__webpack_require__.h = () => ("66d84bf6a9f00fc8a5bd")
+/******/ })();
+/******/ 
+/******/ }
+;
