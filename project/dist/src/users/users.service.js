@@ -60,6 +60,13 @@ let UsersService = class UsersService {
     async tokenValidate(token) {
         return await this.jwtService.verify(token);
     }
+    async getUserInfoByToken(token) {
+        const userFindByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: { userInfo: true },
+        });
+        return userFindByToken;
+    }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),

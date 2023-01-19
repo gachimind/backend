@@ -7,6 +7,7 @@ import {
     UseGuards,
     Param,
     HttpException,
+    Headers,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
@@ -58,11 +59,11 @@ export class UsersController {
     }
 
     // // 회원 정보 상세 조회
-    // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
-    // @UseGuards(JwtAuthGuard)
-    // @Get('/me')
-    // getUserDetailsByToken(@Req() req) {
-    //     const token = req.token;
-    //     return this.usersService.getUserDetailsByToken(token);
-    // }
+    @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
+    @UseGuards(JwtAuthGuard)
+    @Get('/me')
+    getUserDetailsByToken(@Req() req, @Res() res: Response, @Headers() headers: string) {
+        const token = headers.replace('Bearer ', '');
+        return this.usersService.getUserInfoByToken(token);
+    }
 }

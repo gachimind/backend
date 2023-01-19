@@ -13,4 +13,5 @@ export declare class UsersController {
         user: CreateUserDto;
     }, res: Response): Promise<void>;
     user(request: Request): boolean;
+    getUserDetailsByToken(req: any, res: Response, headers: string): Promise<import("./entities/token-map.entity").TokenMap>;
 }

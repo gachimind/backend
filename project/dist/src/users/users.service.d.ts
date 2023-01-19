@@ -16,4 +16,5 @@ export declare class UsersService {
     }>;
     createToken(user: User, isNewUSer: boolean): Promise<string>;
     tokenValidate(token: string): Promise<any>;
+    getUserInfoByToken(token: string): Promise<TokenMap>;
 }

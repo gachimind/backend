@@ -18,6 +18,7 @@ const config_1 = require("@nestjs/config");
 const undefinedToNull_interceptor_1 = require("../common/interceptors/undefinedToNull.interceptor");
 const resultToData_interceptor_1 = require("../common/interceptors/resultToData.interceptor");
 const users_service_1 = require("./users.service");
+const jwt_guard_1 = require("./auth/jwt.guard");
 const passport_1 = require("@nestjs/passport");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
@@ -42,6 +43,10 @@ let UsersController = class UsersController {
         if (!request.user)
             throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
         return true;
+    }
+    getUserDetailsByToken(req, res, headers) {
+        const token = headers.replace('Bearer ', '');
+        return this.usersService.getUserInfoByToken(token);
     }
 };
 __decorate([
@@ -69,6 +74,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
+__decorate([
+    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('/me'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
+    __param(2, (0, common_1.Headers)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,

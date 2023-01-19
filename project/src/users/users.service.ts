@@ -5,6 +5,9 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { stringify } from 'querystring';
+import { userInfo } from 'os';
+import dataSource from 'dataSource';
 
 @Injectable()
 export class UsersService {
@@ -66,14 +69,11 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회
-    // async getUserDetailsByToken(token: string): Promise<TokenMap> {
-    //     const user = await this.tokenMapRepository.findOne({
-    //         where: { token },
-    //         relations: ['User'],
-    //     });
-    //     if (!user) {
-    //         throw new HttpException('회원 인증에 실패했습니다.', 402);
-    //     }
-    //     return user;
-    // }
+    async getUserInfoByToken(token: string): Promise<TokenMap> {
+        const userFindByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: { userInfo: true },
+        });
+        return userFindByToken;
+    }
 }
