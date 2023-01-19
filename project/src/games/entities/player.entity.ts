@@ -8,13 +8,20 @@ import {
     OneToOne,
     ManyToOne,
     JoinColumn,
+    OneToMany,
+    PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Room } from './room.entity';
 import { SocketIdMap } from './socketIdMap.entity';
+import { Turn } from './turn.entity';
+import { TurnResultPerPlayer } from './turnResultPerPlayer.entity';
 
 @Entity()
 export class Player {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
+    playerId: number;
+
+    @Column()
     userInfo: number;
     @OneToOne(() => User, { eager: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userInfo' })
@@ -45,4 +52,10 @@ export class Player {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @OneToMany(() => Turn, (turn) => turn.speechPlayer)
+    turns: Turn[];
+
+    @OneToMany(() => TurnResultPerPlayer, (result) => result.player, { eager: true })
+    result: TurnResultPerPlayer[];
 }
