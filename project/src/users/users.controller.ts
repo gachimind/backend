@@ -62,8 +62,11 @@ export class UsersController {
     @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     @UseGuards(JwtAuthGuard)
     @Get('/me')
-    getUserDetailsByToken(@Req() req, @Res() res: Response, @Headers() headers: string) {
-        const token = headers.replace('Bearer%', '');
-        return this.usersService.getUserInfoByToken(token);
+    getUserDetailsByToken(@Req() req, @Res() res: Response, @Headers() Headers) {
+        const tokenParsing = req.headers.authorization;
+        const token = tokenParsing.replace('Bearer ', '');
+        const userProfile = this.usersService.getUserInfoByToken(token);
+        return res.status(200).json(userProfile);
+        // return this.usersService.getUserInfoByToken(token);
     }
 }

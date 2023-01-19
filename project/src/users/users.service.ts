@@ -7,7 +7,7 @@ import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { stringify } from 'querystring';
 import { userInfo } from 'os';
-import dataSource from 'dataSource';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +17,7 @@ export class UsersService {
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
         private jwtService: JwtService,
+        private configService: ConfigService,
     ) {}
 
     async createUser(details: CreateUserDto): Promise<User> {
@@ -72,16 +73,21 @@ export class UsersService {
 
     // 토큰 검증
     async tokenValidate(token: string) {
-        return await this.jwtService.verify(token);
+        return await this.jwtService.verify(token, {
+            secret: this.configService.get('TOKEN_SECRETE_KEY'),
+        });
     }
 
     // 회원 정보 상세 조회
-    async getUserInfoByToken(token: string): Promise<TokenMap> {
-        const userFindByToken = await this.tokenMapRepository.findOne({
-            where: { token },
-            select: { userInfo: true },
-            relations: { userId: true },
-        });
-        return userFindByToken;
+    async getUserInfoByToken(token: string) {
+        try {
+            const userFindByToken = await this.tokenMapRepository.findOne({
+                where: { token },
+                select: { tokenMapId: true, userInfo: true },
+            });
+            return userFindByToken;
+        } catch (err) {
+            console.log(err);
+        }
     }
 }

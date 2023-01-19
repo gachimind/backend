@@ -409,9 +409,11 @@ let UsersController = class UsersController {
             throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
         return true;
     }
-    getUserDetailsByToken(req, res, headers) {
-        const token = headers.replace('Bearer%', '');
-        return this.usersService.getUserInfoByToken(token);
+    getUserDetailsByToken(req, res, Headers) {
+        const tokenParsing = req.headers.authorization;
+        const token = tokenParsing.replace('Bearer ', '');
+        const userProfile = this.usersService.getUserInfoByToken(token);
+        return res.status(200).json(userProfile);
     }
 };
 __decorate([
@@ -447,7 +449,7 @@ __decorate([
     __param(1, (0, common_1.Res)()),
     __param(2, (0, common_1.Headers)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object, String]),
+    __metadata("design:paramtypes", [Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
@@ -543,7 +545,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersService = void 0;
 const common_1 = __webpack_require__(7);
@@ -552,11 +554,13 @@ const typeorm_2 = __webpack_require__(16);
 const jwt_1 = __webpack_require__(17);
 const user_entity_1 = __webpack_require__(18);
 const token_map_entity_1 = __webpack_require__(19);
+const config_1 = __webpack_require__(11);
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository, jwtService) {
+    constructor(usersRepository, tokenMapRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
         this.jwtService = jwtService;
+        this.configService = configService;
     }
     async createUser(details) {
         return await this.usersRepository.save(details);
@@ -593,22 +597,28 @@ let UsersService = class UsersService {
         return token;
     }
     async tokenValidate(token) {
-        return await this.jwtService.verify(token);
+        return await this.jwtService.verify(token, {
+            secret: this.configService.get('TOKEN_SECRETE_KEY'),
+        });
     }
     async getUserInfoByToken(token) {
-        const userFindByToken = await this.tokenMapRepository.findOne({
-            where: { token },
-            select: { userInfo: true },
-            relations: { userId: true },
-        });
-        return userFindByToken;
+        try {
+            const userFindByToken = await this.tokenMapRepository.findOne({
+                where: { token },
+                select: { tokenMapId: true, userInfo: true },
+            });
+            return userFindByToken;
+        }
+        catch (err) {
+            console.log(err);
+        }
     }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _c : Object, typeof (_d = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _d : Object])
 ], UsersService);
 exports.UsersService = UsersService;
 
@@ -786,8 +796,8 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
         if (authorization === undefined) {
             throw new common_2.HttpException('토큰 전송 실패', common_1.HttpStatus.UNAUTHORIZED);
         }
-        const tokenValue = authorization.replace('Bearer ', '');
-        const kakaoUserId = await this.validate(tokenValue);
+        const token = authorization.replace('Bearer ', '');
+        const kakaoUserId = await this.validate(token);
         response.kakaoUserId = kakaoUserId;
         return true;
     }
@@ -802,8 +812,6 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
                     throw new common_2.HttpException('유효하지 않은 토큰입니다.', 401);
                 case 'jwt expired':
                     throw new common_2.HttpException('토큰이 만료되었습니다.', 410);
-                default:
-                    throw new common_2.HttpException('서버 오류입니다.', 500);
             }
         }
     }
@@ -2138,7 +2146,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("f51e47d57bd3a4a0ae13")
+/******/ 		__webpack_require__.h = () => ("bace82f59b3b71a20194")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

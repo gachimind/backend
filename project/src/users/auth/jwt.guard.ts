@@ -13,12 +13,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         const request = context.switchToHttp().getRequest();
         const response = context.switchToHttp().getResponse();
         const { authorization } = request.headers;
+        // const authorization = request.headers.authorization;
         if (authorization === undefined) {
             throw new HttpException('토큰 전송 실패', HttpStatus.UNAUTHORIZED);
         }
 
-        const tokenValue = authorization.replace('Bearer ', '');
-        const kakaoUserId: number = await this.validate(tokenValue);
+        const token = authorization.replace('Bearer ', '');
+        const kakaoUserId: number = await this.validate(token);
         response.kakaoUserId = kakaoUserId;
         return true;
     }
@@ -37,8 +38,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
                 case 'jwt expired':
                     throw new HttpException('토큰이 만료되었습니다.', 410);
 
-                default:
-                    throw new HttpException('서버 오류입니다.', 500);
+                // default:
+                //    throw new HttpException('서버 오류입니다.', 500);
             }
         }
     }
