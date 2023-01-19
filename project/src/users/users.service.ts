@@ -23,14 +23,21 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
-    async findUserByNickNameOrEmail(nickname: string, email: string): Promise<User[]> {
-        console.log('findUserByNicknameOrEmail', { nickname, email });
+    async findUserByNickNameOrEmail(
+        kakaoUserId: number,
+        nickname: string,
+        email: string,
+    ): Promise<User[]> {
+        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
 
-        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
+        return await this.usersRepository.find({
+            where: [{ kakaoUserId }, { nickname }, { email }],
+        });
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
         const users: User[] = await this.findUserByNickNameOrEmail(
+            userData.kakaoUserId,
             userData.nickname,
             userData.email,
         );
@@ -73,6 +80,7 @@ export class UsersService {
         const userFindByToken = await this.tokenMapRepository.findOne({
             where: { token },
             select: { userInfo: true },
+            relations: { userId: true },
         });
         return userFindByToken;
     }
