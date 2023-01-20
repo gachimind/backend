@@ -4,32 +4,32 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
+    OneToOne,
     OneToMany,
     ManyToOne,
     JoinColumn,
 } from 'typeorm';
 import { Player } from './player.entity';
 import { Room } from './room.entity';
-import { Round } from './round.entity';
-import { TurnResultPerPlayer } from './turnResultPerPlayer.entity';
+import { TurnResult } from './turnResult.entity';
 
 @Entity()
 export class Turn {
     @PrimaryGeneratedColumn()
-    id: number;
+    turnId: number;
+
+    @Column({ name: 'roomInfo' })
+    roomInfo: number;
+    @ManyToOne(() => Room, (room) => room.roomId, { eager: true, cascade: ['update', 'remove'] })
+    @JoinColumn({ name: 'roundInfo' })
+    room: Room;
 
     @Column({ type: 'tinyint' })
     turn: number;
 
-    @Column({ name: 'roundInfo' })
-    roundInfo: number;
-    @ManyToOne(() => Round, (round) => round.id)
-    @JoinColumn({ name: 'roundInfo' })
-    round: Round;
-
     @Column({ name: 'speechPlayerInfo' })
     speechPlayerInfo: number;
-    @ManyToOne(() => Player, (player) => player.playerId, { onDelete: 'CASCADE', eager: true })
+    @OneToOne(() => Player, (player) => player.playerId, { onDelete: 'CASCADE', eager: true })
     @JoinColumn({ name: 'speechPlayerInfo' })
     speechPlayer: Player;
 
@@ -45,6 +45,6 @@ export class Turn {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => TurnResultPerPlayer, (turnResultPerPlayer) => turnResultPerPlayer.turn)
-    turns: TurnResultPerPlayer[];
+    @OneToMany(() => TurnResult, (turnResult) => turnResult.turnInfo)
+    turnResults: TurnResult[];
 }

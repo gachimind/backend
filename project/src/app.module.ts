@@ -11,6 +11,9 @@ import { TokenMap } from './users/entities/token-map.entity';
 import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
+import { Turn } from './games/entities/turn.entity';
+import { TurnResult } from './games/entities/turnResult.entity';
+import { GameResult } from './games/entities/gmaeResult.entity';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -29,7 +32,7 @@ import { SocketIdMap } from './games/entities/socketIdMap.entity';
             username: process.env.MYSQL_USERNAME,
             password: process.env.MYSQL_PASSWORD,
             database: process.env.MYSQL_DATABASE,
-            entities: [User, TokenMap, Room, Player, SocketIdMap],
+            entities: [User, TokenMap, Room, Player, SocketIdMap, Turn, TurnResult, GameResult],
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: true,

@@ -23,12 +23,11 @@ export class RoomService {
         const roomList: Room[] = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
 
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, players, isSecreteRoom, isGameOn } = room;
+            const { roomId, roomTitle, maxCount, players, isSecreteRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
-                round,
                 participants: players.length,
                 isSecreteRoom,
                 isGameOn,

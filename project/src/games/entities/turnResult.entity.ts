@@ -7,28 +7,34 @@ import {
     ManyToOne,
     JoinColumn,
 } from 'typeorm';
-import { Player } from './player.entity';
+import { GameResult } from './gmaeResult.entity';
 import { Turn } from './turn.entity';
 
 @Entity()
-export class TurnResultPerPlayer {
+export class TurnResult {
     @PrimaryGeneratedColumn()
-    id: number;
+    turnResultId: number;
 
     @Column({ name: 'turnInfo' })
     turnInfo: number;
-    @ManyToOne(() => Turn, (turn) => turn.id, { onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => Turn, (turn) => turn.turnId)
     @JoinColumn({ name: 'turnInfo' })
     turn: Turn;
 
-    @Column({ name: 'playerInfo' })
-    playerInfo: number;
-    @ManyToOne(() => Player, (player) => player.playerId, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'playerInfo' })
-    player: Player;
+    @Column({ name: 'gameResult' })
+    gameResultInfo: number;
+    @ManyToOne(() => GameResult, (gameResult) => gameResult.turnResults)
+    @JoinColumn({ name: 'gameResult' })
+    gameResult: GameResult;
 
     @Column({ type: 'tinyint' })
     score: number;
+
+    @Column()
+    keyword: string;
+
+    @Column()
+    isSpeech: boolean;
 
     @CreateDateColumn()
     createdAt: Date;
