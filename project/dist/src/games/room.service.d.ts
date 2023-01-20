@@ -15,5 +15,6 @@ export declare class RoomService {
     updateRoomStatusByRoomId(data: any): Promise<Room>;
     createRoom(room: CreateRoomRequestDto): Promise<number>;
     enterRoom(requestUser: LoginUserToSocketIdMapDto, requestRoom: EnterRoomRequestDto): Promise<void>;
+    validateRoomPassword(password: number, roomId: number): Promise<void>;
     updateIsGameReadyToStart(roomId: number): Promise<Room>;
 }

@@ -88,6 +88,10 @@ let GamesGateway = class GamesGateway {
         const updateRoom = await this.updateRoom(requestRoom.roomId);
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
+    async handleValidRoomPassword(socket, { data: { password, roomId } }) {
+        await this.roomService.validateRoomPassword(password, roomId);
+        socket.emit('valid-room-password');
+    }
     async handleReadyEvent(socket) {
         const event = 'ready';
         const requestUser = await this.socketAuthentication(socket.id, event);
@@ -277,6 +281,14 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleEnterRoomRequest", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('valid-room-password'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleValidRoomPassword", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('ready'),
     __param(0, (0, websockets_1.ConnectedSocket)()),

@@ -160,6 +160,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
 
+    @SubscribeMessage('valid-room-password')
+    async handleValidRoomPassword(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody() { data: { password, roomId } },
+    ) {
+        await this.roomService.validateRoomPassword(password, roomId);
+        //본인에게
+        socket.emit('valid-room-password');
+    }
+
     @SubscribeMessage('ready')
     async handleReadyEvent(@ConnectedSocket() socket: Socket) {
         const event = 'ready';
