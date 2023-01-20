@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", Number)
 ], TokenMap.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, (user) => user.kakaoUserId, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
 ], TokenMap.prototype, "user", void 0);

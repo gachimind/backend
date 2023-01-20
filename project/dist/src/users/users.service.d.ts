@@ -19,7 +19,7 @@ export declare class UsersService {
     createToken(user: User, isNewUSer: boolean): Promise<string>;
     tokenValidate(token: string): Promise<any>;
     getUserDetailsByToken(token: string): Promise<{
-        kakaoUserId: number;
+        userId: number;
         email: string;
         nickname: string;
         profileImg: string;

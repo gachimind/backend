@@ -13,7 +13,7 @@ export declare class UsersController {
     };
     kakaoLoginRedirect(code: string, req: {
         user: CreateUserDto;
-    }, res: Response): Promise<void>;
+    }, res: Response): Promise<string>;
     user(request: Request): boolean;
     getUserDetailsByToken(req: any, res: Response): Promise<Response<any, Record<string, any>>>;
 }

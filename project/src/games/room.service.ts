@@ -112,6 +112,28 @@ export class RoomService {
         });
     }
 
+    async validateRoomPassword(password: number, roomId: number): Promise<void> {
+        const room: Room = await this.getOneRoomByRoomId(roomId);
+
+        if (!room) {
+            throw new SocketException(
+                '요청하신 방을 찾을 수 없습니다.',
+                404,
+                'valid-room-password',
+            );
+        }
+
+        if (room.isSecretRoom) {
+            if (room.roomPassword !== password) {
+                throw new SocketException(
+                    '방 비밀번호가 올바르지 않습니다.',
+                    400,
+                    'valid-room-password',
+                );
+            }
+        }
+    }
+
     // 업데이트가 발생한 방의 정보를 받아, isGameReadyToStart 정보 갱신
     async updateIsGameReadyToStart(roomId: number): Promise<Room> {
         let room: Room = await this.getOneRoomByRoomId(roomId);

@@ -36,10 +36,8 @@ let UsersController = class UsersController {
         const { user, isNewUser } = await this.usersService.validateUser(req.user);
         const token = await this.usersService.createToken(user, isNewUser);
         console.log(token);
-        return res
-            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 })
-            .status(301)
-            .redirect(this.configService.get('REDIRECT'));
+        res.redirect('http://localhost:3000/login?token=' + token);
+        return token;
     }
     user(request) {
         if (!request.user)

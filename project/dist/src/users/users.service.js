@@ -68,19 +68,11 @@ let UsersService = class UsersService {
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        if (!getUserInfoByToken)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
         const modifyingUser = getUserInfoByToken.user;
-        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
-        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
-        getUserInfoByToken.user.email = email;
-        getUserInfoByToken.user.nickname = nickname;
-        getUserInfoByToken.user.profileImg = profileImg;
-        const userDetail = { kakaoUserId, email, nickname, profileImg };
-        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
-            throw new common_1.HttpException('일치하는 회원이 없습니다.', 400);
-        }
-        else {
-            return userDetail;
-        }
+        const { userId, email, nickname, profileImg } = await modifyingUser;
+        return { userId, email, nickname, profileImg };
     }
 };
 UsersService = __decorate([
