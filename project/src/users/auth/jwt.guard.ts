@@ -41,8 +41,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
                     throw new HttpException('정상적인 접근이 아닙니다.', 410);
                 // 토큰 만료
 
-                default:
-                    throw new HttpException('서버 오류입니다.', 500);
+                // default:
+                // throw new HttpException('서버 오류입니다.', 500);
             }
         }
     }
