@@ -49,10 +49,11 @@ export class UsersController {
         const token: string = await this.usersService.createToken(user, isNewUser);
         console.log(token);
 
-        return res
-            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-            .status(301)
-            .redirect(this.configService.get('REDIRECT'));
+        res.redirect('http://localhost:3000/login?token=' + token);
+        return token;
+        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        // .status(301)
+        // .redirect(this.configService.get('REDIRECT'));
     }
 
     @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)

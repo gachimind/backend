@@ -12,7 +12,7 @@ export class User {
     @PrimaryGeneratedColumn()
     userId: number; // 자동 생성
 
-    @Column({ unique: true })
+    @Column()
     kakaoUserId: number;
 
     @Column({ unique: true, length: 50 })
