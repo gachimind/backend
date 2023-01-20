@@ -608,19 +608,11 @@ let UsersService = class UsersService {
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        if (!getUserInfoByToken)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
         const modifyingUser = getUserInfoByToken.user;
-        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
-        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
-        getUserInfoByToken.user.email = email;
-        getUserInfoByToken.user.nickname = nickname;
-        getUserInfoByToken.user.profileImg = profileImg;
-        const userDetail = { kakaoUserId, email, nickname, profileImg };
-        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
-            throw new common_1.HttpException('일치하는 회원이 없습니다.', 400);
-        }
-        else {
-            return userDetail;
-        }
+        const { userId, email, nickname, profileImg } = await modifyingUser;
+        return { userId, email, nickname, profileImg };
     }
 };
 UsersService = __decorate([
@@ -1142,7 +1134,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesGateway = void 0;
 const websockets_1 = __webpack_require__(32);
@@ -1221,6 +1213,10 @@ let GamesGateway = class GamesGateway {
         socket.join(`${requestRoom.roomId}`);
         const updateRoom = await this.updateRoom(requestRoom.roomId);
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
+    }
+    async handleValidRoomPassword(socket, { data: { password, roomId } }) {
+        await this.roomService.validateRoomPassword(password, roomId);
+        socket.emit('valid-room-password');
     }
     async handleLeaveRoomEvent(socket) {
         const event = 'leave-room';
@@ -1421,24 +1417,32 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleEnterRoomRequest", null);
 __decorate([
+    (0, websockets_1.SubscribeMessage)('valid-room-password'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_m = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _m : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleValidRoomPassword", null);
+__decorate([
     (0, websockets_1.SubscribeMessage)('leave-room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_m = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _m : Object]),
+    __metadata("design:paramtypes", [typeof (_o = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _o : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleLeaveRoomEvent", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('ready'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_o = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _o : Object]),
+    __metadata("design:paramtypes", [typeof (_p = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _p : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleReadyEvent", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('start'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_p = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _p : Object]),
+    __metadata("design:paramtypes", [typeof (_q = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _q : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleStartEvent", null);
 __decorate([
@@ -1446,7 +1450,7 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_q = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _q : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_r = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _r : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
 __decorate([
@@ -1454,7 +1458,7 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_r = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _r : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_s = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _s : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleIce", null);
 __decorate([
@@ -1462,7 +1466,7 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_s = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _s : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_t = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _t : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleOffer", null);
 __decorate([
@@ -1470,14 +1474,14 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_t = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _t : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_u = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _u : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleAnswer", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('webrtc-leave'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_u = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _u : Object]),
+    __metadata("design:paramtypes", [typeof (_v = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _v : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handler", null);
 __decorate([
@@ -1485,7 +1489,7 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_v = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _v : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_w = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _w : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
@@ -1574,7 +1578,10 @@ let RoomService = class RoomService {
             room.roomTitle = '같이 가치마인드 한 판 해요!';
         }
         if (room.isSecretRoom && !room.roomPassword) {
-            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'create-room');
+            throw new ws_exception_filter_1.SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
+        }
+        if (room.roomPassword) {
+            room.isSecretRoom = true;
         }
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
         const roomInsert = await this.roomRepository.insert(newRoom);
@@ -1605,6 +1612,17 @@ let RoomService = class RoomService {
             isReady: false,
             isHost,
         });
+    }
+    async validateRoomPassword(password, roomId) {
+        const room = await this.getOneRoomByRoomId(roomId);
+        if (!room) {
+            throw new ws_exception_filter_1.SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'valid-room-password');
+        }
+        if (room.isSecretRoom) {
+            if (room.roomPassword !== password) {
+                throw new ws_exception_filter_1.SocketException('방 비밀번호가 올바르지 않습니다.', 400, 'valid-room-password');
+            }
+        }
     }
     async updateIsGameReadyToStart(roomId) {
         let room = await this.getOneRoomByRoomId(roomId);
@@ -2530,7 +2548,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("17fa3c9d09c8c7825b36")
+/******/ 		__webpack_require__.h = () => ("b7ec0086ef5f8ecbfb2e")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
