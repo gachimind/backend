@@ -22,20 +22,26 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
-    async findUserByKakaoUserId(kakaoUserId: number): Promise<User> {
-        return await this.usersRepository.findOne({
-            where: { kakaoUserId },
-        });
+    async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
+        let user = this.usersRepository.findOne({ where: { kakaoUserId } });
+        if (!user && email) {
+            user = this.usersRepository.findOne({ where: { email } });
+        }
+        if (!user && nickname) {
+            user = this.usersRepository.findOne({ where: { nickname } });
+        }
+        return user;
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
-        let user: User = await this.findUserByKakaoUserId(userData.kakaoUserId);
-        console.log(user);
+        let user: User = await this.findUser(
+            userData.kakaoUserId,
+            userData.email,
+            userData.nickname,
+        );
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {
-            console.log('유저 없으면 새로 만들기!!');
-
             user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };

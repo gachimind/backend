@@ -30,13 +30,18 @@ let UsersService = class UsersService {
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
-    async findUserByKakaoUserId(kakaoUserId) {
-        return await this.usersRepository.findOne({
-            where: { kakaoUserId },
-        });
+    async findUser(kakaoUserId, email, nickname) {
+        let user = this.usersRepository.findOne({ where: { kakaoUserId } });
+        if (!user && email) {
+            user = this.usersRepository.findOne({ where: { email } });
+        }
+        if (!user && nickname) {
+            user = this.usersRepository.findOne({ where: { nickname } });
+        }
+        return user;
     }
     async validateUser(userData) {
-        let user = await this.findUserByKakaoUserId(userData.kakaoUserId);
+        let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
         if (!user) {
             user = await this.createUser(userData);
             const isNewUser = true;
