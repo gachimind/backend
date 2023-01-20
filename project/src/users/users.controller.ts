@@ -47,6 +47,8 @@ export class UsersController {
         const { user, isNewUser }: { user: User; isNewUser: boolean } =
             await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user, isNewUser);
+        console.log(token);
+
         return res
             .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
             .status(301)
