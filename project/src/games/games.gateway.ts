@@ -85,7 +85,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // 토큰 유무 검사
         const token = data.authorization;
         if (!token) {
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+            throw new SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
         // 토큰을 가지고 유저 정보를 얻어서 SocketIdMap에 추가
         await this.playersService.socketIdMapToLoginUser(token, socket.id);
