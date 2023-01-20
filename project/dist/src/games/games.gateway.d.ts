@@ -48,7 +48,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleChangeStream(socket: Socket, { data }: {
         data: any;
     }): Promise<void>;
-    socketAuthentication(socketId: string): Promise<SocketIdMap>;
+    socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
     RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoom(roomId: number): Promise<UpdateRoomDto>;

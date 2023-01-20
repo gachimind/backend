@@ -7,7 +7,7 @@ export declare class Room {
     readyTime: number;
     speechTime: number;
     discussionTime: number;
-    isSecreteRoom: boolean;
+    isSecretRoom: boolean;
     roomPassword: number;
     isGameOn: boolean;
     isGameReadyToStart: boolean;

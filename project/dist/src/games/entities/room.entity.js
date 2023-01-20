@@ -45,7 +45,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
-], Room.prototype, "isSecreteRoom", void 0);
+], Room.prototype, "isSecretRoom", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', width: 4 }),
     __metadata("design:type", Number)

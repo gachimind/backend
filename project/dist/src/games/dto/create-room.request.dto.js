@@ -77,7 +77,7 @@ __decorate([
         description: '비밀방 여부',
     }),
     __metadata("design:type", Boolean)
-], CreateRoomRequestDto.prototype, "isSecreteRoom", void 0);
+], CreateRoomRequestDto.prototype, "isSecretRoom", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),

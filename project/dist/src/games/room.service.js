@@ -27,14 +27,14 @@ let RoomService = class RoomService {
     async getAllRoomList() {
         const roomList = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, players, isSecreteRoom, isGameOn } = room;
+            const { roomId, roomTitle, maxCount, round, players, isSecretRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
                 round,
                 participants: players.length,
-                isSecreteRoom,
+                isSecretRoom,
                 isGameOn,
             };
         });
@@ -56,8 +56,11 @@ let RoomService = class RoomService {
         if (!room.roomTitle) {
             room.roomTitle = '같이 가치마인드 한 판 해요!';
         }
-        if (room.isSecreteRoom && !room.roomPassword) {
-            throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, 'create-room');
+        if (room.isSecretRoom && !room.roomPassword) {
+            throw new ws_exception_filter_1.SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
+        }
+        if (room.roomPassword) {
+            room.isSecretRoom = true;
         }
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
         const roomInsert = await this.roomRepository.insert(newRoom);
@@ -71,9 +74,9 @@ let RoomService = class RoomService {
         if (room.maxCount == room.players.length) {
             throw new ws_exception_filter_1.SocketException('정원초과로 방 입장에 실패했습니다.', 400, 'enter-room');
         }
-        if (room.isSecreteRoom) {
+        if (room.isSecretRoom) {
             if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
-                throw new ws_exception_filter_1.SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
+                throw new ws_exception_filter_1.SocketException('방 비밀번호가 올바르지 않습니다.', 400, 'enter-room');
             }
         }
         let isHost;

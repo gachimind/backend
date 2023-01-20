@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateRoomInfoConstructor = void 0;
 function updateRoomInfoConstructor(room) {
-    const { roomId, roomTitle, maxCount, round, readyTime, speechTime, discussionTime, isSecreteRoom, isGameOn, isGameReadyToStart, players, } = room;
+    const { roomId, roomTitle, maxCount, round, readyTime, speechTime, discussionTime, isSecretRoom, isGameOn, isGameReadyToStart, players, } = room;
     const participants = players.map((player) => {
         const { user, socketInfo, isReady, isHost } = player;
         const { userId, nickname, profileImg } = user;
@@ -16,7 +16,7 @@ function updateRoomInfoConstructor(room) {
         readyTime,
         speechTime,
         discussionTime,
-        isSecreteRoom,
+        isSecretRoom,
         isGameOn,
         isGameReadyToStart,
         participants,
