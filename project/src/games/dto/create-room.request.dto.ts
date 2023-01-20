@@ -57,7 +57,7 @@ export class CreateRoomRequestDto {
         required: true,
         description: '비밀방 여부',
     })
-    readonly isSecreteRoom: boolean;
+    public isSecretRoom: boolean;
 
     @IsNumber()
     @IsOptional()
