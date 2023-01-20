@@ -85,7 +85,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // 토큰 유무 검사
         const token = data.authorization;
         if (!token) {
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+            throw new SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
         // 토큰을 가지고 유저 정보를 얻어서 SocketIdMap에 추가
         await this.playersService.socketIdMapToLoginUser(token, socket.id);
@@ -95,8 +95,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('log-out')
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
+        const event = 'log-out';
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
 
@@ -117,12 +118,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: CreateRoomRequestDto },
     ) {
+        const event = 'create-room';
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
         // 입장을 요청한 유저가 다른 방에 속해있지 않은지 확인
         if (requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
 
         // 방을 생성한 유저에게 새로 생성된 roomId 전달
@@ -138,12 +140,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data: requestRoom }: { data: EnterRoomRequestDto },
     ) {
+        const event = 'enter-room';
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
         // 1. 입장을 요청한 유저가 방에 속해있는지 확인 -> player 정보가 있으면 에러
         if (requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
 
         // 2. 입장을 요청한 유저를 방에 입장 처리
@@ -159,11 +162,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     @SubscribeMessage('ready')
     async handleReadyEvent(@ConnectedSocket() socket: Socket) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'ready';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
-        // 1. 입장을 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
+        // 1. ready를 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
         if (!requestUser.player || requestUser.player.isHost) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'enter-room');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         // 2. ready event를 emit한 Player 정보를 업데이트
         await this.playersService.setPlayerReady(requestUser.player);
@@ -173,17 +177,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             requestUser.player.roomInfo,
         );
         // 방 안에 update room info announce
-        await this.updateRoomInfoToRoom(requestUser, room, 'ready');
+        await this.updateRoomInfoToRoom(requestUser, room, event);
     }
 
     @SubscribeMessage('leave-room')
     async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'leave-room';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
         // request user가 player인지 확인 -> 아니면 에러 반환
         if (!requestUser.player) {
-            throw new SocketException('잘못된 요청입니다.', 400, 'leave-room');
+            throw new SocketException('잘못된 요청입니다.', 400, event);
         }
         // request user의 player 정보 삭제
         await this.RemovePlayerFormRoom(requestUser, socket);
@@ -200,10 +205,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data }: { data: { message: string } },
     ) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'send-chat';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
         if (!requestUser.player) {
-            throw new SocketException('잘못된 요청입니다.', 400, 'send-chat');
+            throw new SocketException('잘못된 요청입니다.', 400, event);
         }
 
         let type = 'chat';
@@ -224,66 +230,73 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @MessageBody()
         { data },
     ) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'webrtc-ice';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
-            .emit('webrtc-ice', { data: { ice, iceSendSocketId: socket.id } });
+            .emit(event, { data: { ice, iceSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-offer')
     async handleOffer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'webrtc-offer';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
-            .emit('webrtc-offer', { data: { sessionDescription, offerSendSocketId: socket.id } });
+            .emit(event, { data: { sessionDescription, offerSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-answer')
     async handleAnswer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'webrtc-answer';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)
-            .emit('webrtc-answer', { data: { sessionDescription, answerSendSocketId: socket.id } });
+            .emit(event, { data: { sessionDescription, answerSendSocketId: socket.id } });
     }
 
     @SubscribeMessage('webrtc-leave')
     async handler(@ConnectedSocket() socket: Socket) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'webrtc-leave';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         this.server
             .to(`${requestUser.player.roomInfo}`)
-            .emit('webrtc-leave', { data: { leaverSocketId: socket.id } });
+            .emit(event, { data: { leaverSocketId: socket.id } });
     }
 
     @SubscribeMessage('update-userstream')
     async handleChangeStream(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id);
+        const event = 'update-userstream';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, 'webrtc-ice');
+            throw new SocketException('잘못된 접근입니다.', 400, event);
         }
-        this.server.to(`${requestUser.player.roomInfo}`).emit('update-userstream', {
+        this.server.to(`${requestUser.player.roomInfo}`).emit(event, {
             data: { socketId: socket.id, video: data.video, audio: data.audio },
         });
     }
 
-    async socketAuthentication(socketId: string) {
+    // ###################### Authentication ##############################
+
+    async socketAuthentication(socketId: string, event: string) {
         const requestUser: SocketIdMap = await this.playersService.getUserBySocketId(socketId);
         if (!requestUser) {
-            throw new SocketException('로그인이 필요한 서비스입니다.', 403, 'create-room');
+            throw new SocketException('로그인이 필요한 서비스입니다.', 403, event);
         }
         return requestUser;
     }

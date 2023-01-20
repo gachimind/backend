@@ -7,6 +7,7 @@ import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class PlayersService {
@@ -65,7 +66,7 @@ export class PlayersService {
         const userId: number = requestUser.userInfo;
 
         if (!userId) {
-            throw new SocketException('잘못된 접근입니다.', 401, 'log-in');
+            throw new SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
         }
 
         // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
@@ -73,9 +74,10 @@ export class PlayersService {
             throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
 
-        // socketIdMap에서 userId로 등록된 정보가 있는지 조회 // db에 없어야 성공
+        // socketIdMap에서 userId로 등록된 정보가 있는지 조회 -> 있다면 로그인 정보를 갱신하고, 기존 socket정보는 삭제
         if (await this.getUserByUserID(userId)) {
-            throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            await this.removeSocketBySocketId(socketId);
+            // TODO : socketIdMap에서 삭제된 소켓의 정보를 찾아서 disconnect -> how?
         }
 
         // 위의 검사를 통과했다면, socketIdMap에 매핑

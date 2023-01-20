@@ -49,7 +49,7 @@ export class CreateRoomRequestDto {
         required: true,
         description: '비밀방 여부',
     })
-    public isSecreteRoom: boolean;
+    public isSecretRoom: boolean;
 
     @IsNumber()
     @IsOptional()
