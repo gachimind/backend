@@ -34,7 +34,7 @@ export class Turn {
     keyword: string;
 
     @Column({ type: 'text' })
-    hint: string;
+    hint: string | null;
 
     @CreateDateColumn()
     createdAt: Date;
