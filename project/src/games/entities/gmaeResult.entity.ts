@@ -36,6 +36,6 @@ export class GameResult {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => TurnResult, (turnResult) => turnResult.gameResult, { eager: true })
+    @OneToMany(() => TurnResult, (turnResult) => turnResult.turnResultId, { eager: true })
     turnResults: TurnResult[];
 }

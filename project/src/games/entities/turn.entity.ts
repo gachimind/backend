@@ -20,18 +20,15 @@ export class Turn {
 
     @Column({ name: 'roomInfo' })
     roomInfo: number;
-    @ManyToOne(() => Room, (room) => room.roomId, { eager: true, cascade: ['update', 'remove'] })
+    @ManyToOne(() => Room, (room) => room.roomId, { cascade: ['update', 'remove'] })
     @JoinColumn({ name: 'roundInfo' })
     room: Room;
 
     @Column({ type: 'tinyint' })
-    turn: number;
+    currentTurn: number;
 
-    @Column({ name: 'speechPlayerInfo' })
-    speechPlayerInfo: number;
-    @OneToOne(() => Player, (player) => player.playerId, { onDelete: 'CASCADE', eager: true })
-    @JoinColumn({ name: 'speechPlayerInfo' })
-    speechPlayer: Player;
+    @Column()
+    speechPlayer: string;
 
     @Column()
     keyword: string;

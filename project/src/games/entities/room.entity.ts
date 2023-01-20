@@ -50,6 +50,6 @@ export class Room {
     @OneToMany(() => Player, (player) => player.room, { eager: true })
     players: Player[];
 
-    @OneToMany(() => Turn, (turn) => turn.room)
+    @OneToMany(() => Turn, (turn) => turn.room, { eager: true })
     turns: Turn[];
 }

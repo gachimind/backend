@@ -21,12 +21,6 @@ export class TurnResult {
     @JoinColumn({ name: 'turnInfo' })
     turn: Turn;
 
-    @Column({ name: 'gameResult' })
-    gameResultInfo: number;
-    @ManyToOne(() => GameResult, (gameResult) => gameResult.turnResults)
-    @JoinColumn({ name: 'gameResult' })
-    gameResult: GameResult;
-
     @Column({ type: 'tinyint' })
     score: number;
 
@@ -41,4 +35,7 @@ export class TurnResult {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @ManyToOne(() => GameResult, (game) => game.turnResults)
+    gameResult: GameResult;
 }

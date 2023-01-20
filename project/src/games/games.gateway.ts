@@ -28,15 +28,10 @@ import { UseFilters } from '@nestjs/common';
 import { Room } from './entities/room.entity';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { UpdateRoomDto } from './dto/update-room.dto';
-import { start } from 'repl';
 import { GamesService } from './games.service';
 
 @UseFilters(SocketExceptionFilter)
-@WebSocketGateway({
-    cors: {
-        origin: '*',
-    },
-})
+@WebSocketGateway()
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly roomService: RoomService,
@@ -211,13 +206,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser.player.isHost) {
             throw new SocketException('방장만 게임을 시작할 수 있습니다.', 400, event);
         }
+        const room: Room = requestUser.player.room;
 
-        // 플레이어별 gameResult 데이터 생성
-        await this.gamesService.startGame();
-
-        // 턴 정보 생성(caching) -> db에 turn data 생성
-
-        // player 변동에 따라 턴 정보 수정() -> db turn data 수정
+        //room에 있는 players 배열을 사용해 turn 정보 만들어 주기
+        await this.gamesService.updateTurn(room.roomId);
 
         // setInterval? -> 타이머 발동
     }
