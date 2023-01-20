@@ -21,7 +21,7 @@ export class TokenMap {
 
     @Column({ name: 'userInfo' })
     userInfo: number;
-    @OneToOne(() => User, (user) => user.kakaoUserId, { onDelete: 'CASCADE', eager: true })
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
