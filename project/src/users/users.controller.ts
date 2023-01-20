@@ -67,7 +67,7 @@ export class UsersController {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        console.log(data);
-        return res.status(200).json({ data });
+
+        // return res.status(200).json({ data });
     }
 }

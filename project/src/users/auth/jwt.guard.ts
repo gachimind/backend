@@ -15,7 +15,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         const { authorization } = request.headers;
         // const authorization = request.headers.authorization;
         if (authorization === undefined) {
-            throw new HttpException('토큰 전송 실패', HttpStatus.UNAUTHORIZED);
+            throw new HttpException('확인되지 않는 유저입니다.', HttpStatus.UNAUTHORIZED);
+            // 토큰 전송 실패
         }
 
         const token = authorization.replace('Bearer ', '');
@@ -33,13 +34,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             switch (error.message) {
                 // 토큰 오류 판단
                 case 'invalid accessToken':
-                    throw new HttpException('유효하지 않은 토큰입니다.', 401);
+                    throw new HttpException('정상적인 접근이 아닙니다.', 401);
+                // 유효하지 않은 토큰
 
                 case 'jwt expired':
-                    throw new HttpException('토큰이 만료되었습니다.', 410);
+                    throw new HttpException('정상적인 접근이 아닙니다.', 410);
+                // 토큰 만료
 
-                // default:
-                //    throw new HttpException('서버 오류입니다.', 500);
+                default:
+                    throw new HttpException('서버 오류입니다.', 500);
             }
         }
     }

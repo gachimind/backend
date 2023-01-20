@@ -413,8 +413,6 @@ let UsersController = class UsersController {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        console.log(data);
-        return res.status(200).json({ data });
     }
 };
 __decorate([
@@ -603,8 +601,9 @@ let UsersService = class UsersService {
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        console.log(getUserInfoByToken, '000000000000000000');
         const modifyingUser = getUserInfoByToken.user;
-        const { kakaoUserId, email, nickname, profileImg } = modifyingUser;
+        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
         getUserInfoByToken.user.email = email;
         getUserInfoByToken.user.nickname = nickname;
@@ -793,7 +792,7 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
         const response = context.switchToHttp().getResponse();
         const { authorization } = request.headers;
         if (authorization === undefined) {
-            throw new common_2.HttpException('토큰 전송 실패', common_1.HttpStatus.UNAUTHORIZED);
+            throw new common_2.HttpException('확인되지 않는 유저입니다.', common_1.HttpStatus.UNAUTHORIZED);
         }
         const token = authorization.replace('Bearer ', '');
         const kakaoUserId = await this.validate(token);
@@ -808,9 +807,11 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
         catch (error) {
             switch (error.message) {
                 case 'invalid accessToken':
-                    throw new common_2.HttpException('유효하지 않은 토큰입니다.', 401);
+                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 401);
                 case 'jwt expired':
-                    throw new common_2.HttpException('토큰이 만료되었습니다.', 410);
+                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 410);
+                default:
+                    throw new common_2.HttpException('서버 오류입니다.', 500);
             }
         }
     }
@@ -2145,7 +2146,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("8d49416db9121383f58c")
+/******/ 		__webpack_require__.h = () => ("b6d9e5ffcb36d4ae425a")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
