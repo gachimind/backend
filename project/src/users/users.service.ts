@@ -5,6 +5,9 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { stringify } from 'querystring';
+import { userInfo } from 'os';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UsersService {
@@ -14,20 +17,28 @@ export class UsersService {
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
         private jwtService: JwtService,
+        private configService: ConfigService,
     ) {}
 
     async createUser(details: CreateUserDto): Promise<User> {
         return await this.usersRepository.save(details);
     }
 
-    async findUserByNickNameOrEmail(nickname: string, email: string): Promise<User[]> {
-        console.log('findUserByNicknameOrEmail', { nickname, email });
+    async findUserByNickNameOrEmail(
+        kakaoUserId: number,
+        nickname: string,
+        email: string,
+    ): Promise<User[]> {
+        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
 
-        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
+        return await this.usersRepository.find({
+            where: [{ kakaoUserId }, { nickname }, { email }],
+        });
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
         const users: User[] = await this.findUserByNickNameOrEmail(
+            userData.kakaoUserId,
             userData.nickname,
             userData.email,
         );
@@ -62,18 +73,27 @@ export class UsersService {
 
     // 토큰 검증
     async tokenValidate(token: string) {
-        return await this.jwtService.verify(token);
+        return await this.jwtService.verify(token, {
+            secret: this.configService.get('TOKEN_SECRETE_KEY'),
+        });
     }
 
     // 회원 정보 상세 조회
-    // async getUserDetailsByToken(token: string): Promise<TokenMap> {
-    //     const user = await this.tokenMapRepository.findOne({
-    //         where: { token },
-    //         relations: ['User'],
-    //     });
-    //     if (!user) {
-    //         throw new HttpException('회원 인증에 실패했습니다.', 402);
-    //     }
-    //     return user;
-    // }
+    async getUserDetailsByToken(token: string) {
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const modifyingUser = getUserInfoByToken.user;
+        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
+        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
+        getUserInfoByToken.user.email = email;
+        getUserInfoByToken.user.nickname = nickname;
+        getUserInfoByToken.user.profileImg = profileImg;
+
+        const userDetail = { kakaoUserId, email, nickname, profileImg };
+
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new HttpException('일치하는 회원이 없습니다.', 400);
+        } else {
+            return userDetail;
+        }
+    }
 }

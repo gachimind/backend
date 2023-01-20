@@ -12,6 +12,9 @@ export class User {
     @PrimaryGeneratedColumn()
     userId: number; // 자동 생성
 
+    @Column()
+    kakaoUserId: number;
+
     @Column({ unique: true, length: 50 })
     email: string | null;
 

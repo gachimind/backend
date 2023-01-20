@@ -7,6 +7,8 @@ import {
     UseGuards,
     Param,
     HttpException,
+    Headers,
+    Body,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
@@ -23,6 +25,7 @@ export class UsersController {
     constructor(
         private readonly usersService: UsersService,
         private configService: ConfigService,
+        private jwtAuthGuard: JwtAuthGuard,
     ) {}
     // 카카로 로그인
     @Get('login/kakao')
@@ -44,10 +47,13 @@ export class UsersController {
         const { user, isNewUser }: { user: User; isNewUser: boolean } =
             await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user, isNewUser);
-        return res
-            .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-            .status(301)
-            .redirect(this.configService.get('REDIRECT'));
+        console.log(token);
+
+        res.redirect('http://localhost:3000/login?token=' + token);
+        return token;
+        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        // .status(301)
+        // .redirect(this.configService.get('REDIRECT'));
     }
 
     @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
@@ -58,11 +64,14 @@ export class UsersController {
     }
 
     // // 회원 정보 상세 조회
-    // @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
-    // @UseGuards(JwtAuthGuard)
-    // @Get('/me')
-    // getUserDetailsByToken(@Req() req) {
-    //     const token = req.token;
-    //     return this.usersService.getUserDetailsByToken(token);
-    // }
+    @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
+    @UseGuards(JwtAuthGuard)
+    @Get('/me')
+    async getUserDetailsByToken(@Req() req, @Res() res: Response) {
+        const tokenParsing = req.headers.authorization;
+        const token = tokenParsing.replace('Bearer ', '');
+        const data = await this.usersService.getUserDetailsByToken(token);
+
+        return res.status(200).json({ data });
+    }
 }
