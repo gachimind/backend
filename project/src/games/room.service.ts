@@ -23,14 +23,14 @@ export class RoomService {
         const roomList: Room[] = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
 
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, players, isSecreteRoom, isGameOn } = room;
+            const { roomId, roomTitle, maxCount, round, players, isSecretRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
                 round,
                 participants: players.length,
-                isSecreteRoom,
+                isSecretRoom,
                 isGameOn,
             };
         });
@@ -57,12 +57,12 @@ export class RoomService {
             room.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
         }
         // 비밀방에 true인데, 방 비밀번호가 없는 경우
-        if (room.isSecreteRoom && !room.roomPassword) {
+        if (room.isSecretRoom && !room.roomPassword) {
             throw new SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
         }
         // 비밀번호가 있다면, 비밀방 여부를 무조건 true로 만들기
         if (room.roomPassword) {
-            room.isSecreteRoom = true;
+            room.isSecretRoom = true;
         }
 
         const newRoom: RoomDataInsertDto = {
@@ -92,7 +92,7 @@ export class RoomService {
         }
 
         // 3. 비밀방이라면 비밀번호 확인
-        if (room.isSecreteRoom) {
+        if (room.isSecretRoom) {
             if (!requestRoom.roomPassword || room.roomPassword !== requestRoom.roomPassword) {
                 throw new SocketException('방 비밀번호가 올바르지 않습니다.', 400, 'enter-room');
             }

@@ -32,7 +32,7 @@ export class Room {
     discussionTime: number;
 
     @Column()
-    isSecreteRoom: boolean;
+    isSecretRoom: boolean;
 
     @Column({ type: 'int', width: 4 })
     roomPassword: number;
