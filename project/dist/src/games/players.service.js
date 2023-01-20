@@ -63,13 +63,13 @@ let PlayersService = class PlayersService {
         const requestUser = await this.tokenMapRepository.findOneBy({ token });
         const userId = requestUser.userInfo;
         if (!userId) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 401, 'log-in');
+            throw new ws_exception_filter_1.SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
         }
         if (await this.getUserBySocketId(socketId)) {
             throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
         if (await this.getUserByUserID(userId)) {
-            throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
+            await this.removeSocketBySocketId(socketId);
         }
         const user = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.insert(user);

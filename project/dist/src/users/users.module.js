@@ -19,6 +19,7 @@ const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const config_1 = require("@nestjs/config");
 const jwt_strategy_1 = require("./auth/jwt.strategy");
+const jwt_guard_1 = require("./auth/jwt.guard");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
@@ -40,6 +41,7 @@ UsersModule = __decorate([
             kakao_serializer_1.SessionSerializer,
             kakao_strategy_1.KakaoStrategy,
             jwt_strategy_1.JwtStrategy,
+            jwt_guard_1.JwtAuthGuard,
             {
                 provide: 'USER_SERVICE',
                 useClass: users_service_1.UsersService,

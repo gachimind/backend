@@ -5,6 +5,6 @@ export declare class CreateRoomRequestDto {
     readonly readyTime: number;
     readonly speechTime: number;
     readonly discussionTime: number;
-    readonly isSecreteRoom: boolean;
+    isSecretRoom: boolean;
     readonly roomPassword: number;
 }

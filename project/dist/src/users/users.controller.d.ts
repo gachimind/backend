@@ -1,11 +1,13 @@
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { Request, Response } from 'express';
+import { JwtAuthGuard } from './auth/jwt.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 export declare class UsersController {
     private readonly usersService;
     private configService;
-    constructor(usersService: UsersService, configService: ConfigService);
+    private jwtAuthGuard;
+    constructor(usersService: UsersService, configService: ConfigService, jwtAuthGuard: JwtAuthGuard);
     handleLogin(): {
         msg: string;
     };
@@ -13,4 +15,5 @@ export declare class UsersController {
         user: CreateUserDto;
     }, res: Response): Promise<void>;
     user(request: Request): boolean;
+    getUserDetailsByToken(req: any, res: Response): Promise<Response<any, Record<string, any>>>;
 }

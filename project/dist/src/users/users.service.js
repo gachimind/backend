@@ -19,21 +19,25 @@ const typeorm_2 = require("typeorm");
 const jwt_1 = require("@nestjs/jwt");
 const user_entity_1 = require("./entities/user.entity");
 const token_map_entity_1 = require("./entities/token-map.entity");
+const config_1 = require("@nestjs/config");
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository, jwtService) {
+    constructor(usersRepository, tokenMapRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
         this.jwtService = jwtService;
+        this.configService = configService;
     }
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
-    async findUserByNickNameOrEmail(nickname, email) {
-        console.log('findUserByNicknameOrEmail', { nickname, email });
-        return await this.usersRepository.find({ where: [{ nickname }, { email }] });
+    async findUserByNickNameOrEmail(kakaoUserId, nickname, email) {
+        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
+        return await this.usersRepository.find({
+            where: [{ kakaoUserId }, { nickname }, { email }],
+        });
     }
     async validateUser(userData) {
-        const users = await this.findUserByNickNameOrEmail(userData.nickname, userData.email);
+        const users = await this.findUserByNickNameOrEmail(userData.kakaoUserId, userData.nickname, userData.email);
         if (!users || !users.length) {
             const user = await this.createUser(userData);
             const isNewUser = true;
@@ -58,7 +62,25 @@ let UsersService = class UsersService {
         return token;
     }
     async tokenValidate(token) {
-        return await this.jwtService.verify(token);
+        return await this.jwtService.verify(token, {
+            secret: this.configService.get('TOKEN_SECRETE_KEY'),
+        });
+    }
+    async getUserDetailsByToken(token) {
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const modifyingUser = getUserInfoByToken.user;
+        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
+        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
+        getUserInfoByToken.user.email = email;
+        getUserInfoByToken.user.nickname = nickname;
+        getUserInfoByToken.user.profileImg = profileImg;
+        const userDetail = { kakaoUserId, email, nickname, profileImg };
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new common_1.HttpException('일치하는 회원이 없습니다.', 400);
+        }
+        else {
+            return userDetail;
+        }
     }
 };
 UsersService = __decorate([
@@ -67,7 +89,8 @@ UsersService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        config_1.ConfigService])
 ], UsersService);
 exports.UsersService = UsersService;
 //# sourceMappingURL=users.service.js.map

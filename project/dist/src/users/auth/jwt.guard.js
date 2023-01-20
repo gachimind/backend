@@ -26,10 +26,10 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
         const response = context.switchToHttp().getResponse();
         const { authorization } = request.headers;
         if (authorization === undefined) {
-            throw new common_2.HttpException('토큰 전송 실패', common_1.HttpStatus.UNAUTHORIZED);
+            throw new common_2.HttpException('확인되지 않는 유저입니다.', common_1.HttpStatus.UNAUTHORIZED);
         }
-        const tokenValue = authorization.replace('Bearer ', '');
-        const kakaoUserId = await this.validate(tokenValue);
+        const token = authorization.replace('Bearer ', '');
+        const kakaoUserId = await this.validate(token);
         response.kakaoUserId = kakaoUserId;
         return true;
     }
@@ -41,11 +41,9 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
         catch (error) {
             switch (error.message) {
                 case 'invalid accessToken':
-                    throw new common_2.HttpException('유효하지 않은 토큰입니다.', 401);
+                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 401);
                 case 'jwt expired':
-                    throw new common_2.HttpException('토큰이 만료되었습니다.', 410);
-                default:
-                    throw new common_2.HttpException('서버 오류입니다.', 500);
+                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 410);
             }
         }
     }

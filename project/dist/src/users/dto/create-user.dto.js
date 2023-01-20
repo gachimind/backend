@@ -15,6 +15,16 @@ const swagger_1 = require("@nestjs/swagger");
 class CreateUserDto {
 }
 __decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, swagger_1.ApiProperty)({
+        example: '12345678',
+        required: true,
+        description: 'OAuth 서버에서 받아온 회원의 userId을 게임 서버 db에 저장',
+    }),
+    __metadata("design:type", Number)
+], CreateUserDto.prototype, "kakaoUserId", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsOptional)(),
