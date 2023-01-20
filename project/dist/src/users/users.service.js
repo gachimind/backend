@@ -32,17 +32,22 @@ let UsersService = class UsersService {
     }
     async findUser(kakaoUserId, email, nickname) {
         let user = this.usersRepository.findOne({ where: { kakaoUserId } });
+        console.log('!!!! kakao Id로 검색', user);
         if (!user && email) {
             user = this.usersRepository.findOne({ where: { email } });
+            console.log('!!!! e-mail로 검색', user);
         }
         if (!user && nickname) {
             user = this.usersRepository.findOne({ where: { nickname } });
+            console.log('!!!! nickname으로 검색', user);
         }
         return user;
     }
     async validateUser(userData) {
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
+        console.log('!!!!!!!!!!!!! db에서 유저 조회', user);
         if (!user) {
+            console.log('!!!!!!!!!!!!! db에 유저 없다!!!!!');
             user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
