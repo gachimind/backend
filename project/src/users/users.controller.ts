@@ -8,6 +8,7 @@ import {
     Param,
     HttpException,
     Headers,
+    Body,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UndefinedToNullInterceptor } from 'src/common/interceptors/undefinedToNull.interceptor';
@@ -62,11 +63,11 @@ export class UsersController {
     @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
     @UseGuards(JwtAuthGuard)
     @Get('/me')
-    getUserDetailsByToken(@Req() req, @Res() res: Response, @Headers() Headers) {
+    async getUserDetailsByToken(@Req() req, @Res() res: Response) {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
-        const userProfile = this.usersService.getUserInfoByToken(token);
-        return res.status(200).json(userProfile);
-        // return this.usersService.getUserInfoByToken(token);
+        const data = await this.usersService.getUserDetailsByToken(token);
+        console.log(data);
+        return res.status(200).json({ data });
     }
 }

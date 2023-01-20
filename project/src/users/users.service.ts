@@ -79,15 +79,15 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회
-    async getUserInfoByToken(token: string) {
-        try {
-            const userFindByToken = await this.tokenMapRepository.findOne({
-                where: { token },
-                select: { tokenMapId: true, userInfo: true },
-            });
-            return userFindByToken;
-        } catch (err) {
-            console.log(err);
-        }
+    async getUserDetailsByToken(token: string) {
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const modifyingUser = getUserInfoByToken.user;
+        const { kakaoUserId, email, nickname, profileImg } = modifyingUser;
+        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
+        getUserInfoByToken.user.email = email;
+        getUserInfoByToken.user.nickname = nickname;
+        getUserInfoByToken.user.profileImg = profileImg;
+        const userDetail = { kakaoUserId, email, nickname, profileImg };
+        return userDetail;
     }
 }

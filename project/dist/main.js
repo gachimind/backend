@@ -409,11 +409,12 @@ let UsersController = class UsersController {
             throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
         return true;
     }
-    getUserDetailsByToken(req, res, Headers) {
+    async getUserDetailsByToken(req, res) {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
-        const userProfile = this.usersService.getUserInfoByToken(token);
-        return res.status(200).json(userProfile);
+        const data = await this.usersService.getUserDetailsByToken(token);
+        console.log(data);
+        return res.status(200).json({ data });
     }
 };
 __decorate([
@@ -447,10 +448,9 @@ __decorate([
     (0, common_1.Get)('/me'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
-    __param(2, (0, common_1.Headers)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
+    __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
@@ -601,17 +601,16 @@ let UsersService = class UsersService {
             secret: this.configService.get('TOKEN_SECRETE_KEY'),
         });
     }
-    async getUserInfoByToken(token) {
-        try {
-            const userFindByToken = await this.tokenMapRepository.findOne({
-                where: { token },
-                select: { tokenMapId: true, userInfo: true },
-            });
-            return userFindByToken;
-        }
-        catch (err) {
-            console.log(err);
-        }
+    async getUserDetailsByToken(token) {
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const modifyingUser = getUserInfoByToken.user;
+        const { kakaoUserId, email, nickname, profileImg } = modifyingUser;
+        getUserInfoByToken.user.kakaoUserId = kakaoUserId;
+        getUserInfoByToken.user.email = email;
+        getUserInfoByToken.user.nickname = nickname;
+        getUserInfoByToken.user.profileImg = profileImg;
+        const userDetail = { kakaoUserId, email, nickname, profileImg };
+        return userDetail;
     }
 };
 UsersService = __decorate([
@@ -731,7 +730,7 @@ __decorate([
     __metadata("design:type", Number)
 ], TokenMap.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, (user) => user.kakaoUserId, { onDelete: 'CASCADE', eager: true }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
 ], TokenMap.prototype, "user", void 0);
@@ -2146,7 +2145,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("bace82f59b3b71a20194")
+/******/ 		__webpack_require__.h = () => ("8d49416db9121383f58c")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
