@@ -92,6 +92,17 @@ let RoomService = class RoomService {
             isHost,
         });
     }
+    async validateRoomPassword(password, roomId) {
+        const room = await this.getOneRoomByRoomId(roomId);
+        if (!room) {
+            throw new ws_exception_filter_1.SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'valid-room-password');
+        }
+        if (room.isSecretRoom) {
+            if (room.roomPassword !== password) {
+                throw new ws_exception_filter_1.SocketException('방 비밀번호가 올바르지 않습니다.', 400, 'valid-room-password');
+            }
+        }
+    }
     async updateIsGameReadyToStart(roomId) {
         let room = await this.getOneRoomByRoomId(roomId);
         if (room.players.length > 1) {
