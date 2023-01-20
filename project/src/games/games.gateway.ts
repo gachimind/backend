@@ -28,6 +28,8 @@ import { UseFilters } from '@nestjs/common';
 import { Room } from './entities/room.entity';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { start } from 'repl';
+import { GamesService } from './games.service';
 
 @UseFilters(SocketExceptionFilter)
 @WebSocketGateway({
@@ -40,6 +42,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         private readonly roomService: RoomService,
         private readonly playersService: PlayersService,
         private readonly chatService: ChatService,
+        private readonly gamesService: GamesService,
     ) {}
 
     @WebSocketServer()
@@ -160,6 +163,26 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
 
+    @SubscribeMessage('leave-room')
+    async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
+        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
+        const event = 'leave-room';
+        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
+
+        // request user가 player인지 확인 -> 아니면 에러 반환
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 요청입니다.', 400, event);
+        }
+        // request user의 player 정보 삭제
+        await this.RemovePlayerFormRoom(requestUser, socket);
+
+        // 유저가 나간 뒤 방 정보 갱신
+        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+
+        // 업데이트 된 방 정보 announce
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+    }
+
     @SubscribeMessage('ready')
     async handleReadyEvent(@ConnectedSocket() socket: Socket) {
         const event = 'ready';
@@ -180,24 +203,23 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.updateRoomInfoToRoom(requestUser, room, event);
     }
 
-    @SubscribeMessage('leave-room')
-    async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
-        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
-        const event = 'leave-room';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-
-        // request user가 player인지 확인 -> 아니면 에러 반환
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 요청입니다.', 400, event);
+    @SubscribeMessage('start')
+    async handleStartEvent(@ConnectedSocket() socket: Socket) {
+        const event = 'start';
+        const requestUser = await this.socketAuthentication(socket.id, event);
+        // requestUser가 방장인지 확인
+        if (!requestUser.player.isHost) {
+            throw new SocketException('방장만 게임을 시작할 수 있습니다.', 400, event);
         }
-        // request user의 player 정보 삭제
-        await this.RemovePlayerFormRoom(requestUser, socket);
 
-        // 유저가 나간 뒤 방 정보 갱신
-        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+        // 플레이어별 gameResult 데이터 생성
+        await this.gamesService.startGame();
 
-        // 업데이트 된 방 정보 announce
-        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+        // 턴 정보 생성(caching) -> db에 turn data 생성
+
+        // player 변동에 따라 턴 정보 수정() -> db turn data 수정
+
+        // setInterval? -> 타이머 발동
     }
 
     @SubscribeMessage('send-chat')
