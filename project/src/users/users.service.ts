@@ -23,15 +23,15 @@ export class UsersService {
     }
 
     async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
-        let user = this.usersRepository.findOne({ where: { kakaoUserId } });
+        let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
         console.log('!!!! kakao Id로 검색', user);
 
         if (!user && email) {
-            user = this.usersRepository.findOne({ where: { email } });
+            user = await this.usersRepository.findOne({ where: { email } });
             console.log('!!!! e-mail로 검색', user);
         }
         if (!user && nickname) {
-            user = this.usersRepository.findOne({ where: { nickname } });
+            user = await this.usersRepository.findOne({ where: { nickname } });
             console.log('!!!! nickname으로 검색', user);
         }
         return user;
