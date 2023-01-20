@@ -76,19 +76,17 @@ let UsersService = class UsersService {
         });
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOne({
-            where: { socketId },
-        });
-        console.log(getUserInfoByToken, '000000000000000000');
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         const modifyingUser = getUserInfoByToken.user;
-        console.log(modifyingUser, '111111111111111111');
-        const { kakaoUserId, email, nickname, profileImg } = modifyingUser;
+        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
         getUserInfoByToken.user.email = email;
         getUserInfoByToken.user.nickname = nickname;
         getUserInfoByToken.user.profileImg = profileImg;
         const userDetail = { kakaoUserId, email, nickname, profileImg };
-        console.log(userDetail, '2222222222222222');
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new SocketException('잘못된 요청입니다.', 400, 'create-room');
+        }
         return userDetail;
     }
 };
@@ -108,7 +106,7 @@ exports.runtime =
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ /* webpack/runtime/getFullHash */
 /******/ (() => {
-/******/ 	__webpack_require__.h = () => ("613e3d05fc9b1eb828e1")
+/******/ 	__webpack_require__.h = () => ("f0c637e5196ddd757136")
 /******/ })();
 /******/ 
 /******/ }

@@ -77,7 +77,6 @@ let UsersService = class UsersService {
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
-        console.log(getUserInfoByToken, '000000000000000000');
         const modifyingUser = getUserInfoByToken.user;
         const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
@@ -85,6 +84,9 @@ let UsersService = class UsersService {
         getUserInfoByToken.user.nickname = nickname;
         getUserInfoByToken.user.profileImg = profileImg;
         const userDetail = { kakaoUserId, email, nickname, profileImg };
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new common_1.HttpException('잘못된 요청입니다.', 400);
+        }
         return userDetail;
     }
 };
@@ -104,7 +106,7 @@ exports.runtime =
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ /* webpack/runtime/getFullHash */
 /******/ (() => {
-/******/ 	__webpack_require__.h = () => ("c1a6b05bddcd0dd39d18")
+/******/ 	__webpack_require__.h = () => ("8f3f5d64108a9f51b368")
 /******/ })();
 /******/ 
 /******/ }

@@ -76,8 +76,7 @@ let UsersService = class UsersService {
         });
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOne({ token });
-        console.log(getUserInfoByToken, '000000000000000000');
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         const modifyingUser = getUserInfoByToken.user;
         const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
@@ -104,7 +103,7 @@ exports.runtime =
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ /* webpack/runtime/getFullHash */
 /******/ (() => {
-/******/ 	__webpack_require__.h = () => ("487c37d5c8c0f7e7e2ad")
+/******/ 	__webpack_require__.h = () => ("83bd97f1c52d0d489758")
 /******/ })();
 /******/ 
 /******/ }

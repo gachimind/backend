@@ -317,6 +317,7 @@ const jwt_1 = __webpack_require__(17);
 const passport_1 = __webpack_require__(22);
 const config_1 = __webpack_require__(11);
 const jwt_strategy_1 = __webpack_require__(26);
+const jwt_guard_1 = __webpack_require__(21);
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
@@ -338,6 +339,7 @@ UsersModule = __decorate([
             kakao_serializer_1.SessionSerializer,
             kakao_strategy_1.KakaoStrategy,
             jwt_strategy_1.JwtStrategy,
+            jwt_guard_1.JwtAuthGuard,
             {
                 provide: 'USER_SERVICE',
                 useClass: users_service_1.UsersService,
@@ -374,7 +376,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(7);
@@ -386,9 +388,10 @@ const express_1 = __webpack_require__(20);
 const jwt_guard_1 = __webpack_require__(21);
 const passport_1 = __webpack_require__(22);
 let UsersController = class UsersController {
-    constructor(usersService, configService) {
+    constructor(usersService, configService, jwtAuthGuard) {
         this.usersService = usersService;
         this.configService = configService;
+        this.jwtAuthGuard = jwtAuthGuard;
     }
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
@@ -413,6 +416,7 @@ let UsersController = class UsersController {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
+        return res.status(200).json({ data });
     }
 };
 __decorate([
@@ -429,7 +433,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, typeof (_c = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [String, Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
@@ -437,7 +441,7 @@ __decorate([
     (0, common_1.Get)('status'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _e : Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "user", null);
 __decorate([
@@ -447,12 +451,12 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_e = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _e : Object]),
+    __metadata("design:paramtypes", [Object, typeof (_f = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _f : Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
-    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object, typeof (_c = typeof jwt_guard_1.JwtAuthGuard !== "undefined" && jwt_guard_1.JwtAuthGuard) === "function" ? _c : Object])
 ], UsersController);
 exports.UsersController = UsersController;
 
@@ -601,7 +605,6 @@ let UsersService = class UsersService {
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
-        console.log(getUserInfoByToken, '000000000000000000');
         const modifyingUser = getUserInfoByToken.user;
         const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
@@ -609,7 +612,12 @@ let UsersService = class UsersService {
         getUserInfoByToken.user.nickname = nickname;
         getUserInfoByToken.user.profileImg = profileImg;
         const userDetail = { kakaoUserId, email, nickname, profileImg };
-        return userDetail;
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new common_1.HttpException('일치하는 회원이 없습니다.', 400);
+        }
+        else {
+            return userDetail;
+        }
     }
 };
 UsersService = __decorate([
@@ -810,8 +818,6 @@ let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
                     throw new common_2.HttpException('정상적인 접근이 아닙니다.', 401);
                 case 'jwt expired':
                     throw new common_2.HttpException('정상적인 접근이 아닙니다.', 410);
-                default:
-                    throw new common_2.HttpException('서버 오류입니다.', 500);
             }
         }
     }
@@ -2146,7 +2152,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("b6d9e5ffcb36d4ae425a")
+/******/ 		__webpack_require__.h = () => ("be56036331908415bbf8")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

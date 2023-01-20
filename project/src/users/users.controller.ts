@@ -25,6 +25,7 @@ export class UsersController {
     constructor(
         private readonly usersService: UsersService,
         private configService: ConfigService,
+        private jwtAuthGuard: JwtAuthGuard,
     ) {}
     // 카카로 로그인
     @Get('login/kakao')
@@ -68,6 +69,6 @@ export class UsersController {
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
 
-        // return res.status(200).json({ data });
+        return res.status(200).json({ data });
     }
 }

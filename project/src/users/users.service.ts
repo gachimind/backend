@@ -81,9 +81,7 @@ export class UsersService {
     // 회원 정보 상세 조회
     async getUserDetailsByToken(token: string) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
-        console.log(getUserInfoByToken, '000000000000000000');
         const modifyingUser = getUserInfoByToken.user;
-
         const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
         getUserInfoByToken.user.email = email;
@@ -92,6 +90,10 @@ export class UsersService {
 
         const userDetail = { kakaoUserId, email, nickname, profileImg };
 
-        return userDetail;
+        if (getUserInfoByToken.user.kakaoUserId !== modifyingUser.kakaoUserId) {
+            throw new HttpException('일치하는 회원이 없습니다.', 400);
+        } else {
+            return userDetail;
+        }
     }
 }

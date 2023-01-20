@@ -76,18 +76,16 @@ let UsersService = class UsersService {
         });
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOne({ where: token });
-        console.log(getUserInfoByToken, '000000000000000000');
+        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         const modifyingUser = getUserInfoByToken.user;
-        console.log(modifyingUser, '111111111111111111');
-        const { kakaoUserId, email, nickname, profileImg } = modifyingUser;
+        const { kakaoUserId, email, nickname, profileImg } = await modifyingUser;
         getUserInfoByToken.user.kakaoUserId = kakaoUserId;
         getUserInfoByToken.user.email = email;
         getUserInfoByToken.user.nickname = nickname;
         getUserInfoByToken.user.profileImg = profileImg;
         const userDetail = { kakaoUserId, email, nickname, profileImg };
-        console.log(userDetail, '2222222222222222');
-        return userDetail;
+        if (getUserInfoByToken.user)
+            return userDetail;
     }
 };
 UsersService = __decorate([
@@ -106,7 +104,7 @@ exports.runtime =
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ /* webpack/runtime/getFullHash */
 /******/ (() => {
-/******/ 	__webpack_require__.h = () => ("0361f39332e983d458a1")
+/******/ 	__webpack_require__.h = () => ("e36482e80d3c9bc9a927")
 /******/ })();
 /******/ 
 /******/ }
