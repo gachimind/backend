@@ -30,20 +30,19 @@ let UsersService = class UsersService {
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
-    async findUserByNickNameOrEmail(kakaoUserId, nickname, email) {
-        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
-        return await this.usersRepository.find({
-            where: [{ kakaoUserId }, { nickname }, { email }],
+    async findUserByKakaoUserId(kakaoUserId) {
+        return await this.usersRepository.findOne({
+            where: { kakaoUserId },
         });
     }
     async validateUser(userData) {
-        const users = await this.findUserByNickNameOrEmail(userData.kakaoUserId, userData.nickname, userData.email);
-        if (!users || !users.length) {
-            const user = await this.createUser(userData);
+        let user = await this.findUserByKakaoUserId(userData.kakaoUserId);
+        if (!user) {
+            user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
         }
-        return { user: users[0], isNewUser: false };
+        return { user, isNewUser: false };
     }
     async createToken(user, isNewUSer) {
         const payload = {};

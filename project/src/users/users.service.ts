@@ -5,8 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { stringify } from 'querystring';
-import { userInfo } from 'os';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -24,33 +22,26 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
-    async findUserByNickNameOrEmail(
-        kakaoUserId: number,
-        nickname: string,
-        email: string,
-    ): Promise<User[]> {
-        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
-
-        return await this.usersRepository.find({
-            where: [{ kakaoUserId }, { nickname }, { email }],
+    async findUserByKakaoUserId(kakaoUserId: number): Promise<User> {
+        return await this.usersRepository.findOne({
+            where: { kakaoUserId },
         });
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
-        const users: User[] = await this.findUserByNickNameOrEmail(
-            userData.kakaoUserId,
-            userData.nickname,
-            userData.email,
-        );
+        let user: User = await this.findUserByKakaoUserId(userData.kakaoUserId);
+        console.log(user);
 
         // db에 유저 정보가 없는 경우 처리
-        if (!users || !users.length) {
-            const user: User = await this.createUser(userData);
+        if (!user) {
+            console.log('유저 없으면 새로 만들기!!');
+
+            user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
         }
 
-        return { user: users[0], isNewUser: false };
+        return { user, isNewUser: false };
     }
 
     // AccessToken 생성
