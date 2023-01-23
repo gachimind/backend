@@ -89,6 +89,7 @@ let GamesGateway = class GamesGateway {
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
     }
     async handleValidRoomPassword(socket, { data: { password, roomId } }) {
+        await this.socketAuthentication(socket.id, 'valid-room-password');
         await this.roomService.validateRoomPassword(password, roomId);
         socket.emit('valid-room-password');
     }
