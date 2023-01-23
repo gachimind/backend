@@ -25,7 +25,7 @@ export class Turn {
     room: Room;
 
     @Column({ type: 'tinyint' })
-    currentTurn: number;
+    turn: number;
 
     @Column()
     speechPlayer: string;
@@ -41,7 +41,4 @@ export class Turn {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-    @OneToMany(() => TurnResult, (turnResult) => turnResult.turnInfo)
-    turnResults: TurnResult[];
 }

@@ -4,31 +4,23 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    ManyToOne,
     OneToOne,
     OneToMany,
     JoinColumn,
 } from 'typeorm';
-import { Room } from './room.entity';
 import { TurnResult } from './turnResult.entity';
-import { Player } from './player.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class GameResult {
     @PrimaryGeneratedColumn()
     gameResultId: number;
 
-    @Column({ name: 'playerInfo' })
-    playerInfo: number;
-    @OneToOne(() => Player, (player) => player.playerId, { eager: true })
-    @JoinColumn({ name: 'playerInfo' })
-    player: Player;
-
-    @Column({ name: 'roomInfo' })
-    roomInfo: number;
-    @OneToOne(() => Room, (room) => room.roomId)
-    @JoinColumn({ name: 'roomInfo' })
-    room: Room;
+    @Column({ name: 'userInfo' })
+    userInfo: number;
+    @OneToOne(() => User, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'userInfo' })
+    user: User;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -15,11 +15,11 @@ export class TurnResult {
     @PrimaryGeneratedColumn()
     turnResultId: number;
 
-    @Column({ name: 'turnInfo' })
-    turnInfo: number;
-    @ManyToOne(() => Turn, (turn) => turn.turnId)
-    @JoinColumn({ name: 'turnInfo' })
-    turn: Turn;
+    @Column({ type: 'tinyint' })
+    turn: number;
+
+    @Column()
+    room: number;
 
     @Column({ type: 'tinyint' })
     score: number;
@@ -30,12 +30,17 @@ export class TurnResult {
     @Column()
     isSpeech: boolean;
 
+    @Column({name: 'gameResultInfo'})
+    gameResultInfo: number
+    @ManyToOne(() => GameResult)
+    @JoinColumn({name: 'gameResultInfo'})
+    gameResult: GameResult;
+
     @CreateDateColumn()
     createdAt: Date;
 
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @ManyToOne(() => GameResult, (game) => game.turnResults)
-    gameResult: GameResult;
+    
 }

@@ -7,17 +7,14 @@ import {
     OneToOne,
     ManyToOne,
     JoinColumn,
-    PrimaryGeneratedColumn,
+    PrimaryColumn,
 } from 'typeorm';
 import { Room } from './room.entity';
 import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Player {
-    @PrimaryGeneratedColumn()
-    playerId: number;
-
-    @Column()
+    @PrimaryColumn({ name: 'userInfo' })
     userInfo: number;
     @OneToOne(() => User, { eager: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userInfo' })
