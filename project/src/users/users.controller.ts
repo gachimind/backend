@@ -49,7 +49,7 @@ export class UsersController {
         const token: string = await this.usersService.createToken(user, isNewUser);
         console.log(token);
 
-        res.redirect('http://localhost:3000/login?token=' + token);
+        res.redirect(this.configService.get('REDIRECT') + token);
         return token;
         // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
         // .status(301)

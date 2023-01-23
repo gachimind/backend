@@ -11,7 +11,7 @@ export declare class UsersService {
     private configService;
     constructor(usersRepository: Repository<User>, tokenMapRepository: Repository<TokenMap>, jwtService: JwtService, configService: ConfigService);
     createUser(details: CreateUserDto): Promise<User>;
-    findUserByNickNameOrEmail(kakaoUserId: number, nickname: string, email: string): Promise<User[]>;
+    findUser(kakaoUserId: number, email: string, nickname: string): Promise<User>;
     validateUser(userData: CreateUserDto): Promise<{
         user: User;
         isNewUser: boolean;

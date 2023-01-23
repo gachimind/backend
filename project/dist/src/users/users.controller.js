@@ -36,7 +36,7 @@ let UsersController = class UsersController {
         const { user, isNewUser } = await this.usersService.validateUser(req.user);
         const token = await this.usersService.createToken(user, isNewUser);
         console.log(token);
-        res.redirect('http://localhost:3000/login?token=' + token);
+        res.redirect(this.configService.get('REDIRECT') + token);
         return token;
     }
     user(request) {
