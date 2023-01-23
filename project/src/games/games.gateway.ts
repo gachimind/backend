@@ -163,6 +163,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         @ConnectedSocket() socket: Socket,
         @MessageBody() { data: { password, roomId } },
     ) {
+        await this.socketAuthentication(socket.id, 'valid-room-password');
         await this.roomService.validateRoomPassword(password, roomId);
         //본인에게
         socket.emit('valid-room-password');

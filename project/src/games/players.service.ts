@@ -75,14 +75,15 @@ export class PlayersService {
         }
 
         // socketIdMap에서 userId로 등록된 정보가 있는지 조회 -> 있다면 로그인 정보를 갱신하고, 기존 socket정보는 삭제
-        if (await this.getUserByUserID(userId)) {
-            await this.removeSocketBySocketId(socketId);
+        const prevLoinInfo = await this.getUserByUserID(userId);
+        if (prevLoinInfo) {
+            await this.removeSocketBySocketId(prevLoinInfo.socketId);
             // TODO : socketIdMap에서 삭제된 소켓의 정보를 찾아서 disconnect -> how?
         }
 
         // 위의 검사를 통과했다면, socketIdMap에 매핑
         const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
-        return await this.socketIdMapRepository.insert(user);
+        return await this.socketIdMapRepository.save(user);
     }
 
     async setPlayerReady(player: Player): Promise<Player> {
