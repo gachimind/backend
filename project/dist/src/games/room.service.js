@@ -123,7 +123,13 @@ let RoomService = class RoomService {
         return room;
     }
     async updateIsGameOn(roomId) {
-        let room = await this.updateRoomStatusByRoomId({
+        let room = await this.getOneRoomByRoomId(roomId);
+        for (const player of room.players) {
+            if (!player.isHost && !player.isReady) {
+                throw new ws_exception_filter_1.SocketException('모든 플레이어가 ready상태여야 게임을 시작할 수 있습니다.', 400, 'start');
+            }
+        }
+        room = await this.updateRoomStatusByRoomId({
             roomId,
             isGameOn: true,
         });
