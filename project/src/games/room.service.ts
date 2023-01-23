@@ -176,6 +176,7 @@ export class RoomService {
             roomId,
             isGameOn: true,
         });
-        return room;
+
+        return await this.getOneRoomByRoomId(roomId);
     }
 }

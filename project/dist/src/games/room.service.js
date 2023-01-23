@@ -127,7 +127,7 @@ let RoomService = class RoomService {
             roomId,
             isGameOn: true,
         });
-        return room;
+        return await this.getOneRoomByRoomId(roomId);
     }
 };
 RoomService = __decorate([

@@ -23,8 +23,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Turn.prototype, "roomInfo", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, { cascade: ['update', 'remove'] }),
-    (0, typeorm_1.JoinColumn)({ name: 'roundInfo' }),
+    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
+        onDelete: 'CASCADE',
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'roomInfo' }),
     __metadata("design:type", room_entity_1.Room)
 ], Turn.prototype, "room", void 0);
 __decorate([
@@ -40,7 +42,7 @@ __decorate([
     __metadata("design:type", String)
 ], Turn.prototype, "keyword", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'text' }),
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", String)
 ], Turn.prototype, "hint", void 0);
 __decorate([

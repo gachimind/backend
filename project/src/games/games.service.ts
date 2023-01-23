@@ -36,22 +36,22 @@ export class GamesService {
         for (let userId of playersUserId) {
             data.push({
                 roomInfo: roomId,
-                userInfo: userId,
+                userInfo: userId.userInfo,
             });
         }
-        console.log(data);
 
         await this.gameResultRepository.save(data);
     }
 
     async createTurn(roomId: number) {
-        const room = await this.roomRepository.findOneBy({ roomId });
-        const turn = room.turns.length;
+        const room = await this.roomRepository.findOne({ where: { roomId } });
+        let index = room.turns.length;
+
         const newTurnData: TurnDataInsertDto = {
             roomInfo: room.roomId,
-            turn: turn + 1,
-            speechPlayerInfo: room.players[turn].user.nickname,
-            keyword: keywords[turn],
+            turn: index + 1,
+            speechPlayerInfo: room.players[index].user.nickname,
+            keyword: keywords[index],
             hint: null,
         };
         return await this.turnRepository.save(newTurnData);

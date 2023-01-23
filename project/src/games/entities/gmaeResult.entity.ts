@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { TurnResult } from './turnResult.entity';
 import { User } from '../../users/entities/user.entity';
+import { ManyToOne } from 'typeorm/decorator/relations/ManyToOne';
 
 @Entity()
 export class GameResult {
@@ -18,7 +19,7 @@ export class GameResult {
 
     @Column({ name: 'userInfo' })
     userInfo: number;
-    @OneToOne(() => User, { onDelete: 'CASCADE' })
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
@@ -28,6 +29,6 @@ export class GameResult {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => TurnResult, (turnResult) => turnResult.turnResultId, { eager: true })
+    @OneToMany(() => TurnResult, (turnResult) => turnResult.gameResult, { eager: true })
     turnResults: TurnResult[];
 }

@@ -8,5 +8,5 @@ export declare class User {
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
-    gameResult: GameResult;
+    gameResults: GameResult[];
 }

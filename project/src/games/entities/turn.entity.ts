@@ -4,14 +4,10 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    OneToOne,
-    OneToMany,
     ManyToOne,
     JoinColumn,
 } from 'typeorm';
-import { Player } from './player.entity';
 import { Room } from './room.entity';
-import { TurnResult } from './turnResult.entity';
 
 @Entity()
 export class Turn {
@@ -20,8 +16,10 @@ export class Turn {
 
     @Column({ name: 'roomInfo' })
     roomInfo: number;
-    @ManyToOne(() => Room, (room) => room.roomId, { cascade: ['update', 'remove'] })
-    @JoinColumn({ name: 'roundInfo' })
+    @ManyToOne(() => Room, (room) => room.roomId, {
+        onDelete: 'CASCADE',
+    })
+    @JoinColumn({ name: 'roomInfo' })
     room: Room;
 
     @Column({ type: 'tinyint' })
@@ -33,7 +31,7 @@ export class Turn {
     @Column()
     keyword: string;
 
-    @Column({ type: 'text' })
+    @Column({ type: 'text', nullable: true })
     hint: string | null;
 
     @CreateDateColumn()

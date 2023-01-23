@@ -210,6 +210,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.updateRoomInfoToRoom(requestUser, room, event);
     }
 
+    // TODO : time 함수 하나로 만들기!!
     @SubscribeMessage('start')
     async handleStartEvent(@ConnectedSocket() socket: Socket) {
         const event = 'start';
@@ -227,85 +228,90 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // player별 gameResult 만들기
         await this.gamesService.createGameResultPerPlayer(room.roomId);
-
+        // 첫 번째 턴 데이터 생성
+        let turnCount = 0;
         let turn: Turn = await this.gamesService.createTurn(room.roomId);
-        while (turn.turn - 1 < room.players.length) {
-            // startCount 시작
-            await this.startCount(room.roomId, 10000, turn);
+
+        // startCount 시작
+        await this.gameTimer(room, 'startCount', turn);
+
+        // player 수만큼 turn 반복
+        while (turnCount < room.players.length) {
+            turnCount++;
             // readyTimer 시작
-            await this.readyTimer(room.roomId, room.readyTime, turn);
+            await setTimeout(async () => {
+                await this.gameTimer(room, 'readyTime', turn);
+            }, 10000);
+
             // speechTimer 시작
-            await this.speechTimer(room.roomId, room.readyTime, turn);
-            // 현재 턴 저장 & 다음 턴 생성
-            let currentTurn = turn;
-            turn = await this.gamesService.createTurn(room.roomId);
+            await setTimeout(async () => {
+                await this.gameTimer(room, 'speechTime', turn);
+            }, 10000 + room.readyTime);
+
             // discussionTimer시작
-            await this.discussionTimer(room.roomId, room.readyTime, currentTurn, turn);
+            await setTimeout(async () => {
+                // 현재 턴 저장 & 다음 턴 생성
+                let currentTurn = turn;
+                if (turn.turn < room.players.length) {
+                    turn = await this.gamesService.createTurn(room.roomId);
+                } else {
+                    turn = currentTurn;
+                    turnCount++;
+                }
+                await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+            }, 10000 + room.readyTime + room.speechTime);
+
             // 턴 종료 후 방 데이터 업데이트
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
         }
     }
 
-    async startCount(roomId: number, timer: number, newTurn: Turn) {
-        // startCount evoke
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
-        });
-        // 10초 뒤 startCount 종료
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
-            });
-        }, timer);
-    }
+    async gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn) {
+        const roomId = room.roomId;
+        const timer = eventName === 'startCount' ? 10000 : room[eventName];
+        const event = eventName === 'startCount' ? eventName : `${eventName}r`;
 
-    async readyTimer(roomId: number, timer: number, turn: Turn) {
-        const event = 'readyTimer';
-        // game info emit
-        const turnInfo = {
-            currentTurn: turn.turn,
-            speechPlayer: turn.speechPlayer,
-            keyword: turn.keyword,
-            hint: turn.hint,
-        };
-        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+        // game-info event 처리
+        if (event === 'readyTime') {
+            const turnInfo = {
+                currentTurn: turn.turn,
+                speechPlayer: turn.speechPlayer,
+                keyword: turn.keyword,
+                hint: turn.hint,
+            };
+            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+        }
 
-        // startCount evoke
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: turn.turn, timer, event },
+        // time-start event 처리
+        await this.server.to(`${roomId}`).emit('time-start', {
+            data: {
+                currentTurn: turn.turn,
+                timer,
+                event,
+            },
         });
-        // 10초 뒤 startCount 종료
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: turn.turn, timer, event },
-            });
-        }, timer);
-    }
 
-    async speechTimer(roomId: number, timer: number, turn: Turn) {
-        const event = 'speechTimer';
-        // startCount evoke
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: turn.turn, timer, event },
-        });
-        // 10초 뒤 startCount 종료
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: turn.turn, timer, event },
-            });
-        }, timer);
-    }
-
-    async discussionTimer(roomId: number, timer: number, currentTurn: Turn, nextTurn: Turn) {
-        const event = 'discussionTimer';
-        // startCount evoke
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: currentTurn.turn, timer, event },
-        });
-        // 10초 뒤 startCount 종료
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { nextTurn: nextTurn.turn, timer, event },
+        // time-end event 처리
+        await setTimeout(async () => {
+            // 현재 턴이 마지막 턴일때 처리
+            if (event === 'discussionTimer') {
+                if (turn === nextTurn) {
+                    nextTurn.turn = 0;
+                }
+                return await this.server.to(`${roomId}`).emit('time-end', {
+                    data: {
+                        nextTurn: nextTurn.turn,
+                        timer,
+                        event,
+                    },
+                });
+            }
+            return await this.server.to(`${roomId}`).emit('time-end', {
+                data: {
+                    currentTurn: turn.turn,
+                    timer,
+                    event,
+                },
             });
         }, timer);
     }

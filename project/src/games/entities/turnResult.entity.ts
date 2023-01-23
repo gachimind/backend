@@ -8,7 +8,6 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { GameResult } from './gmaeResult.entity';
-import { Turn } from './turn.entity';
 
 @Entity()
 export class TurnResult {
@@ -32,7 +31,7 @@ export class TurnResult {
 
     @Column({ name: 'gameResultInfo' })
     gameResultInfo: number;
-    @ManyToOne(() => GameResult)
+    @ManyToOne(() => GameResult, (gameResult) => gameResult.gameResultId)
     @JoinColumn({ name: 'gameResultInfo' })
     gameResult: GameResult;
 

@@ -13,6 +13,7 @@ exports.GameResult = void 0;
 const typeorm_1 = require("typeorm");
 const turnResult_entity_1 = require("./turnResult.entity");
 const user_entity_1 = require("../../users/entities/user.entity");
+const ManyToOne_1 = require("typeorm/decorator/relations/ManyToOne");
 let GameResult = class GameResult {
 };
 __decorate([
@@ -24,7 +25,7 @@ __decorate([
     __metadata("design:type", Number)
 ], GameResult.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
+    (0, ManyToOne_1.ManyToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
 ], GameResult.prototype, "user", void 0);
@@ -37,7 +38,7 @@ __decorate([
     __metadata("design:type", Date)
 ], GameResult.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => turnResult_entity_1.TurnResult, (turnResult) => turnResult.turnResultId, { eager: true }),
+    (0, typeorm_1.OneToMany)(() => turnResult_entity_1.TurnResult, (turnResult) => turnResult.gameResult, { eager: true }),
     __metadata("design:type", Array)
 ], GameResult.prototype, "turnResults", void 0);
 GameResult = __decorate([

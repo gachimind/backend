@@ -43,7 +43,7 @@ __decorate([
     __metadata("design:type", Number)
 ], TurnResult.prototype, "gameResultInfo", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => gmaeResult_entity_1.GameResult),
+    (0, typeorm_1.ManyToOne)(() => gmaeResult_entity_1.GameResult, (gameResult) => gameResult.gameResultId),
     (0, typeorm_1.JoinColumn)({ name: 'gameResultInfo' }),
     __metadata("design:type", gmaeResult_entity_1.GameResult)
 ], TurnResult.prototype, "gameResult", void 0);

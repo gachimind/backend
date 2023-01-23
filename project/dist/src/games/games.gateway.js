@@ -125,64 +125,70 @@ let GamesGateway = class GamesGateway {
         room = await this.roomService.updateIsGameOn(room.roomId);
         await this.updateRoomListToMain();
         await this.gamesService.createGameResultPerPlayer(room.roomId);
+        let turnCount = 0;
         let turn = await this.gamesService.createTurn(room.roomId);
-        while (turn.turn - 1 < room.players.length) {
-            await this.startCount(room.roomId, 10000, turn);
-            await this.readyTimer(room.roomId, room.readyTime, turn);
-            await this.speechTimer(room.roomId, room.readyTime, turn);
-            let currentTurn = turn;
-            turn = await this.gamesService.createTurn(room.roomId);
-            await this.discussionTimer(room.roomId, room.readyTime, currentTurn, turn);
+        await this.gameTimer(room, 'startCount', turn);
+        while (turnCount < room.players.length) {
+            turnCount++;
+            await setTimeout(async () => {
+                await this.gameTimer(room, 'readyTime', turn);
+            }, 10000);
+            await setTimeout(async () => {
+                await this.gameTimer(room, 'speechTime', turn);
+            }, 10000 + room.readyTime);
+            await setTimeout(async () => {
+                let currentTurn = turn;
+                if (turn.turn < room.players.length) {
+                    turn = await this.gamesService.createTurn(room.roomId);
+                }
+                else {
+                    turn = currentTurn;
+                    turnCount++;
+                }
+                await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+            }, 10000 + room.readyTime + room.speechTime);
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
         }
     }
-    async startCount(roomId, timer, newTurn) {
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
+    async gameTimer(room, eventName, turn, nextTurn) {
+        const roomId = room.roomId;
+        const timer = eventName === 'startCount' ? 10000 : room[eventName];
+        const event = eventName === 'startCount' ? eventName : `${eventName}r`;
+        if (event === 'readyTime') {
+            const turnInfo = {
+                currentTurn: turn.turn,
+                speechPlayer: turn.speechPlayer,
+                keyword: turn.keyword,
+                hint: turn.hint,
+            };
+            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+        }
+        await this.server.to(`${roomId}`).emit('time-start', {
+            data: {
+                currentTurn: turn.turn,
+                timer,
+                event,
+            },
         });
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
-            });
-        }, timer);
-    }
-    async readyTimer(roomId, timer, turn) {
-        const event = 'readyTimer';
-        const turnInfo = {
-            currentTurn: turn.turn,
-            speechPlayer: turn.speechPlayer,
-            keyword: turn.keyword,
-            hint: turn.hint,
-        };
-        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: turn.turn, timer, event },
-        });
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: turn.turn, timer, event },
-            });
-        }, timer);
-    }
-    async speechTimer(roomId, timer, turn) {
-        const event = 'speechTimer';
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: turn.turn, timer, event },
-        });
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { currentTurn: turn.turn, timer, event },
-            });
-        }, timer);
-    }
-    async discussionTimer(roomId, timer, currentTurn, nextTurn) {
-        const event = 'discussionTimer';
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: { currentTurn: currentTurn.turn, timer, event },
-        });
-        setTimeout(() => {
-            this.server.to(`${roomId}`).emit('time-end', {
-                data: { nextTurn: nextTurn.turn, timer, event },
+        await setTimeout(async () => {
+            if (event === 'discussionTimer') {
+                if (turn === nextTurn) {
+                    nextTurn.turn = 0;
+                }
+                return await this.server.to(`${roomId}`).emit('time-end', {
+                    data: {
+                        nextTurn: nextTurn.turn,
+                        timer,
+                        event,
+                    },
+                });
+            }
+            return await this.server.to(`${roomId}`).emit('time-end', {
+                data: {
+                    currentTurn: turn.turn,
+                    timer,
+                    event,
+                },
             });
         }, timer);
     }
