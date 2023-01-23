@@ -31,7 +31,7 @@ import { GameResult } from './games/entities/gmaeResult.entity';
             port: 3306,
             username: process.env.MYSQL_USERNAME,
             password: process.env.MYSQL_PASSWORD,
-            database: process.env.MYSQL_DATABASE_TEST,
+            database: process.env.MYSQL_DATABASE,
             entities: [User, TokenMap, Room, Player, SocketIdMap, Turn, TurnResult, GameResult],
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
