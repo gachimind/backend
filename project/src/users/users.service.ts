@@ -5,8 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { stringify } from 'querystring';
-import { userInfo } from 'os';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -24,33 +22,38 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
-    async findUserByNickNameOrEmail(
-        kakaoUserId: number,
-        nickname: string,
-        email: string,
-    ): Promise<User[]> {
-        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
+    async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
+        let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+        console.log('!!!! kakao Id로 검색', user);
 
-        return await this.usersRepository.find({
-            where: [{ kakaoUserId }, { nickname }, { email }],
-        });
+        if (!user && email) {
+            user = await this.usersRepository.findOne({ where: { email } });
+            console.log('!!!! e-mail로 검색', user);
+        }
+        if (!user && nickname) {
+            user = await this.usersRepository.findOne({ where: { nickname } });
+            console.log('!!!! nickname으로 검색', user);
+        }
+        return user;
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
-        const users: User[] = await this.findUserByNickNameOrEmail(
+        let user: User = await this.findUser(
             userData.kakaoUserId,
-            userData.nickname,
             userData.email,
+            userData.nickname,
         );
+        console.log('!!!!!!!!!!!!! db에서 유저 조회', user);
 
         // db에 유저 정보가 없는 경우 처리
-        if (!users || !users.length) {
-            const user: User = await this.createUser(userData);
+        if (!user) {
+            console.log('!!!!!!!!!!!!! db에 유저 없다!!!!!');
+            user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
         }
 
-        return { user: users[0], isNewUser: false };
+        return { user, isNewUser: false };
     }
 
     // AccessToken 생성

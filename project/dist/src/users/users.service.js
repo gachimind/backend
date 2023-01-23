@@ -30,20 +30,29 @@ let UsersService = class UsersService {
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
-    async findUserByNickNameOrEmail(kakaoUserId, nickname, email) {
-        console.log('findUserByNicknameOrEmail', { kakaoUserId, nickname, email });
-        return await this.usersRepository.find({
-            where: [{ kakaoUserId }, { nickname }, { email }],
-        });
+    async findUser(kakaoUserId, email, nickname) {
+        let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+        console.log('!!!! kakao Id로 검색', user);
+        if (!user && email) {
+            user = await this.usersRepository.findOne({ where: { email } });
+            console.log('!!!! e-mail로 검색', user);
+        }
+        if (!user && nickname) {
+            user = await this.usersRepository.findOne({ where: { nickname } });
+            console.log('!!!! nickname으로 검색', user);
+        }
+        return user;
     }
     async validateUser(userData) {
-        const users = await this.findUserByNickNameOrEmail(userData.kakaoUserId, userData.nickname, userData.email);
-        if (!users || !users.length) {
-            const user = await this.createUser(userData);
+        let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
+        console.log('!!!!!!!!!!!!! db에서 유저 조회', user);
+        if (!user) {
+            console.log('!!!!!!!!!!!!! db에 유저 없다!!!!!');
+            user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
         }
-        return { user: users[0], isNewUser: false };
+        return { user, isNewUser: false };
     }
     async createToken(user, isNewUSer) {
         const payload = {};
