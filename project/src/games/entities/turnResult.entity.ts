@@ -8,7 +8,6 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { GameResult } from './gmaeResult.entity';
-import { Turn } from './turn.entity';
 
 @Entity()
 export class TurnResult {
@@ -30,10 +29,10 @@ export class TurnResult {
     @Column()
     isSpeech: boolean;
 
-    @Column({name: 'gameResultInfo'})
-    gameResultInfo: number
-    @ManyToOne(() => GameResult)
-    @JoinColumn({name: 'gameResultInfo'})
+    @Column({ name: 'gameResultInfo' })
+    gameResultInfo: number;
+    @ManyToOne(() => GameResult, (gameResult) => gameResult.gameResultId)
+    @JoinColumn({ name: 'gameResultInfo' })
     gameResult: GameResult;
 
     @CreateDateColumn()
@@ -41,6 +40,4 @@ export class TurnResult {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-    
 }

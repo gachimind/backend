@@ -5,7 +5,7 @@ export class TurnDataInsertDto {
     roomInfo: number;
 
     @IsNumber()
-    currentTurn: number;
+    turn: number;
 
     @IsString()
     speechPlayerInfo: string;

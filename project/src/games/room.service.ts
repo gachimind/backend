@@ -158,4 +158,26 @@ export class RoomService {
         }
         return room;
     }
+
+    async updateIsGameOn(roomId: number): Promise<Room> {
+        // 모든 플레이어가 ready 상태인지 검사
+        let room: Room = await this.getOneRoomByRoomId(roomId);
+        for (const player of room.players) {
+            if (!player.isHost && !player.isReady) {
+                throw new SocketException(
+                    '모든 플레이어가 ready상태여야 게임을 시작할 수 있습니다.',
+                    400,
+                    'start',
+                );
+            }
+        }
+
+        // 모두 ready라면, 방의 isGameOn 상태를 업데이트
+        room = await this.updateRoomStatusByRoomId({
+            roomId,
+            isGameOn: true,
+        });
+
+        return await this.getOneRoomByRoomId(roomId);
+    }
 }

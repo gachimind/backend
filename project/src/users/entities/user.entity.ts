@@ -6,7 +6,7 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    OneToOne,
+    OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -35,6 +35,6 @@ export class User {
     @DeleteDateColumn()
     deletedAt: Date | null;
 
-    @OneToOne(() => GameResult, (gameResult) => gameResult.user, { eager: true })
-    gameResult: GameResult;
+    @OneToMany(() => GameResult, (gameResult) => gameResult.user, { eager: true })
+    gameResults: GameResult[];
 }

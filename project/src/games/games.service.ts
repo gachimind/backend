@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { userInfo } from 'os';
 import { Repository } from 'typeorm';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { GameResult } from './entities/gmaeResult.entity';
@@ -25,16 +26,34 @@ export class GamesService {
         private readonly gameResultRepository: Repository<GameResult>,
     ) {}
 
-    async updateTurn(roomId: number) {
+    async createGameResultPerPlayer(roomId) {
+        const playersUserId = await this.playerRepository.find({
+            where: { roomInfo: roomId },
+            select: { userInfo: true },
+        });
+
+        let data = [];
+        for (let userId of playersUserId) {
+            data.push({
+                roomInfo: roomId,
+                userInfo: userId.userInfo,
+            });
+        }
+
+        await this.gameResultRepository.save(data);
+    }
+
+    async createTurn(roomId: number) {
         const room = await this.roomRepository.findOne({ where: { roomId } });
-        const turn = room.turns.length;
+        let index = room.turns.length;
+
         const newTurnData: TurnDataInsertDto = {
             roomInfo: room.roomId,
-            currentTurn: turn + 1,
-            speechPlayerInfo: room.players[turn].user.nickname,
-            keyword: keywords[turn],
+            turn: index + 1,
+            speechPlayerInfo: room.players[index].user.nickname,
+            keyword: keywords[index],
             hint: null,
         };
-        await this.turnRepository.save(newTurnData);
+        return await this.turnRepository.save(newTurnData);
     }
 }
