@@ -4,8 +4,8 @@ import * as cheerio from 'cheerio';
 
 @Injectable()
 export class QuizService {
-    async getData(pageNumber: number) {
-        const URL = `https://terms.naver.com/list.naver?cid=42344&categoryId=42344&so=st1.dsc&viewType=&categoryType=&page=${pageNumber}`;
+    async getData(pageNum: number) {
+        const URL = `https://terms.naver.com/list.naver?cid=42344&categoryId=42344&page=${pageNum}`;
         const browser = await puppeteer.launch({
             // ignoreHTTPSErrors: true,
             // setRequestInterception 메소드 이용할 때 에러 방지
@@ -25,16 +25,20 @@ export class QuizService {
 
         const data = lists.each((index, list) => {
             const word = $(list).find('div > div.subject > strong> a:nth-child(1)').html();
-            const wordExp = word.replace(/[^ㄱ-ㅎ|가-힣|'']/g, '');
+            const wordExp = word.replace(/[^a-z|A-Z|0-9|ㄱ-ㅎ|가-힣|'']/g, '');
             const hint = $(list).find('div > p').html();
             const hintExp = hint.replace(/[^a-z|A-Z|0-9|ㄱ-ㅎ|가-힣|' '|「」|()]/g, '');
-
-            console.log({ index, wordExp, hintExp });
+            const dataSet = [index, wordExp, hintExp];
+            console.log(dataSet);
         });
         await browser.close();
+
         //     return results;
     }
 }
+
+// ()기준으로 스플릿해서 한글, 영어 분리해서 저장
+// 셀레니움으로 한글단어, 영어단어, 정의(페이지 들어가서)
 
 // https://terms.naver.com/list.naver?cid=42344&categoryId=42344 >>> 컴퓨터인터넷IT용어대사전
 // https://terms.naver.com/list.naver?cid=42344&categoryId=42344&page=2 >>> 컴퓨터인터넷IT용어대사전 (페이지 구분)
@@ -48,5 +52,9 @@ export class QuizService {
 // #content > div.list_wrap > ul > li:nth-child(1) > div > div.subject > strong
 // #content > div.list_wrap > ul > li:nth-child(1) > div > div.subject > strong > a:nth-child(1)
 // #content > div.list_wrap > ul > li:nth-child(1) > div > p
+
+// #paginate > strong
+// #paginate > a:nth-child(3)
+// #paginate > a:nth-child(4)
 
 //////////////////////////////////////////////////
