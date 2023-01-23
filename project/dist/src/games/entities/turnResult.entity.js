@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TurnResult = void 0;
 const typeorm_1 = require("typeorm");
-const gmaeResult_entity_1 = require("./gmaeResult.entity");
+const gameResult_entity_1 = require("./gameResult.entity");
 let TurnResult = class TurnResult {
 };
 __decorate([
@@ -23,9 +23,9 @@ __decorate([
     __metadata("design:type", Number)
 ], TurnResult.prototype, "gameResultInfo", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => gmaeResult_entity_1.GameResult, (gameResult) => gameResult.gameResultId),
+    (0, typeorm_1.ManyToOne)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.gameResultId),
     (0, typeorm_1.JoinColumn)({ name: 'gameResultInfo' }),
-    __metadata("design:type", gmaeResult_entity_1.GameResult)
+    __metadata("design:type", gameResult_entity_1.GameResult)
 ], TurnResult.prototype, "gameResult", void 0);
 __decorate([
     (0, typeorm_1.Column)(),

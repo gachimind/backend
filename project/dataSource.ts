@@ -6,7 +6,7 @@ import { Player } from './src/games/entities/player.entity';
 import { SocketIdMap } from './src/games/entities/socketIdMap.entity';
 import { Turn } from './src/games/entities/turn.entity';
 import { TurnResult } from './src/games/entities/turnResult.entity';
-import { GameResult } from './src/games/entities/gmaeResult.entity';
+import { GameResult } from './src/games/entities/gameResult.entity';
 import 'dotenv/config';
 
 const dataSource = new DataSource({

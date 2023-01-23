@@ -1,6 +1,6 @@
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
-import { GameResult } from './entities/gmaeResult.entity';
+import { GameResult } from './entities/gameResult.entity';
 import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';

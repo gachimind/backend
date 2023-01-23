@@ -49,4 +49,4 @@ GameResult = __decorate([
     (0, typeorm_1.Entity)()
 ], GameResult);
 exports.GameResult = GameResult;
-//# sourceMappingURL=gmaeResult.entity.js.map
+//# sourceMappingURL=gameResult.entity.js.map

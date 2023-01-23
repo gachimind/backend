@@ -5,7 +5,7 @@ import { User } from 'src/users/entities/user.entity';
 import { createSecurePair } from 'tls';
 import { Repository } from 'typeorm';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
-import { GameResult } from './entities/gmaeResult.entity';
+import { GameResult } from './entities/gameResult.entity';
 import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';

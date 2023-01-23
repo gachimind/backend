@@ -13,7 +13,7 @@ import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
 import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
-import { GameResult } from './games/entities/gmaeResult.entity';
+import { GameResult } from './games/entities/gameResult.entity';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {

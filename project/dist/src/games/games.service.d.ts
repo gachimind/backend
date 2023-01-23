@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
-import { GameResult } from './entities/gmaeResult.entity';
+import { GameResult } from './entities/gameResult.entity';
 import { Player } from './entities/player.entity';
 import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';

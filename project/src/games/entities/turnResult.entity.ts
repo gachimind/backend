@@ -7,7 +7,7 @@ import {
     ManyToOne,
     JoinColumn,
 } from 'typeorm';
-import { GameResult } from './gmaeResult.entity';
+import { GameResult } from './gameResult.entity';
 import { Turn } from './turn.entity';
 
 @Entity()

@@ -1,4 +1,4 @@
-import { GameResult } from './gmaeResult.entity';
+import { GameResult } from './gameResult.entity';
 export declare class TurnResult {
     turnResultId: number;
     gameResultInfo: number;

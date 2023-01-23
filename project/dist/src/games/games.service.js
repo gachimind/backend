@@ -16,7 +16,7 @@ exports.GamesService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const gmaeResult_entity_1 = require("./entities/gmaeResult.entity");
+const gameResult_entity_1 = require("./entities/gameResult.entity");
 const player_entity_1 = require("./entities/player.entity");
 const room_entity_1 = require("./entities/room.entity");
 const turn_entity_1 = require("./entities/turn.entity");
@@ -70,7 +70,7 @@ GamesService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
     __param(2, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
     __param(3, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
-    __param(4, (0, typeorm_1.InjectRepository)(gmaeResult_entity_1.GameResult)),
+    __param(4, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

@@ -17,7 +17,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const typeorm_2 = require("typeorm");
-const gmaeResult_entity_1 = require("./entities/gmaeResult.entity");
+const gameResult_entity_1 = require("./entities/gameResult.entity");
 const room_entity_1 = require("./entities/room.entity");
 const turn_entity_1 = require("./entities/turn.entity");
 const turnResult_entity_1 = require("./entities/turnResult.entity");
@@ -76,7 +76,7 @@ ChatService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(room_entity_1.Room)),
     __param(1, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
     __param(2, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
-    __param(3, (0, typeorm_1.InjectRepository)(gmaeResult_entity_1.GameResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

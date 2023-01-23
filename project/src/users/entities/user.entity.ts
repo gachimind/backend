@@ -1,4 +1,4 @@
-import { GameResult } from '../../games/entities/gmaeResult.entity';
+import { GameResult } from '../../games/entities/gameResult.entity';
 import {
     Column,
     CreateDateColumn,
