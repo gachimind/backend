@@ -30,10 +30,10 @@ export class TurnResult {
     @Column()
     isSpeech: boolean;
 
-    @Column({name: 'gameResultInfo'})
-    gameResultInfo: number
+    @Column({ name: 'gameResultInfo' })
+    gameResultInfo: number;
     @ManyToOne(() => GameResult)
-    @JoinColumn({name: 'gameResultInfo'})
+    @JoinColumn({ name: 'gameResultInfo' })
     gameResult: GameResult;
 
     @CreateDateColumn()
@@ -41,6 +41,4 @@ export class TurnResult {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-    
 }

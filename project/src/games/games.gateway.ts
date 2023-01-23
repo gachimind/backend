@@ -29,6 +29,7 @@ import { Room } from './entities/room.entity';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { GamesService } from './games.service';
+import { Turn } from './entities/turn.entity';
 
 @UseFilters(SocketExceptionFilter)
 @WebSocketGateway()
@@ -217,12 +218,96 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser.player.isHost) {
             throw new SocketException('방장만 게임을 시작할 수 있습니다.', 400, event);
         }
-        const room: Room = requestUser.player.room;
+        let room: Room = requestUser.player.room;
 
-        //room에 있는 players 배열을 사용해 turn 정보 만들어 주기
-        await this.gamesService.updateTurn(room.roomId);
+        // 1. 방 정보 갱신 -> isGameOn : true
+        room = await this.roomService.updateIsGameOn(room.roomId);
+        // announce to main
+        await this.updateRoomListToMain();
 
-        // setInterval? -> 타이머 발동
+        // player별 gameResult 만들기
+        await this.gamesService.createGameResultPerPlayer(room.roomId);
+
+        let turn: Turn = await this.gamesService.createTurn(room.roomId);
+        while (turn.turn - 1 < room.players.length) {
+            // startCount 시작
+            await this.startCount(room.roomId, 10000, turn);
+            // readyTimer 시작
+            await this.readyTimer(room.roomId, room.readyTime, turn);
+            // speechTimer 시작
+            await this.speechTimer(room.roomId, room.readyTime, turn);
+            // 현재 턴 저장 & 다음 턴 생성
+            let currentTurn = turn;
+            turn = await this.gamesService.createTurn(room.roomId);
+            // discussionTimer시작
+            await this.discussionTimer(room.roomId, room.readyTime, currentTurn, turn);
+            // 턴 종료 후 방 데이터 업데이트
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        }
+    }
+
+    async startCount(roomId: number, timer: number, newTurn: Turn) {
+        // startCount evoke
+        this.server.to(`${roomId}`).emit('time-start', {
+            data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
+        });
+        // 10초 뒤 startCount 종료
+        setTimeout(() => {
+            this.server.to(`${roomId}`).emit('time-end', {
+                data: { currentTurn: newTurn.turn, timer: 10000, event: 'startCount' },
+            });
+        }, timer);
+    }
+
+    async readyTimer(roomId: number, timer: number, turn: Turn) {
+        const event = 'readyTimer';
+        // game info emit
+        const turnInfo = {
+            currentTurn: turn.turn,
+            speechPlayer: turn.speechPlayer,
+            keyword: turn.keyword,
+            hint: turn.hint,
+        };
+        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+
+        // startCount evoke
+        this.server.to(`${roomId}`).emit('time-start', {
+            data: { currentTurn: turn.turn, timer, event },
+        });
+        // 10초 뒤 startCount 종료
+        setTimeout(() => {
+            this.server.to(`${roomId}`).emit('time-end', {
+                data: { currentTurn: turn.turn, timer, event },
+            });
+        }, timer);
+    }
+
+    async speechTimer(roomId: number, timer: number, turn: Turn) {
+        const event = 'speechTimer';
+        // startCount evoke
+        this.server.to(`${roomId}`).emit('time-start', {
+            data: { currentTurn: turn.turn, timer, event },
+        });
+        // 10초 뒤 startCount 종료
+        setTimeout(() => {
+            this.server.to(`${roomId}`).emit('time-end', {
+                data: { currentTurn: turn.turn, timer, event },
+            });
+        }, timer);
+    }
+
+    async discussionTimer(roomId: number, timer: number, currentTurn: Turn, nextTurn: Turn) {
+        const event = 'discussionTimer';
+        // startCount evoke
+        this.server.to(`${roomId}`).emit('time-start', {
+            data: { currentTurn: currentTurn.turn, timer, event },
+        });
+        // 10초 뒤 startCount 종료
+        setTimeout(() => {
+            this.server.to(`${roomId}`).emit('time-end', {
+                data: { nextTurn: nextTurn.turn, timer, event },
+            });
+        }, timer);
     }
 
     @SubscribeMessage('send-chat')
