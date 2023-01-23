@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
@@ -14,6 +15,6 @@ export declare class PlayersService {
     updatePlayerStatusByUserId(user: any): Promise<Player>;
     removeSocketBySocketId(socketId: string): Promise<number | any>;
     removePlayerByUserId(userId: number | User): Promise<number | any>;
-    socketIdMapToLoginUser(token: string, socketId: string): Promise<import("typeorm").InsertResult>;
+    socketIdMapToLoginUser(token: string, socketId: string): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
     setPlayerReady(player: Player): Promise<Player>;
 }

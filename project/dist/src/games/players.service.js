@@ -68,11 +68,12 @@ let PlayersService = class PlayersService {
         if (await this.getUserBySocketId(socketId)) {
             throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
-        if (await this.getUserByUserID(userId)) {
-            await this.removeSocketBySocketId(socketId);
+        const prevLoinInfo = await this.getUserByUserID(userId);
+        if (prevLoinInfo) {
+            await this.removeSocketBySocketId(prevLoinInfo.socketId);
         }
         const user = { socketId, userInfo: userId };
-        return await this.socketIdMapRepository.insert(user);
+        return await this.socketIdMapRepository.save(user);
     }
     async setPlayerReady(player) {
         let user;
