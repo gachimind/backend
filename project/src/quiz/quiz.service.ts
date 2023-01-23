@@ -9,10 +9,11 @@ export class QuizService {
         const browser = await puppeteer.launch({
             // ignoreHTTPSErrors: true,
             // setRequestInterception 메소드 이용할 때 에러 방지
-            headless: true,
+            headless: false,
             // 처음에는 false 설정해두고 브라우저를 직접 눈으로 보면서 실행되는 부분 확인 가능하고 나중에는 true로 바꿀 것
         });
         const page = await browser.newPage();
+
         await page.goto(URL, {
             waitUntil: 'networkidle2',
             // 페이지 렌더링을 완료하고 결과를 반환하는 방법과 시기 결정하는 옵션
@@ -22,22 +23,23 @@ export class QuizService {
         const content = await page.content();
         const $ = cheerio.load(content);
         const lists = $('#content > div.list_wrap > ul > ');
-
         const data = lists.each((index, list) => {
             const word = $(list).find('div > div.subject > strong> a:nth-child(1)').html();
-            const wordExp = word.replace(/[^a-z|A-Z|0-9|ㄱ-ㅎ|가-힣|'']/g, '');
+            const wordExpKo = word.replace(/[^ㄱ-ㅎ|가-힣|'']/g, '');
+            const wordExpEng = word.replace(/[^a-z|A-Z|0-9|'']/g, '');
+            // const wordExp2 = wordExp.split('[ㄱ-힣] + [a-Z]', 2);
+            // const wordExpKo = wordExp2[0];
+            // const wordExpEng = wordExp2[1];
             const hint = $(list).find('div > p').html();
-            const hintExp = hint.replace(/[^a-z|A-Z|0-9|ㄱ-ㅎ|가-힣|' '|「」|()]/g, '');
-            const dataSet = [index, wordExp, hintExp];
+            const hintExp = hint.replace(/[^ㄱ-ㅎ|가-힣|' '|「」|()]/g, '');
+            const hintExpf = hint.split('.', 1);
+            const dataSet = [index, wordExpKo, wordExpEng, hintExpf];
             console.log(dataSet);
         });
         await browser.close();
-
-        //     return results;
     }
 }
 
-// ()기준으로 스플릿해서 한글, 영어 분리해서 저장
 // 셀레니움으로 한글단어, 영어단어, 정의(페이지 들어가서)
 
 // https://terms.naver.com/list.naver?cid=42344&categoryId=42344 >>> 컴퓨터인터넷IT용어대사전
