@@ -36,7 +36,7 @@ import { GameResult } from './games/entities/gmaeResult.entity';
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: true,
-            logging: true,
+            logging: false,
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
         }),

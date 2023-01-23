@@ -28,6 +28,9 @@ export class Turn {
     turn: number;
 
     @Column()
+    currentEvent: string;
+
+    @Column()
     speechPlayer: string;
 
     @Column()
@@ -41,7 +44,4 @@ export class Turn {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-    @OneToMany(() => TurnResult, (turnResult) => turnResult.turn, { eager: true })
-    turnResults: TurnResult[];
 }

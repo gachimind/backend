@@ -38,7 +38,7 @@ let GamesService = class GamesService {
         let data = [];
         for (let userId of playersUserId) {
             data.push({
-                roomInfo: roomId,
+                roomId,
                 userInfo: userId.userInfo,
             });
         }
@@ -47,14 +47,21 @@ let GamesService = class GamesService {
     async createTurn(roomId) {
         const room = await this.roomRepository.findOne({ where: { roomId } });
         let index = room.turns.length;
+        console.log('createTurn 유저 닉네임!', room.players[index].user.nickname);
         const newTurnData = {
             roomInfo: room.roomId,
             turn: index + 1,
-            speechPlayerInfo: room.players[index].user.nickname,
+            currentEvent: 'start',
+            speechPlayer: room.players[index].user.nickname,
             keyword: keywords[index],
             hint: null,
         };
         return await this.turnRepository.save(newTurnData);
+    }
+    async updateTurn(turn, timer) {
+        turn.currentEvent = timer;
+        console.log('updateTurn data : ', turn);
+        return await this.turnRepository.save(turn);
     }
 };
 GamesService = __decorate([

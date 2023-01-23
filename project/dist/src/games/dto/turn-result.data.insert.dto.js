@@ -9,34 +9,38 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TurnDataInsertDto = void 0;
+exports.TurnResultDataInsertDto = void 0;
 const class_validator_1 = require("class-validator");
-class TurnDataInsertDto {
+class TurnResultDataInsertDto {
 }
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], TurnDataInsertDto.prototype, "roomInfo", void 0);
+], TurnResultDataInsertDto.prototype, "gameResultInfo", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], TurnDataInsertDto.prototype, "turn", void 0);
+], TurnResultDataInsertDto.prototype, "roomId", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], TurnResultDataInsertDto.prototype, "turn", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], TurnDataInsertDto.prototype, "currentEvent", void 0);
+], TurnResultDataInsertDto.prototype, "nickname", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], TurnResultDataInsertDto.prototype, "score", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], TurnDataInsertDto.prototype, "speechPlayer", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], TurnDataInsertDto.prototype, "keyword", void 0);
+], TurnResultDataInsertDto.prototype, "keyword", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], TurnDataInsertDto.prototype, "hint", void 0);
-exports.TurnDataInsertDto = TurnDataInsertDto;
-//# sourceMappingURL=turn.data.insert.dto.js.map
+    __metadata("design:type", Boolean)
+], TurnResultDataInsertDto.prototype, "isSpeech", void 0);
+exports.TurnResultDataInsertDto = TurnResultDataInsertDto;
+//# sourceMappingURL=turn-result.data.insert.dto.js.map

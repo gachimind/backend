@@ -1,7 +1,8 @@
 export declare class TurnDataInsertDto {
     roomInfo: number;
     turn: number;
-    speechPlayerInfo: string;
+    currentEvent: string;
+    speechPlayer: string;
     keyword: string;
     hint?: string;
 }

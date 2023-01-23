@@ -2,6 +2,7 @@ import { TurnResult } from './turnResult.entity';
 import { User } from '../../users/entities/user.entity';
 export declare class GameResult {
     gameResultId: number;
+    roomId: number;
     userInfo: number;
     user: User;
     createdAt: Date;

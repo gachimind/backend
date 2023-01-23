@@ -4,6 +4,7 @@ export declare class Turn {
     roomInfo: number;
     room: Room;
     turn: number;
+    currentEvent: string;
     speechPlayer: string;
     keyword: string;
     hint: string | null;

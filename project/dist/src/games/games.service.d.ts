@@ -14,4 +14,5 @@ export declare class GamesService {
     constructor(roomRepository: Repository<Room>, playerRepository: Repository<Player>, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>);
     createGameResultPerPlayer(roomId: any): Promise<void>;
     createTurn(roomId: number): Promise<TurnDataInsertDto & Turn>;
+    updateTurn(turn: Turn, timer: string): Promise<Turn>;
 }

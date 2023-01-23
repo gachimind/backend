@@ -22,13 +22,10 @@ export class TurnResult {
     gameResult: GameResult;
 
     @Column()
-    room: number;
+    roomId: number;
 
-    @Column({ name: 'turnInfo', type: 'tinyint' })
-    turnInfo: number;
-    @ManyToOne(() => Turn, (turn) => turn.turnId)
-    @JoinColumn({ name: 'turnInfo' })
-    turn: Turn;
+    @Column({ type: 'tinyint' })
+    turn: number;
 
     @Column()
     nickname: string;

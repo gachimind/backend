@@ -21,6 +21,10 @@ __decorate([
     __metadata("design:type", Number)
 ], GameResult.prototype, "gameResultId", void 0);
 __decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], GameResult.prototype, "roomId", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'userInfo' }),
     __metadata("design:type", Number)
 ], GameResult.prototype, "userInfo", void 0);

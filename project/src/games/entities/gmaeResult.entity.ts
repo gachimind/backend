@@ -17,6 +17,9 @@ export class GameResult {
     @PrimaryGeneratedColumn()
     gameResultId: number;
 
+    @Column()
+    roomId: number;
+
     @Column({ name: 'userInfo' })
     userInfo: number;
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
