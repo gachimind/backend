@@ -21,14 +21,6 @@ export class CreateRoomRequestDto {
 
     @IsNumber()
     @ApiProperty({
-        example: 3,
-        required: true,
-        description: '게임 라운드',
-    })
-    readonly round: number;
-
-    @IsNumber()
-    @ApiProperty({
         example: 30000,
         required: true,
         description: '발표 준비 타이머, milliseconds 단위',

@@ -23,12 +23,11 @@ export class RoomService {
         const roomList: Room[] = await this.roomRepository.find({ order: { updatedAt: 'DESC' } });
 
         return roomList.map((room) => {
-            const { roomId, roomTitle, maxCount, round, players, isSecretRoom, isGameOn } = room;
+            const { roomId, roomTitle, maxCount, players, isSecretRoom, isGameOn } = room;
             return {
                 roomId,
                 roomTitle,
                 maxCount,
-                round,
                 participants: players.length,
                 isSecretRoom,
                 isGameOn,
@@ -56,6 +55,7 @@ export class RoomService {
         if (!room.roomTitle) {
             room.roomTitle = '같이 가치마인드 한 판 해요!'; // 랜덤 방제 만들어서 넣기
         }
+
         // 비밀방에 true인데, 방 비밀번호가 없는 경우
         if (room.isSecretRoom && !room.roomPassword) {
             throw new SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');

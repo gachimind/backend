@@ -11,6 +11,7 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { JwtAuthGuard } from './auth/jwt.guard';
+import { SeedingController } from './seeding.controller';
 
 @Module({
     imports: [
@@ -24,7 +25,7 @@ import { JwtAuthGuard } from './auth/jwt.guard';
         }),
         PassportModule,
     ],
-    controllers: [UsersController],
+    controllers: [UsersController, SeedingController],
     providers: [
         UsersService,
         SessionSerializer,

@@ -1,3 +1,4 @@
+import { GameResult } from '../../games/entities/gmaeResult.entity';
 import {
     Column,
     CreateDateColumn,
@@ -5,6 +6,7 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
+    OneToOne,
 } from 'typeorm';
 
 @Entity()
@@ -32,4 +34,7 @@ export class User {
 
     @DeleteDateColumn()
     deletedAt: Date | null;
+
+    @OneToOne(() => GameResult, (gameResult) => gameResult.user, { eager: true })
+    gameResult: GameResult;
 }

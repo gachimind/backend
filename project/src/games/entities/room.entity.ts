@@ -7,6 +7,7 @@ import {
     OneToMany,
 } from 'typeorm';
 import { Player } from './player.entity';
+import { Turn } from './turn.entity';
 
 @Entity()
 export class Room {
@@ -18,9 +19,6 @@ export class Room {
 
     @Column('tinyint')
     maxCount: number;
-
-    @Column('tinyint')
-    round: number;
 
     @Column()
     readyTime: number;
@@ -51,4 +49,7 @@ export class Room {
 
     @OneToMany(() => Player, (player) => player.room, { eager: true })
     players: Player[];
+
+    @OneToMany(() => Turn, (turn) => turn.room, { eager: true })
+    turns: Turn[];
 }

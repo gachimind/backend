@@ -3,18 +3,18 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    PrimaryColumn,
     UpdateDateColumn,
     OneToOne,
     ManyToOne,
     JoinColumn,
+    PrimaryColumn,
 } from 'typeorm';
 import { Room } from './room.entity';
 import { SocketIdMap } from './socketIdMap.entity';
 
 @Entity()
 export class Player {
-    @PrimaryColumn()
+    @PrimaryColumn({ name: 'userInfo' })
     userInfo: number;
     @OneToOne(() => User, { eager: true, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userInfo' })
