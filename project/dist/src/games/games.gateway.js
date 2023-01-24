@@ -130,13 +130,13 @@ let GamesGateway = class GamesGateway {
         await this.gameTimer(room, 'startCount', turn);
         while (turnCount < room.players.length) {
             turnCount++;
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 await this.gameTimer(room, 'readyTime', turn);
             }, 10000);
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 await this.gameTimer(room, 'speechTime', turn);
             }, 10000 + room.readyTime);
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 let currentTurn = turn;
                 if (turn.turn < room.players.length) {
                     turn = await this.gamesService.createTurn(room.roomId);
@@ -457,7 +457,7 @@ __decorate([
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
     (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
-    (0, websockets_1.WebSocketGateway)(),
+    (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,
         chat_service_1.ChatService,
