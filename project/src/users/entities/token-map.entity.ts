@@ -30,7 +30,4 @@ export class TokenMap {
 
     @UpdateDateColumn()
     updatedAt: Date;
-
-    @DeleteDateColumn()
-    deletedAt: Date | null;
 }

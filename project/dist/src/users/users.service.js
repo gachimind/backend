@@ -32,22 +32,17 @@ let UsersService = class UsersService {
     }
     async findUser(kakaoUserId, email, nickname) {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
-        console.log('!!!! kakao Id로 검색', user);
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
-            console.log('!!!! e-mail로 검색', user);
         }
         if (!user && nickname) {
             user = await this.usersRepository.findOne({ where: { nickname } });
-            console.log('!!!! nickname으로 검색', user);
         }
         return user;
     }
     async validateUser(userData) {
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
-        console.log('!!!!!!!!!!!!! db에서 유저 조회', user);
         if (!user) {
-            console.log('!!!!!!!!!!!!! db에 유저 없다!!!!!');
             user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
@@ -79,8 +74,7 @@ let UsersService = class UsersService {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
-        const modifyingUser = getUserInfoByToken.user;
-        const { userId, email, nickname, profileImg } = await modifyingUser;
+        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
         return { userId, email, nickname, profileImg };
     }
 };

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { User } from 'src/users/entities/user.entity';
-import { createSecurePair } from 'tls';
 import { Repository } from 'typeorm';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';

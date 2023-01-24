@@ -24,15 +24,12 @@ export class UsersService {
 
     async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
-        console.log('!!!! kakao Id로 검색', user);
 
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
-            console.log('!!!! e-mail로 검색', user);
         }
         if (!user && nickname) {
             user = await this.usersRepository.findOne({ where: { nickname } });
-            console.log('!!!! nickname으로 검색', user);
         }
         return user;
     }
@@ -43,11 +40,9 @@ export class UsersService {
             userData.email,
             userData.nickname,
         );
-        console.log('!!!!!!!!!!!!! db에서 유저 조회', user);
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {
-            console.log('!!!!!!!!!!!!! db에 유저 없다!!!!!');
             user = await this.createUser(userData);
             const isNewUser = true;
             return { user, isNewUser };
@@ -87,8 +82,7 @@ export class UsersService {
 
         if (!getUserInfoByToken) throw new HttpException('정상적인 접근이 아닙니다.', 401);
 
-        const modifyingUser = getUserInfoByToken.user;
-        const { userId, email, nickname, profileImg } = await modifyingUser;
+        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
 
         return { userId, email, nickname, profileImg };
     }

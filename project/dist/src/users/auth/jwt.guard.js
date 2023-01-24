@@ -11,46 +11,27 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JwtAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
-const passport_1 = require("@nestjs/passport");
-const jwt_1 = require("@nestjs/jwt");
 const common_2 = require("@nestjs/common");
 const users_service_1 = require("../users.service");
-let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
-    constructor(jwtService, userService) {
-        super();
-        this.jwtService = jwtService;
+let JwtAuthGuard = class JwtAuthGuard {
+    constructor(userService) {
         this.userService = userService;
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
-        const response = context.switchToHttp().getResponse();
-        const { authorization } = request.headers;
-        if (authorization === undefined) {
+        const authorization = request.headers.authorization;
+        console.log(authorization);
+        if (!authorization) {
             throw new common_2.HttpException('확인되지 않는 유저입니다.', common_1.HttpStatus.UNAUTHORIZED);
         }
         const token = authorization.replace('Bearer ', '');
-        const kakaoUserId = await this.validate(token);
-        response.kakaoUserId = kakaoUserId;
+        await this.userService.tokenValidate(token);
         return true;
-    }
-    async validate(token) {
-        try {
-            const { kakaoUserId } = await this.userService.tokenValidate(token);
-            return kakaoUserId;
-        }
-        catch (error) {
-            switch (error.message) {
-                case 'invalid accessToken':
-                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 401);
-                case 'jwt expired':
-                    throw new common_2.HttpException('정상적인 접근이 아닙니다.', 410);
-            }
-        }
     }
 };
 JwtAuthGuard = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [jwt_1.JwtService, users_service_1.UsersService])
+    __metadata("design:paramtypes", [users_service_1.UsersService])
 ], JwtAuthGuard);
 exports.JwtAuthGuard = JwtAuthGuard;
 //# sourceMappingURL=jwt.guard.js.map
