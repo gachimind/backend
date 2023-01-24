@@ -22,12 +22,13 @@ export class SocketExceptionFilter extends BaseWsExceptionFilter {
         super.catch(exception, host);
         const ctx = host.switchToWs();
         const socket = ctx.getClient();
+        const error = {
+            errorMessage: exception.message,
+            status: exception.status,
+            event: exception.eventName,
+        };
         socket.emit('error', {
-            error: {
-                errorMessage: exception.message,
-                status: exception.status,
-                event: exception.eventName,
-            },
+            error,
         });
     }
 }

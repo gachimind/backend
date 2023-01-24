@@ -31,8 +31,9 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { GamesService } from './games.service';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
+import { AllExceptionFilter } from 'src/common/exceptionFilters/all-exception.filter';
 
-@UseFilters(SocketExceptionFilter)
+@UseFilters(SocketExceptionFilter, AllExceptionFilter)
 @WebSocketGateway({ cors: { origin: '*' } })
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
