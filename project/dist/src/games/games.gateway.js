@@ -23,6 +23,8 @@ const chat_service_1 = require("./chat.service");
 const common_1 = require("@nestjs/common");
 const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 const games_service_1 = require("./games.service");
+const all_exception_filter_1 = require("../common/exceptionFilters/all-exception.filter");
+const http_exception_filter_1 = require("../common/exceptionFilters/http-exception.filter");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
@@ -203,7 +205,7 @@ let GamesGateway = class GamesGateway {
         let type = 'chat';
         if (requestUser.player.room.isGameOn) {
             const isAnswer = this.chatService.checkAnswer(data.message, requestUser.player.room);
-            if (requestUser.user.nickname === currentTurn.speechPlayer &&
+            if (requestUser.userInfo === currentTurn.speechPlayer &&
                 currentTurn.currentEvent === 'readyTime') {
                 throw new ws_exception_filter_1.SocketException('발표자는 정답을 채팅으로 알릴 수 없습니다.', 400, 'send-chat');
             }
@@ -456,7 +458,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
-    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
+    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter, all_exception_filter_1.AllExceptionFilter, http_exception_filter_1.HttpExceptionFilter),
     (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,

@@ -6,36 +6,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SocketExceptionFilter = exports.SocketException = void 0;
+exports.AllExceptionFilter = void 0;
 const common_1 = require("@nestjs/common");
 const websockets_1 = require("@nestjs/websockets");
-const errors_1 = require("@nestjs/websockets/errors");
-class SocketException extends errors_1.WsException {
-    constructor(message, status, eventName) {
-        super({ message, status, eventName });
-        this.message = message;
-        this.status = status;
-        this.eventName = eventName;
-    }
-}
-exports.SocketException = SocketException;
-let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
+let AllExceptionFilter = class AllExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         super.catch(exception, host);
         const ctx = host.switchToWs();
         const socket = ctx.getClient();
         const error = {
             errorMessage: exception.message,
-            status: exception.status,
-            event: exception.eventName,
         };
         socket.emit('error', {
             error,
         });
     }
 };
-SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
-], SocketExceptionFilter);
-exports.SocketExceptionFilter = SocketExceptionFilter;
-//# sourceMappingURL=ws-exception.filter.js.map
+AllExceptionFilter = __decorate([
+    (0, common_1.Catch)(Error)
+], AllExceptionFilter);
+exports.AllExceptionFilter = AllExceptionFilter;
+//# sourceMappingURL=all-exception.filter.js.map

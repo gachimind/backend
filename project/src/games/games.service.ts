@@ -46,13 +46,12 @@ export class GamesService {
     async createTurn(roomId: number) {
         const room = await this.roomRepository.findOne({ where: { roomId } });
         let index = room.turns.length;
-        console.log('createTurn 유저 닉네임!', room.players[index].user.nickname);
 
         const newTurnData: TurnDataInsertDto = {
             roomInfo: room.roomId,
             turn: index + 1,
             currentEvent: 'start',
-            speechPlayer: room.players[index].user.nickname,
+            speechPlayer: room.players[index].userInfo,
             keyword: keywords[index],
             hint: null,
         };
@@ -61,8 +60,6 @@ export class GamesService {
 
     async updateTurn(turn: Turn, timer: string): Promise<Turn> {
         turn.currentEvent = timer;
-        console.log('updateTurn data : ', turn);
-
         return await this.turnRepository.save(turn);
     }
 }

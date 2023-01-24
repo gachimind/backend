@@ -5,7 +5,7 @@ export declare class Turn {
     room: Room;
     turn: number;
     currentEvent: string;
-    speechPlayer: string;
+    speechPlayer: number;
     keyword: string;
     hint: string | null;
     createdAt: Date;

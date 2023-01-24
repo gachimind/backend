@@ -342,7 +342,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             );
             //
             if (
-                requestUser.user.nickname === currentTurn.speechPlayer &&
+                requestUser.userInfo === currentTurn.speechPlayer &&
                 currentTurn.currentEvent === 'readyTime'
             ) {
                 throw new SocketException(

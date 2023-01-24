@@ -26,8 +26,8 @@ __decorate([
     __metadata("design:type", String)
 ], TurnDataInsertDto.prototype, "currentEvent", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
 ], TurnDataInsertDto.prototype, "speechPlayer", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
