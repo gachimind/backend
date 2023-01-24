@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 export declare class UsersController {
@@ -13,7 +13,11 @@ export declare class UsersController {
     };
     kakaoLoginRedirect(code: string, req: {
         user: CreateUserDto;
-    }, res: Response): Promise<string>;
-    user(request: Request): boolean;
-    getUserDetailsByToken(req: any, res: Response): Promise<Response<any, Record<string, any>>>;
+    }, res: Response): Promise<void>;
+    getUserDetailsByToken(req: any, res: Response): Promise<{
+        userId: number;
+        email: string;
+        nickname: string;
+        profileImg: string;
+    }>;
 }

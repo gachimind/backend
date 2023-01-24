@@ -24,7 +24,6 @@ const common_1 = require("@nestjs/common");
 const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 const games_service_1 = require("./games.service");
 const all_exception_filter_1 = require("../common/exceptionFilters/all-exception.filter");
-const http_exception_filter_1 = require("../common/exceptionFilters/http-exception.filter");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
@@ -458,7 +457,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
-    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter, all_exception_filter_1.AllExceptionFilter, http_exception_filter_1.HttpExceptionFilter),
+    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter, all_exception_filter_1.AllExceptionFilter),
     (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,

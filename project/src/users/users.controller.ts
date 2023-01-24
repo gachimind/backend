@@ -50,17 +50,9 @@ export class UsersController {
         console.log(token);
 
         res.redirect(this.configService.get('REDIRECT') + token);
-        return token;
         // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
         // .status(301)
         // .redirect(this.configService.get('REDIRECT'));
-    }
-
-    @UseInterceptors(UndefinedToNullInterceptor, ResultToDataInterceptor)
-    @Get('status')
-    user(@Req() request: Request) {
-        if (!request.user) throw new HttpException('토큰 값이 일치하지 않습니다.', 401);
-        return true;
     }
 
     // // 회원 정보 상세 조회
@@ -72,6 +64,6 @@ export class UsersController {
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
 
-        return res.status(200).json({ data });
+        return data;
     }
 }

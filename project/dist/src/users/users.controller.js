@@ -37,18 +37,12 @@ let UsersController = class UsersController {
         const token = await this.usersService.createToken(user, isNewUser);
         console.log(token);
         res.redirect(this.configService.get('REDIRECT') + token);
-        return token;
-    }
-    user(request) {
-        if (!request.user)
-            throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
-        return true;
     }
     async getUserDetailsByToken(req, res) {
         const tokenParsing = req.headers.authorization;
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        return res.status(200).json({ data });
+        return data;
     }
 };
 __decorate([
@@ -68,14 +62,6 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
-__decorate([
-    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
-    (0, common_1.Get)('status'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "user", null);
 __decorate([
     (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
