@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { Repository } from 'typeorm';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';
@@ -44,18 +45,22 @@ export class GamesService {
     }
 
     async createTurn(roomId: number) {
-        const room = await this.roomRepository.findOne({ where: { roomId } });
-        let index = room.turns.length;
+        try {
+            const room = await this.roomRepository.findOne({ where: { roomId } });
+            let index = room.turns.length;
 
-        const newTurnData: TurnDataInsertDto = {
-            roomInfo: room.roomId,
-            turn: index + 1,
-            currentEvent: 'start',
-            speechPlayer: room.players[index].userInfo,
-            keyword: keywords[index],
-            hint: null,
-        };
-        return await this.turnRepository.save(newTurnData);
+            const newTurnData: TurnDataInsertDto = {
+                roomInfo: room.roomId,
+                turn: index + 1,
+                currentEvent: 'start',
+                speechPlayer: room.players[index].userInfo,
+                keyword: keywords[index],
+                hint: null,
+            };
+            return await this.turnRepository.save(newTurnData);
+        } catch (err) {
+            throw new SocketException(err.message, 500, 'start');
+        }
     }
 
     async updateTurn(turn: Turn, timer: string): Promise<Turn> {

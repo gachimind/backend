@@ -128,33 +128,43 @@ let GamesGateway = class GamesGateway {
         let turnCount = 0;
         let turn = await this.gamesService.createTurn(room.roomId);
         await this.gameTimer(room, 'startCount', turn);
-        while (turnCount < room.players.length) {
-            turnCount++;
-            setTimeout(async () => {
-                await this.gameTimer(room, 'readyTime', turn);
-            }, 10000);
-            setTimeout(async () => {
-                await this.gameTimer(room, 'speechTime', turn);
-            }, 10000 + room.readyTime);
-            setTimeout(async () => {
-                let currentTurn = turn;
-                if (turn.turn < room.players.length) {
-                    turn = await this.gamesService.createTurn(room.roomId);
-                }
-                else {
-                    turn = currentTurn;
-                    turnCount++;
-                }
-                await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-            }, 10000 + room.readyTime + room.speechTime);
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        try {
+            while (turnCount < room.players.length) {
+                turnCount++;
+                setTimeout(async () => {
+                    await this.gameTimer(room, 'readyTime', turn);
+                }, 10000);
+                setTimeout(async () => {
+                    await this.gameTimer(room, 'speechTime', turn);
+                }, 10000 + room.readyTime);
+                setTimeout(async () => {
+                    let currentTurn = turn;
+                    if (turn.turn < room.players.length) {
+                        turn = await this.gamesService.createTurn(room.roomId);
+                    }
+                    else {
+                        turn = currentTurn;
+                        turnCount++;
+                    }
+                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+                }, 10000 + room.readyTime + room.speechTime);
+                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            }
+        }
+        catch (err) {
+            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
         }
     }
     async gameTimer(room, eventName, turn, nextTurn) {
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-        turn = await this.gamesService.updateTurn(turn, eventName);
+        try {
+            turn = await this.gamesService.updateTurn(turn, eventName);
+        }
+        catch (err) {
+            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
+        }
         if (event === 'readyTimer') {
             const turnInfo = {
                 currentTurn: turn.turn,
@@ -456,7 +466,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
-    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
+    (0, common_1.UseFilters)(new ws_exception_filter_1.SocketExceptionFilter()),
     (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,

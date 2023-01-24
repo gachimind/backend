@@ -10,6 +10,8 @@ exports.SocketExceptionFilter = exports.SocketException = void 0;
 const common_1 = require("@nestjs/common");
 const websockets_1 = require("@nestjs/websockets");
 const errors_1 = require("@nestjs/websockets/errors");
+const shared_utils_1 = require("@nestjs/common/utils/shared.utils");
+const constants_1 = require("@nestjs/core/constants");
 class SocketException extends errors_1.WsException {
     constructor(message, status, eventName) {
         super({ message, status, eventName });
@@ -22,20 +24,39 @@ exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         super.catch(exception, host);
-        const ctx = host.switchToWs();
-        const socket = ctx.getClient();
+        const client = host.switchToWs().getClient();
+        this.handleError(client, exception);
+        const logger = new common_1.Logger('WsExceptionsHandler');
+        logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception.stack);
+    }
+    handleError(client, exception) {
+        if (!(exception instanceof SocketException)) {
+            return this.handleUnknownError(exception, client);
+        }
+        const event = exception.eventName;
+        const status = exception.status;
+        const errorMessage = exception.message;
         const error = {
-            errorMessage: exception.message,
-            status: exception.status,
-            event: exception.eventName,
+            errorMessage,
+            status,
+            event,
         };
-        socket.emit('error', {
-            error,
+        client.emit('error', { error });
+    }
+    handleUnknownError(exception, client) {
+        console.log('handleUnknownError');
+        const status = 500;
+        client.emit('error', {
+            status,
+            message: constants_1.MESSAGES.UNKNOWN_EXCEPTION_MESSAGE,
         });
+    }
+    isExceptionObject(err) {
+        return (0, shared_utils_1.isObject)(err) && !!err.message;
     }
 };
 SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
+    (0, common_1.Catch)()
 ], SocketExceptionFilter);
 exports.SocketExceptionFilter = SocketExceptionFilter;
 //# sourceMappingURL=ws-exception.filter.js.map

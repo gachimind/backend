@@ -32,7 +32,7 @@ import { GamesService } from './games.service';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 
-@UseFilters(SocketExceptionFilter)
+@UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
@@ -236,34 +236,38 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // startCount 시작
         await this.gameTimer(room, 'startCount', turn);
 
-        // player 수만큼 turn 반복
-        while (turnCount < room.players.length) {
-            turnCount++;
-            // readyTimer 시작
-            setTimeout(async () => {
-                await this.gameTimer(room, 'readyTime', turn);
-            }, 10000);
+        try {
+            // player 수만큼 turn 반복
+            while (turnCount < room.players.length) {
+                turnCount++;
+                // readyTimer 시작
+                setTimeout(async () => {
+                    await this.gameTimer(room, 'readyTime', turn);
+                }, 10000);
 
-            // speechTimer 시작
-            setTimeout(async () => {
-                await this.gameTimer(room, 'speechTime', turn);
-            }, 10000 + room.readyTime);
+                // speechTimer 시작
+                setTimeout(async () => {
+                    await this.gameTimer(room, 'speechTime', turn);
+                }, 10000 + room.readyTime);
 
-            // discussionTimer시작
-            setTimeout(async () => {
-                // 현재 턴 저장 & 다음 턴 생성
-                let currentTurn = turn;
-                if (turn.turn < room.players.length) {
-                    turn = await this.gamesService.createTurn(room.roomId);
-                } else {
-                    turn = currentTurn;
-                    turnCount++;
-                }
-                await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-            }, 10000 + room.readyTime + room.speechTime);
+                // discussionTimer시작
+                setTimeout(async () => {
+                    // 현재 턴 저장 & 다음 턴 생성
+                    let currentTurn = turn;
+                    if (turn.turn < room.players.length) {
+                        turn = await this.gamesService.createTurn(room.roomId);
+                    } else {
+                        turn = currentTurn;
+                        turnCount++;
+                    }
+                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+                }, 10000 + room.readyTime + room.speechTime);
 
-            // 턴 종료 후 방 데이터 업데이트
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+                // 턴 종료 후 방 데이터 업데이트
+                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            }
+        } catch (err) {
+            throw new SocketException(err.message, 500, 'start');
         }
     }
 
@@ -272,8 +276,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
 
-        // update turn currentTimer
-        turn = await this.gamesService.updateTurn(turn, eventName);
+        try {
+            // update turn currentTimer
+            turn = await this.gamesService.updateTurn(turn, eventName);
+        } catch (err) {
+            throw new SocketException(err.message, 500, 'start');
+        }
 
         // game-info event 처리
         if (event === 'readyTimer') {
