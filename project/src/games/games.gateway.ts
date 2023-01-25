@@ -198,6 +198,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 1. ready를 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
         if (!requestUser.player || requestUser.player.isHost) {
+            console.log('뭐가 문제인가??');
+            console.log(requestUser.user);
             throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         // 2. ready event를 emit한 Player 정보를 업데이트
@@ -243,21 +245,24 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // speechTimer 시작
             await this.gameTimer(room, 'speechTime', turn);
             // discussionTimer시작
-            let currentTurn = turn;
+            // player 정보를 확인하기 위해 room 정보 갱신
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-            console.log('inside start event-while-discussionTimer');
+
+            let nextTurn = turn;
             if (turn.turn < room.players.length) {
-                turn = await this.gamesService.createTurn(room.roomId);
-            } else {
-                turn = currentTurn;
-                turnCount++;
+                nextTurn = await this.gamesService.createTurn(room.roomId);
             }
-            await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-            // 턴 종료 후 방 데이터 업데이트
+            await this.gameTimer(room, 'discussionTime', turn, nextTurn);
+
+            // 턴 종료 후 게임 데이터 업데이트
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            turn = nextTurn;
             turnCount++;
         }
     }
@@ -267,10 +272,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     async gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn) {
-        if (eventName === 'discussionTime') {
-            console.log('inside gameTimer, discussionTime');
-        }
-
         room = await this.roomService.getOneRoomByRoomId(room.roomId);
         if (!room) {
             throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
@@ -309,18 +310,17 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // 현재 턴이 마지막 턴일때 처리
         let key = 'currentTurn';
         if (event === 'discussionTimer') {
+            key = 'nextTurn';
             if (turn === nextTurn) {
                 nextTurn.turn = 0;
-                key = turn === nextTurn ? 'nextTurn' : 'currentTurn';
             }
         }
-        return this.server.to(`${roomId}`).emit('time-end', {
-            data: {
-                key: key === 'currentTurn' ? turn.turn : nextTurn.turn,
-                timer,
-                event,
-            },
-        });
+        const data = {
+            timer,
+            event,
+        };
+        data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
+        return this.server.to(`${roomId}`).emit('time-end', { data });
     }
 
     @SubscribeMessage('send-chat')
