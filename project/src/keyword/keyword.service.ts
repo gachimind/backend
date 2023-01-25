@@ -14,12 +14,14 @@ export class KeywordService {
 
     async getData() {
         const browser = await puppeteer.launch({ headless: false });
+        // 작동 중인 화면 보고 싶지 않을 때는 headless true로 변경할 것
         const page = await browser.newPage();
 
         const urlList = [];
 
         const pageNumberToNumber = 200;
-        for (let i = 101; i <= pageNumberToNumber; i++) {
+        // 어디까지 크롤링할건지 페이지 수 지정해줄 것
+        for (let i = 1; i <= pageNumberToNumber; i++) {
             urlList.push(`https://terms.naver.com/list.naver?cid=42344&categoryId=42344&page=${i}`);
         }
 
