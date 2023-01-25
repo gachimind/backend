@@ -227,10 +227,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleIce(socket, { data }) {
         const event = 'webrtc-ice';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
@@ -238,10 +234,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleOffer(socket, { data }) {
         const event = 'webrtc-offer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
@@ -249,10 +241,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleAnswer(socket, { data }) {
         const event = 'webrtc-answer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)
