@@ -128,43 +128,42 @@ let GamesGateway = class GamesGateway {
         let turnCount = 0;
         let turn = await this.gamesService.createTurn(room.roomId);
         await this.gameTimer(room, 'startCount', turn);
-        try {
-            while (turnCount < room.players.length) {
-                turnCount++;
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'readyTime', turn);
-                }, 10000);
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'speechTime', turn);
-                }, 10000 + room.readyTime);
-                setTimeout(async () => {
-                    let currentTurn = turn;
-                    if (turn.turn < room.players.length) {
-                        turn = await this.gamesService.createTurn(room.roomId);
-                    }
-                    else {
-                        turn = currentTurn;
-                        turnCount++;
-                    }
-                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-                }, 10000 + room.readyTime + room.speechTime);
-                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        while (turnCount < room.players.length) {
+            await this.gameTimer(room, 'readyTime', turn);
+            await this.gameTimer(room, 'speechTime', turn);
+            let currentTurn = turn;
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-        }
-        catch (err) {
-            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
+            console.log('inside start event-while-discussionTimer');
+            if (turn.turn < room.players.length) {
+                turn = await this.gamesService.createTurn(room.roomId);
+            }
+            else {
+                turn = currentTurn;
+                turnCount++;
+            }
+            await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            turnCount++;
         }
     }
+    timer(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
     async gameTimer(room, eventName, turn, nextTurn) {
+        if (eventName === 'discussionTime') {
+            console.log('inside gameTimer, discussionTime');
+        }
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-        try {
-            turn = await this.gamesService.updateTurn(turn, eventName);
-        }
-        catch (err) {
-            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
-        }
+        turn = await this.gamesService.updateTurn(turn, eventName);
         if (event === 'readyTimer') {
             const turnInfo = {
                 currentTurn: turn.turn,
@@ -172,36 +171,30 @@ let GamesGateway = class GamesGateway {
                 keyword: turn.keyword,
                 hint: turn.hint,
             };
-            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
         }
-        await this.server.to(`${roomId}`).emit('time-start', {
+        this.server.to(`${roomId}`).emit('time-start', {
             data: {
                 currentTurn: turn.turn,
                 timer,
                 event,
             },
         });
-        await setTimeout(async () => {
-            if (event === 'discussionTimer') {
-                if (turn === nextTurn) {
-                    nextTurn.turn = 0;
-                }
-                return await this.server.to(`${roomId}`).emit('time-end', {
-                    data: {
-                        nextTurn: nextTurn.turn,
-                        timer,
-                        event,
-                    },
-                });
+        await this.timer(timer);
+        let key = 'currentTurn';
+        if (event === 'discussionTimer') {
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
+                key = turn === nextTurn ? 'nextTurn' : 'currentTurn';
             }
-            return await this.server.to(`${roomId}`).emit('time-end', {
-                data: {
-                    currentTurn: turn.turn,
-                    timer,
-                    event,
-                },
-            });
-        }, timer);
+        }
+        return this.server.to(`${roomId}`).emit('time-end', {
+            data: {
+                key: key === 'currentTurn' ? turn.turn : nextTurn.turn,
+                timer,
+                event,
+            },
+        });
     }
     async sendChatRequest(socket, { data }) {
         const event = 'send-chat';

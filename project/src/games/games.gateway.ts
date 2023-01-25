@@ -236,52 +236,51 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // startCount 시작
         await this.gameTimer(room, 'startCount', turn);
 
-        try {
-            // player 수만큼 turn 반복
-            while (turnCount < room.players.length) {
-                turnCount++;
-                // readyTimer 시작
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'readyTime', turn);
-                }, 10000);
-
-                // speechTimer 시작
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'speechTime', turn);
-                }, 10000 + room.readyTime);
-
-                // discussionTimer시작
-                setTimeout(async () => {
-                    // 현재 턴 저장 & 다음 턴 생성
-                    let currentTurn = turn;
-                    if (turn.turn < room.players.length) {
-                        turn = await this.gamesService.createTurn(room.roomId);
-                    } else {
-                        turn = currentTurn;
-                        turnCount++;
-                    }
-                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-                }, 10000 + room.readyTime + room.speechTime);
-
-                // 턴 종료 후 방 데이터 업데이트
-                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        // player 수만큼 turn 반복
+        while (turnCount < room.players.length) {
+            // readyTimer 시작
+            await this.gameTimer(room, 'readyTime', turn);
+            // speechTimer 시작
+            await this.gameTimer(room, 'speechTime', turn);
+            // discussionTimer시작
+            let currentTurn = turn;
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-        } catch (err) {
-            throw new SocketException(err.message, 500, 'start');
+            console.log('inside start event-while-discussionTimer');
+            if (turn.turn < room.players.length) {
+                turn = await this.gamesService.createTurn(room.roomId);
+            } else {
+                turn = currentTurn;
+                turnCount++;
+            }
+            await this.gameTimer(room, 'discussionTime', currentTurn, turn);
+            // 턴 종료 후 방 데이터 업데이트
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            turnCount++;
         }
     }
 
+    timer(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+
     async gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn) {
+        if (eventName === 'discussionTime') {
+            console.log('inside gameTimer, discussionTime');
+        }
+
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
 
-        try {
-            // update turn currentTimer
-            turn = await this.gamesService.updateTurn(turn, eventName);
-        } catch (err) {
-            throw new SocketException(err.message, 500, 'start');
-        }
+        // update turn currentTimer
+        turn = await this.gamesService.updateTurn(turn, eventName);
 
         // game-info event 처리
         if (event === 'readyTimer') {
@@ -291,11 +290,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 keyword: turn.keyword,
                 hint: turn.hint,
             };
-            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
         }
 
         // time-start event 처리
-        await this.server.to(`${roomId}`).emit('time-start', {
+        this.server.to(`${roomId}`).emit('time-start', {
             data: {
                 currentTurn: turn.turn,
                 timer,
@@ -303,29 +302,25 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             },
         });
 
+        // time-start 후 turnState별 대기시간
+        await this.timer(timer);
+
         // time-end event 처리
-        await setTimeout(async () => {
-            // 현재 턴이 마지막 턴일때 처리
-            if (event === 'discussionTimer') {
-                if (turn === nextTurn) {
-                    nextTurn.turn = 0;
-                }
-                return await this.server.to(`${roomId}`).emit('time-end', {
-                    data: {
-                        nextTurn: nextTurn.turn,
-                        timer,
-                        event,
-                    },
-                });
+        // 현재 턴이 마지막 턴일때 처리
+        let key = 'currentTurn';
+        if (event === 'discussionTimer') {
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
+                key = turn === nextTurn ? 'nextTurn' : 'currentTurn';
             }
-            return await this.server.to(`${roomId}`).emit('time-end', {
-                data: {
-                    currentTurn: turn.turn,
-                    timer,
-                    event,
-                },
-            });
-        }, timer);
+        }
+        return this.server.to(`${roomId}`).emit('time-end', {
+            data: {
+                key: key === 'currentTurn' ? turn.turn : nextTurn.turn,
+                timer,
+                event,
+            },
+        });
     }
 
     @SubscribeMessage('send-chat')

@@ -40,7 +40,8 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleLeaveRoomEvent(socket: Socket): Promise<void>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
-    gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn): Promise<void>;
+    timer(time: any): Promise<unknown>;
+    gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn): Promise<boolean>;
     sendChatRequest(socket: Socket, { data }: {
         data: {
             message: string;
