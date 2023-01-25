@@ -9,7 +9,6 @@ import { TokenMap } from './entities/token-map.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './auth/jwt.strategy';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { SeedingController } from './seeding.controller';
 
@@ -30,7 +29,6 @@ import { SeedingController } from './seeding.controller';
         UsersService,
         SessionSerializer,
         KakaoStrategy,
-        JwtStrategy,
         JwtAuthGuard,
         {
             provide: 'USER_SERVICE',

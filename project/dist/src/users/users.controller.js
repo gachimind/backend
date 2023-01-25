@@ -15,16 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const undefinedToNull_interceptor_1 = require("../common/interceptors/undefinedToNull.interceptor");
-const resultToData_interceptor_1 = require("../common/interceptors/resultToData.interceptor");
 const users_service_1 = require("./users.service");
 const jwt_guard_1 = require("./auth/jwt.guard");
 const passport_1 = require("@nestjs/passport");
 let UsersController = class UsersController {
-    constructor(usersService, configService, jwtAuthGuard) {
+    constructor(usersService, configService) {
         this.usersService = usersService;
         this.configService = configService;
-        this.jwtAuthGuard = jwtAuthGuard;
     }
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
@@ -35,32 +32,28 @@ let UsersController = class UsersController {
         }
         const { user, isNewUser } = await this.usersService.validateUser(req.user);
         const token = await this.usersService.createToken(user, isNewUser);
-        console.log(token);
-        res.redirect(this.configService.get('REDIRECT') + token);
-        return token;
+        return { url: this.configService.get('REDIRECT') + token };
     }
-    user(request) {
-        if (!request.user)
-            throw new common_1.HttpException('토큰 값이 일치하지 않습니다.', 401);
-        return true;
-    }
-    async getUserDetailsByToken(req, res) {
-        const tokenParsing = req.headers.authorization;
+    async getUserDetailsByToken(headers) {
+        const tokenParsing = headers.authorization;
+        console.log('controller headers:', tokenParsing);
         const token = tokenParsing.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        return res.status(200).json({ data });
+        console.log('controller, data :', data);
+        return { data };
     }
 };
 __decorate([
-    (0, common_1.Get)('login/kakao'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
+    (0, common_1.Get)('login/kakao'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "handleLogin", null);
 __decorate([
-    (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
+    (0, common_1.Get)('login/kakao/redirect'),
+    (0, common_1.Redirect)('redirectUrl', 302),
     __param(0, (0, common_1.Param)('code')),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
@@ -69,28 +62,17 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
-    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
-    (0, common_1.Get)('status'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "user", null);
-__decorate([
-    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Res)()),
+    __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
-        config_1.ConfigService,
-        jwt_guard_1.JwtAuthGuard])
+        config_1.ConfigService])
 ], UsersController);
 exports.UsersController = UsersController;
 //# sourceMappingURL=users.controller.js.map

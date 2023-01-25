@@ -33,7 +33,7 @@ import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 
 @UseFilters(SocketExceptionFilter)
-@WebSocketGateway()
+@WebSocketGateway({ cors: { origin: '*' } })
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly roomService: RoomService,
@@ -240,17 +240,17 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         while (turnCount < room.players.length) {
             turnCount++;
             // readyTimer 시작
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 await this.gameTimer(room, 'readyTime', turn);
             }, 10000);
 
             // speechTimer 시작
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 await this.gameTimer(room, 'speechTime', turn);
             }, 10000 + room.readyTime);
 
             // discussionTimer시작
-            await setTimeout(async () => {
+            setTimeout(async () => {
                 // 현재 턴 저장 & 다음 턴 생성
                 let currentTurn = turn;
                 if (turn.turn < room.players.length) {
@@ -341,7 +341,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             );
             //
             if (
-                requestUser.user.nickname === currentTurn.speechPlayer &&
+                requestUser.userInfo === currentTurn.speechPlayer &&
                 currentTurn.currentEvent === 'readyTime'
             ) {
                 throw new SocketException(

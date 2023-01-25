@@ -10,8 +10,8 @@ export class TurnDataInsertDto {
     @IsString()
     currentEvent: string;
 
-    @IsString()
-    speechPlayer: string;
+    @IsNumber()
+    speechPlayer: number;
 
     @IsString()
     keyword: string;

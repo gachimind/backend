@@ -104,6 +104,13 @@ let RoomService = class RoomService {
     }
     async updateIsGameReadyToStart(roomId) {
         let room = await this.getOneRoomByRoomId(roomId);
+        if (room.players.length === 1) {
+            await this.updateRoomStatusByRoomId({
+                roomId: room.roomId,
+                isGameReadyToStart: false,
+            });
+            room = await this.getOneRoomByRoomId(room.roomId);
+        }
         if (room.players.length > 1) {
             const isAllPlayerReadyToStart = (() => {
                 for (const player of room.players) {

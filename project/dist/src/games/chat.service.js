@@ -40,7 +40,7 @@ let ChatService = class ChatService {
         const currentTurn = room.turns.at(-1);
         console.log('요청 유저 닉네임', user.nickname);
         console.log('현재 턴 발표자 닉네임', currentTurn.speechPlayer);
-        if (user.nickname === currentTurn.speechPlayer) {
+        if (user.userId === currentTurn.speechPlayer) {
             throw new ws_exception_filter_1.SocketException('발표자는 정답을 맞출 수 없습니다.', 400, 'send-chat');
         }
         const turnResults = await this.turnResultRepository.find({

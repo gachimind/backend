@@ -6,5 +6,4 @@ export declare class TokenMap {
     user: User;
     createdAt: Date;
     updatedAt: Date;
-    deletedAt: Date | null;
 }

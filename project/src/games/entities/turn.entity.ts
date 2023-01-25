@@ -31,7 +31,7 @@ export class Turn {
     currentEvent: string;
 
     @Column()
-    speechPlayer: string;
+    speechPlayer: number;
 
     @Column()
     keyword: string;
