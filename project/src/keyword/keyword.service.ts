@@ -45,11 +45,11 @@ export class KeywordService {
             const lists = $('#content > div.list_wrap > ul > ');
             const data = lists.each((index, list) => {
                 const word = $(list).find('div > div.subject > strong> a:nth-child(1)').html();
-                const wordExpKo = word.replace(/[^ㄱ-ㅎ|가-힣|'']/g, '');
+                const keywordKor = word.replace(/[^ㄱ-ㅎ|가-힣|'']/g, '');
                 const wordExpEng = word.replace(/[^a-z|A-Z|0-9|'']/g, '');
 
                 const saveData = this.keywordRepository.save({
-                    keywordKo: wordExpKo,
+                    keywordKor: keywordKor,
                     keywordEng: wordExpEng,
                 });
             });

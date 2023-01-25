@@ -6,7 +6,7 @@ export class Keyword {
     keywordId: number;
 
     @Column()
-    keywordKo: string;
+    keywordKor: string;
 
     @Column()
     keywordEng: string;
