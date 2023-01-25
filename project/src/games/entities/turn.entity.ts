@@ -6,8 +6,10 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToMany,
 } from 'typeorm';
 import { Room } from './room.entity';
+import { TurnResult } from './turnResult.entity';
 
 @Entity()
 export class Turn {
@@ -24,6 +26,9 @@ export class Turn {
 
     @Column({ type: 'tinyint' })
     turn: number;
+
+    @Column()
+    currentEvent: string;
 
     @Column()
     speechPlayer: string;

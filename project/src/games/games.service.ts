@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
 import { Repository } from 'typeorm';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
-import { GameResult } from './entities/gmaeResult.entity';
+import { GameResult } from './entities/gameResult.entity';
 import { Player } from './entities/player.entity';
 import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
@@ -35,7 +35,7 @@ export class GamesService {
         let data = [];
         for (let userId of playersUserId) {
             data.push({
-                roomInfo: roomId,
+                roomId,
                 userInfo: userId.userInfo,
             });
         }
@@ -46,14 +46,23 @@ export class GamesService {
     async createTurn(roomId: number) {
         const room = await this.roomRepository.findOne({ where: { roomId } });
         let index = room.turns.length;
+        console.log('createTurn 유저 닉네임!', room.players[index].user.nickname);
 
         const newTurnData: TurnDataInsertDto = {
             roomInfo: room.roomId,
             turn: index + 1,
-            speechPlayerInfo: room.players[index].user.nickname,
+            currentEvent: 'start',
+            speechPlayer: room.players[index].user.nickname,
             keyword: keywords[index],
             hint: null,
         };
         return await this.turnRepository.save(newTurnData);
+    }
+
+    async updateTurn(turn: Turn, timer: string): Promise<Turn> {
+        turn.currentEvent = timer;
+        console.log('updateTurn data : ', turn);
+
+        return await this.turnRepository.save(turn);
     }
 }

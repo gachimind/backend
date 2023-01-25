@@ -154,7 +154,8 @@ let GamesGateway = class GamesGateway {
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-        if (event === 'readyTime') {
+        turn = await this.gamesService.updateTurn(turn, eventName);
+        if (event === 'readyTimer') {
             const turnInfo = {
                 currentTurn: turn.turn,
                 speechPlayer: turn.speechPlayer,
@@ -198,9 +199,26 @@ let GamesGateway = class GamesGateway {
         if (!requestUser.player) {
             throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, event);
         }
+        const currentTurn = requestUser.player.room.turns.at(-1);
         let type = 'chat';
         if (requestUser.player.room.isGameOn) {
-            type = 'answer';
+            const isAnswer = this.chatService.checkAnswer(data.message, requestUser.player.room);
+            if (requestUser.user.nickname === currentTurn.speechPlayer &&
+                currentTurn.currentEvent === 'readyTime') {
+                throw new ws_exception_filter_1.SocketException('발표자는 정답을 채팅으로 알릴 수 없습니다.', 400, 'send-chat');
+            }
+            if (currentTurn.currentEvent === 'speechTime') {
+                if (isAnswer) {
+                    const result = await this.chatService.recordScore(requestUser.player.user, requestUser.player.roomInfo);
+                    type = 'answer';
+                    this.server.to(`${requestUser.player.roomInfo}`).emit('score', {
+                        data: { userId: requestUser.userInfo, score: result.score },
+                    });
+                }
+            }
+        }
+        if (type === 'answer') {
+            data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
         }
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         this.server

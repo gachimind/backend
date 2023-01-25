@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TurnResult = void 0;
 const typeorm_1 = require("typeorm");
-const gmaeResult_entity_1 = require("./gmaeResult.entity");
+const gameResult_entity_1 = require("./gameResult.entity");
 let TurnResult = class TurnResult {
 };
 __decorate([
@@ -19,13 +19,26 @@ __decorate([
     __metadata("design:type", Number)
 ], TurnResult.prototype, "turnResultId", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'gameResultInfo' }),
+    __metadata("design:type", Number)
+], TurnResult.prototype, "gameResultInfo", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.gameResultId),
+    (0, typeorm_1.JoinColumn)({ name: 'gameResultInfo' }),
+    __metadata("design:type", gameResult_entity_1.GameResult)
+], TurnResult.prototype, "gameResult", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], TurnResult.prototype, "roomId", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'tinyint' }),
     __metadata("design:type", Number)
 ], TurnResult.prototype, "turn", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
-    __metadata("design:type", Number)
-], TurnResult.prototype, "room", void 0);
+    __metadata("design:type", String)
+], TurnResult.prototype, "nickname", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'tinyint' }),
     __metadata("design:type", Number)
@@ -38,15 +51,6 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
 ], TurnResult.prototype, "isSpeech", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'gameResultInfo' }),
-    __metadata("design:type", Number)
-], TurnResult.prototype, "gameResultInfo", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => gmaeResult_entity_1.GameResult, (gameResult) => gameResult.gameResultId),
-    (0, typeorm_1.JoinColumn)({ name: 'gameResultInfo' }),
-    __metadata("design:type", gmaeResult_entity_1.GameResult)
-], TurnResult.prototype, "gameResult", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

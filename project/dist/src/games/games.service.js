@@ -16,7 +16,7 @@ exports.GamesService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const gmaeResult_entity_1 = require("./entities/gmaeResult.entity");
+const gameResult_entity_1 = require("./entities/gameResult.entity");
 const player_entity_1 = require("./entities/player.entity");
 const room_entity_1 = require("./entities/room.entity");
 const turn_entity_1 = require("./entities/turn.entity");
@@ -38,7 +38,7 @@ let GamesService = class GamesService {
         let data = [];
         for (let userId of playersUserId) {
             data.push({
-                roomInfo: roomId,
+                roomId,
                 userInfo: userId.userInfo,
             });
         }
@@ -47,14 +47,21 @@ let GamesService = class GamesService {
     async createTurn(roomId) {
         const room = await this.roomRepository.findOne({ where: { roomId } });
         let index = room.turns.length;
+        console.log('createTurn 유저 닉네임!', room.players[index].user.nickname);
         const newTurnData = {
             roomInfo: room.roomId,
             turn: index + 1,
-            speechPlayerInfo: room.players[index].user.nickname,
+            currentEvent: 'start',
+            speechPlayer: room.players[index].user.nickname,
             keyword: keywords[index],
             hint: null,
         };
         return await this.turnRepository.save(newTurnData);
+    }
+    async updateTurn(turn, timer) {
+        turn.currentEvent = timer;
+        console.log('updateTurn data : ', turn);
+        return await this.turnRepository.save(turn);
     }
 };
 GamesService = __decorate([
@@ -63,7 +70,7 @@ GamesService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
     __param(2, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
     __param(3, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
-    __param(4, (0, typeorm_1.InjectRepository)(gmaeResult_entity_1.GameResult)),
+    __param(4, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

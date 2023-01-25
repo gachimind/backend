@@ -1,13 +1,14 @@
-import { GameResult } from './gmaeResult.entity';
+import { GameResult } from './gameResult.entity';
 export declare class TurnResult {
     turnResultId: number;
+    gameResultInfo: number;
+    gameResult: GameResult;
+    roomId: number;
     turn: number;
-    room: number;
+    nickname: string;
     score: number;
     keyword: string;
     isSpeech: boolean;
-    gameResultInfo: number;
-    gameResult: GameResult;
     createdAt: Date;
     updatedAt: Date;
 }

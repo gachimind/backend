@@ -36,6 +36,10 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
+], Turn.prototype, "currentEvent", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
 ], Turn.prototype, "speechPlayer", void 0);
 __decorate([
     (0, typeorm_1.Column)(),

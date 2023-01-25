@@ -10,7 +10,7 @@ import { Player } from './entities/player.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { GameResult } from './entities/gmaeResult.entity';
+import { GameResult } from './entities/gameResult.entity';
 import { GamesService } from './games.service';
 
 @Module({

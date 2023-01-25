@@ -1,22 +1,25 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class TurnDataInsertDto {
+export class TurnResultDataInsertDto {
     @IsNumber()
-    roomInfo: number;
+    gameResultInfo: number;
+
+    @IsNumber()
+    roomId: number;
 
     @IsNumber()
     turn: number;
 
     @IsString()
-    currentEvent: string;
+    nickname: string;
 
-    @IsString()
-    speechPlayer: string;
+    @IsNumber()
+    score: number;
 
     @IsString()
     keyword: string;
 
     @IsString()
     @IsOptional()
-    hint?: string;
+    isSpeech: boolean;
 }
