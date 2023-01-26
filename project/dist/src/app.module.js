@@ -20,6 +20,8 @@ const token_map_entity_1 = require("./users/entities/token-map.entity");
 const room_entity_1 = require("./games/entities/room.entity");
 const player_entity_1 = require("./games/entities/player.entity");
 const socketIdMap_entity_1 = require("./games/entities/socketIdMap.entity");
+const keyword_module_1 = require("./keyword/keyword.module");
+const keyword_entities_1 = require("./keyword/entities/keyword.entities");
 const turn_entity_1 = require("./games/entities/turn.entity");
 const turnResult_entity_1 = require("./games/entities/turnResult.entity");
 const gameResult_entity_1 = require("./games/entities/gameResult.entity");
@@ -39,7 +41,17 @@ AppModule = __decorate([
                 username: process.env.MYSQL_USERNAME,
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
-                entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap, turn_entity_1.Turn, turnResult_entity_1.TurnResult, gameResult_entity_1.GameResult],
+                entities: [
+                    user_entity_1.User,
+                    token_map_entity_1.TokenMap,
+                    room_entity_1.Room,
+                    player_entity_1.Player,
+                    socketIdMap_entity_1.SocketIdMap,
+                    keyword_entities_1.Keyword,
+                    turn_entity_1.Turn,
+                    turnResult_entity_1.TurnResult,
+                    gameResult_entity_1.GameResult,
+                ],
                 synchronize: true,
                 logging: false,
                 keepConnectionAlive: true,
@@ -47,6 +59,7 @@ AppModule = __decorate([
             }),
             users_module_1.UsersModule,
             games_module_1.GamesModule,
+            keyword_module_1.KeywordModule,
             passport_1.PassportModule.register({ session: true }),
         ],
         controllers: [app_controller_1.AppController],
