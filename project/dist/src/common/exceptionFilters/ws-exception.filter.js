@@ -23,11 +23,10 @@ class SocketException extends errors_1.WsException {
 exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
-        super.catch(exception, host);
         const client = host.switchToWs().getClient();
         this.handleError(client, exception);
         const logger = new common_1.Logger('WsExceptionsHandler');
-        logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception.stack);
+        logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception instanceof Error ? exception.stack : null);
     }
     handleError(client, exception) {
         if (!(exception instanceof SocketException)) {

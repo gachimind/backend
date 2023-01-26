@@ -8,7 +8,7 @@ export declare class SocketException extends WsException {
     constructor(message: string, status: SocketExceptionStatus, eventName: string);
 }
 export declare class SocketExceptionFilter extends BaseWsExceptionFilter {
-    catch(exception: SocketException | Error | TypeError, host: ArgumentsHost): void;
+    catch(exception: unknown, host: ArgumentsHost): void;
     handleError<TClient extends {
         emit: Function;
     }>(client: TClient, exception: any): void;
