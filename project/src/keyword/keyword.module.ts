@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Keyword } from './entities/keyword';
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 import { KeywordService } from './keyword.service';
 import { KeywordController } from './keyword.controller';
 @Module({

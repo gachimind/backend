@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PrimaryGeneratedColumn, Repository } from 'typeorm';
-import { Keyword } from './entities/Keyword';
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 import * as puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 

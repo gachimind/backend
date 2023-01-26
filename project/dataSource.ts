@@ -5,7 +5,7 @@ import { Room } from './src/games/entities/room.entity';
 import { Player } from './src/games/entities/player.entity';
 import { SocketIdMap } from './src/games/entities/socketIdMap.entity';
 import 'dotenv/config';
-import { Keyword } from 'src/keyword/entities/keyword';
+import { Keyword } from './src/keyword/entities/keyword.entities';
 
 const dataSource = new DataSource({
     type: 'mysql',
