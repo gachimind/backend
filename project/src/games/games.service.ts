@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { Repository } from 'typeorm';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';
