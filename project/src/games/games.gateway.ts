@@ -383,10 +383,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         { data },
     ) {
         const event = 'webrtc-ice';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
@@ -396,10 +392,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('webrtc-offer')
     async handleOffer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const event = 'webrtc-offer';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
@@ -409,10 +401,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('webrtc-answer')
     async handleAnswer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const event = 'webrtc-answer';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)
