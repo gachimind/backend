@@ -12,7 +12,7 @@ import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
 import { KeywordModule } from './keyword/keyword.module';
-import { Keyword } from 'src/keyword/entities/keyword.entities';
+import { Keyword } from './keyword/entities/keyword.entities';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
