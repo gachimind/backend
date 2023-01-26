@@ -128,10 +128,11 @@ export class UsersService {
                 todaySpeechKeyword1.push({
                     Keyword: result.keyword,
                 });
-            } else result.isSpeech === false;
-            todayQuizKeyword1.push({
-                Keyword: result.keyword,
-            });
+            } else {
+                todayQuizKeyword1.push({
+                    Keyword: result.keyword,
+                });
+            }
         }
 
         const todaySpeechKeyword = [];
@@ -162,10 +163,11 @@ export class UsersService {
                 totalSpeechKeyword1.push({
                     Keyword: result.keyword,
                 });
-            } else result.isSpeech === false;
-            totalQuizKeyword1.push({
-                Keyword: result.keyword,
-            });
+            } else {
+                totalQuizKeyword1.push({
+                    Keyword: result.keyword,
+                });
+            }
         }
 
         const totalSpeechKeyword = [];
