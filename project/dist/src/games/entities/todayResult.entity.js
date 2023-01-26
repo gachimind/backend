@@ -42,6 +42,10 @@ __decorate([
     __metadata("design:type", Date)
 ], TodayResult.prototype, "updatedAt", void 0);
 __decorate([
+    (0, typeorm_1.DeleteDateColumn)(),
+    __metadata("design:type", Date)
+], TodayResult.prototype, "deletedAt", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.todayResult, { eager: true }),
     __metadata("design:type", Array)
 ], TodayResult.prototype, "gameResults", void 0);

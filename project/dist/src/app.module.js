@@ -58,6 +58,8 @@ AppModule = __decorate([
                 logging: false,
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
+                timezone: 'Z',
+                cache: true,
             }),
             users_module_1.UsersModule,
             games_module_1.GamesModule,

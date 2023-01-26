@@ -32,6 +32,8 @@ const dataSource = new typeorm_1.DataSource({
     ],
     synchronize: true,
     logging: true,
+    timezone: 'Z',
+    cache: true,
 });
 exports.default = dataSource;
 //# sourceMappingURL=dataSource.js.map

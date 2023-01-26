@@ -1,0 +1,1 @@
+{"version":3,"file":"get.today.date.js","sourceRoot":"","sources":["../../../../src/games/util/get.today.date.ts"],"names":[],"mappings":";;;AAAA,SAAgB,YAAY;IACxB,MAAM,IAAI,GAAG,IAAI,IAAI,EAAE,CAAC;IACxB,MAAM,UAAU,GAAG,IAAI,CAAC,YAAY,EAAE,CAAC;IACvC,MAAM,OAAO,GAAG,IAAI,IAAI,CAAC,GAAG,UAAU,UAAU,CAAC,CAAC;IAClD,OAAO,OAAO,CAAC;AACnB,CAAC;AALD,oCAKC"}

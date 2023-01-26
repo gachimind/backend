@@ -20,11 +20,14 @@ const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.f
 const token_map_entity_1 = require("../users/entities/token-map.entity");
 const socketIdMap_entity_1 = require("./entities/socketIdMap.entity");
 const player_entity_1 = require("./entities/player.entity");
+const todayResult_entity_1 = require("./entities/todayResult.entity");
+const get_today_date_1 = require("./util/get.today.date");
 let PlayersService = class PlayersService {
-    constructor(tokenMapRepository, socketIdMapRepository, playerRepository) {
+    constructor(tokenMapRepository, socketIdMapRepository, playerRepository, todayResultRepository) {
         this.tokenMapRepository = tokenMapRepository;
         this.socketIdMapRepository = socketIdMapRepository;
         this.playerRepository = playerRepository;
+        this.todayResultRepository = todayResultRepository;
     }
     async getUserBySocketId(socketId) {
         const user = await this.socketIdMapRepository.findOne({
@@ -75,6 +78,20 @@ let PlayersService = class PlayersService {
         const user = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.save(user);
     }
+    async createTodayResult(userInfo) {
+        const today = (0, get_today_date_1.getTodayDate)();
+        const todayResult = await this.todayResultRepository.findOne({
+            where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
+            cache: 5 * 60 * 1000,
+        });
+        if (!todayResult) {
+            await this.todayResultRepository.save({ userInfo, todayScore: 0 });
+            await this.todayResultRepository.findOne({
+                where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
+                cache: 5 * 60 * 1000,
+            });
+        }
+    }
     async setPlayerReady(player) {
         let user;
         if (!player.isReady) {
@@ -91,7 +108,9 @@ PlayersService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
     __param(1, (0, typeorm_1.InjectRepository)(socketIdMap_entity_1.SocketIdMap)),
     __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
+    __param(3, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], PlayersService);

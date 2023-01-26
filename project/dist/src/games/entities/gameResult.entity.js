@@ -35,11 +35,15 @@ __decorate([
     __metadata("design:type", user_entity_1.User)
 ], GameResult.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'todayResultInfo' }),
+    (0, typeorm_1.Column)({ name: 'todayResultInfo', nullable: true }),
     __metadata("design:type", Number)
 ], GameResult.prototype, "todayResultInfo", void 0);
 __decorate([
-    (0, ManyToOne_1.ManyToOne)(() => todayResult_entity_1.TodayResult, (todayResult) => todayResult.gameResults),
+    (0, ManyToOne_1.ManyToOne)(() => todayResult_entity_1.TodayResult, (todayResult) => todayResult.gameResults, {
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        createForeignKeyConstraints: false,
+    }),
     (0, typeorm_1.JoinColumn)({ name: 'todayResultInfo' }),
     __metadata("design:type", todayResult_entity_1.TodayResult)
 ], GameResult.prototype, "todayResult", void 0);
