@@ -88,7 +88,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             throw new SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
         // 토큰을 가지고 유저 정보를 얻어서 SocketIdMap에 추가
-        await this.playersService.socketIdMapToLoginUser(token, socket.id);
+        const requestUser: SocketIdMap = await this.playersService.socketIdMapToLoginUser(
+            token,
+            socket.id,
+        );
+        await this.playersService.createTodayResult(requestUser.userInfo);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
@@ -335,6 +339,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         }
 
         const currentTurn = requestUser.player.room.turns.at(-1);
+
         let type = 'chat';
         // room이 game상태이고, 턴의 currentEvent가 speechTime일때만 정답 처리
         if (requestUser.player.room.isGameOn) {
@@ -342,10 +347,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 data.message,
                 requestUser.player.room,
             );
-            //
+
             if (
+                isAnswer &&
                 requestUser.userInfo === currentTurn.speechPlayer &&
-                currentTurn.currentEvent === 'readyTime'
+                (currentTurn.currentEvent === 'readyTime' || 'speechTime')
             ) {
                 throw new SocketException(
                     '발표자는 정답을 채팅으로 알릴 수 없습니다.',
@@ -435,6 +441,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async socketAuthentication(socketId: string, event: string) {
         const requestUser: SocketIdMap = await this.playersService.getUserBySocketId(socketId);
+        if (requestUser.player) console.log('플레이어 정보 있음');
+
         if (!requestUser) {
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, event);
         }

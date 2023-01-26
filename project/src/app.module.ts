@@ -53,6 +53,8 @@ import { TodayResult } from './games/entities/todayResult.entity';
             logging: false,
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
+            timezone: 'Z',
+            cache: true,
         }),
         UsersModule,
         GamesModule,

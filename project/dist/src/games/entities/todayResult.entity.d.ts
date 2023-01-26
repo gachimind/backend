@@ -7,5 +7,6 @@ export declare class TodayResult {
     todayScore: number;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     gameResults: GameResult[];
 }

@@ -6,6 +6,7 @@ import {
     UpdateDateColumn,
     OneToMany,
     JoinColumn,
+    DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ManyToOne } from 'typeorm/decorator/relations/ManyToOne';
@@ -30,6 +31,9 @@ export class TodayResult {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @DeleteDateColumn()
+    deletedAt: Date | null;
 
     @OneToMany(() => GameResult, (gameResult) => gameResult.todayResult, { eager: true })
     gameResults: GameResult[];
