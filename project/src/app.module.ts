@@ -16,6 +16,7 @@ import { Keyword } from './keyword/entities/keyword.entities';
 import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
+import { TodayResult } from './games/entities/todayResult.entity';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -44,6 +45,7 @@ import { GameResult } from './games/entities/gameResult.entity';
                 Turn,
                 TurnResult,
                 GameResult,
+                TodayResult,
             ],
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함

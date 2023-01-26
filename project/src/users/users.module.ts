@@ -10,7 +10,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './auth/jwt.guard';
-import { SeedingController } from './seeding.controller';
 
 @Module({
     imports: [
@@ -24,7 +23,7 @@ import { SeedingController } from './seeding.controller';
         }),
         PassportModule,
     ],
-    controllers: [UsersController, SeedingController],
+    controllers: [UsersController],
     providers: [
         UsersService,
         SessionSerializer,
