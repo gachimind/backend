@@ -21,15 +21,14 @@ export class SocketException extends WsException {
 
 @Catch()
 export class SocketExceptionFilter extends BaseWsExceptionFilter {
-    catch(exception: SocketException | Error | TypeError, host: ArgumentsHost) {
-        super.catch(exception, host);
+    catch(exception: unknown, host: ArgumentsHost) {
         const client: Socket = host.switchToWs().getClient();
         this.handleError(client, exception);
         const logger = new Logger('WsExceptionsHandler');
         logger.error(
             exception instanceof SocketException ? 'SocketException' : 'UnknownError',
             exception instanceof SocketException ? exception.eventName : 'unknownEvent',
-            exception.stack,
+            exception instanceof Error ? exception.stack : null,
         );
     }
 

@@ -10,6 +10,7 @@ const turn_entity_1 = require("./src/games/entities/turn.entity");
 const turnResult_entity_1 = require("./src/games/entities/turnResult.entity");
 const gameResult_entity_1 = require("./src/games/entities/gameResult.entity");
 require("dotenv/config");
+const keyword_entities_1 = require("./src/keyword/entities/keyword.entities");
 const todayResult_entity_1 = require("./src/games/entities/todayResult.entity");
 const dataSource = new typeorm_1.DataSource({
     type: 'mysql',
@@ -23,6 +24,7 @@ const dataSource = new typeorm_1.DataSource({
         socketIdMap_entity_1.SocketIdMap,
         room_entity_1.Room,
         player_entity_1.Player,
+        keyword_entities_1.Keyword,
         turn_entity_1.Turn,
         turnResult_entity_1.TurnResult,
         gameResult_entity_1.GameResult,
