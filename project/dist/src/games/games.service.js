@@ -22,7 +22,7 @@ const room_entity_1 = require("./entities/room.entity");
 const todayResult_entity_1 = require("./entities/todayResult.entity");
 const turn_entity_1 = require("./entities/turn.entity");
 const turnResult_entity_1 = require("./entities/turnResult.entity");
-const get_today_date_1 = require("./util/get.today.date");
+const today_date_constructor_1 = require("./util/today.date.constructor");
 const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 let GamesService = class GamesService {
     constructor(roomRepository, playerRepository, turnRepository, turnResultRepository, gameResultRepository, todayResultRepository) {
@@ -38,7 +38,7 @@ let GamesService = class GamesService {
             where: { roomInfo: roomId },
             select: { userInfo: true },
         });
-        const today = (0, get_today_date_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getTodayDate)();
         let data = [];
         for (let userId of playersUserId) {
             const todayResult = await this.todayResultRepository.findOne({

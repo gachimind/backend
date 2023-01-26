@@ -9,7 +9,7 @@ import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Socket } from 'socket.io';
 import { TodayResult } from './entities/todayResult.entity';
-import { getTodayDate } from './util/get.today.date';
+import { getTodayDate } from './util/today.date.constructor';
 
 @Injectable()
 export class PlayersService {

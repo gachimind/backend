@@ -21,7 +21,7 @@ const token_map_entity_1 = require("../users/entities/token-map.entity");
 const socketIdMap_entity_1 = require("./entities/socketIdMap.entity");
 const player_entity_1 = require("./entities/player.entity");
 const todayResult_entity_1 = require("./entities/todayResult.entity");
-const get_today_date_1 = require("./util/get.today.date");
+const today_date_constructor_1 = require("./util/today.date.constructor");
 let PlayersService = class PlayersService {
     constructor(tokenMapRepository, socketIdMapRepository, playerRepository, todayResultRepository) {
         this.tokenMapRepository = tokenMapRepository;
@@ -79,7 +79,7 @@ let PlayersService = class PlayersService {
         return await this.socketIdMapRepository.save(user);
     }
     async createTodayResult(userInfo) {
-        const today = (0, get_today_date_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getTodayDate)();
         const todayResult = await this.todayResultRepository.findOne({
             where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
             cache: 5 * 60 * 1000,

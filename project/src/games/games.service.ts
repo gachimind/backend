@@ -9,7 +9,7 @@ import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { getTodayDate } from './util/get.today.date';
+import { getTodayDate } from './util/today.date.constructor';
 
 const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 

@@ -8,4 +8,4 @@ function getTodayDate() {
     return newDate;
 }
 exports.getTodayDate = getTodayDate;
-//# sourceMappingURL=get.today.date.js.map
+//# sourceMappingURL=today.date.constructor.js.map
