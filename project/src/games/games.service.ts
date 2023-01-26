@@ -45,22 +45,18 @@ export class GamesService {
     }
 
     async createTurn(roomId: number) {
-        try {
-            const room = await this.roomRepository.findOne({ where: { roomId } });
-            let index = room.turns.length;
+        const room = await this.roomRepository.findOne({ where: { roomId } });
+        let index = room.turns.length;
 
-            const newTurnData: TurnDataInsertDto = {
-                roomInfo: room.roomId,
-                turn: index + 1,
-                currentEvent: 'start',
-                speechPlayer: room.players[index].userInfo,
-                keyword: keywords[index],
-                hint: null,
-            };
-            return await this.turnRepository.save(newTurnData);
-        } catch (err) {
-            throw new SocketException(err.message, 500, 'start');
-        }
+        const newTurnData: TurnDataInsertDto = {
+            roomInfo: room.roomId,
+            turn: index + 1,
+            currentEvent: 'start',
+            speechPlayer: room.players[index].userInfo,
+            keyword: keywords[index],
+            hint: null,
+        };
+        return await this.turnRepository.save(newTurnData);
     }
 
     async updateTurn(turn: Turn, timer: string): Promise<Turn> {

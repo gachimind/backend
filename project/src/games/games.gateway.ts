@@ -198,6 +198,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 1. ready를 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
         if (!requestUser.player || requestUser.player.isHost) {
+            console.log('뭐가 문제인가??');
+            console.log(requestUser.user);
             throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         // 2. ready event를 emit한 Player 정보를 업데이트
@@ -236,52 +238,50 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // startCount 시작
         await this.gameTimer(room, 'startCount', turn);
 
-        try {
-            // player 수만큼 turn 반복
-            while (turnCount < room.players.length) {
-                turnCount++;
-                // readyTimer 시작
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'readyTime', turn);
-                }, 10000);
-
-                // speechTimer 시작
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'speechTime', turn);
-                }, 10000 + room.readyTime);
-
-                // discussionTimer시작
-                setTimeout(async () => {
-                    // 현재 턴 저장 & 다음 턴 생성
-                    let currentTurn = turn;
-                    if (turn.turn < room.players.length) {
-                        turn = await this.gamesService.createTurn(room.roomId);
-                    } else {
-                        turn = currentTurn;
-                        turnCount++;
-                    }
-                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-                }, 10000 + room.readyTime + room.speechTime);
-
-                // 턴 종료 후 방 데이터 업데이트
-                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        // player 수만큼 turn 반복
+        while (turnCount < room.players.length) {
+            // readyTimer 시작
+            await this.gameTimer(room, 'readyTime', turn);
+            // speechTimer 시작
+            await this.gameTimer(room, 'speechTime', turn);
+            // discussionTimer시작
+            // player 정보를 확인하기 위해 room 정보 갱신
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-        } catch (err) {
-            throw new SocketException(err.message, 500, 'start');
+
+            let nextTurn = turn;
+            if (turn.turn < room.players.length) {
+                nextTurn = await this.gamesService.createTurn(room.roomId);
+            }
+            await this.gameTimer(room, 'discussionTime', turn, nextTurn);
+
+            // 턴 종료 후 게임 데이터 업데이트
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            turn = nextTurn;
+            turnCount++;
         }
     }
 
+    timer(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+
     async gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn) {
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
 
-        try {
-            // update turn currentTimer
-            turn = await this.gamesService.updateTurn(turn, eventName);
-        } catch (err) {
-            throw new SocketException(err.message, 500, 'start');
-        }
+        // update turn currentTimer
+        turn = await this.gamesService.updateTurn(turn, eventName);
 
         // game-info event 처리
         if (event === 'readyTimer') {
@@ -291,11 +291,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 keyword: turn.keyword,
                 hint: turn.hint,
             };
-            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
         }
 
         // time-start event 처리
-        await this.server.to(`${roomId}`).emit('time-start', {
+        this.server.to(`${roomId}`).emit('time-start', {
             data: {
                 currentTurn: turn.turn,
                 timer,
@@ -303,29 +303,24 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             },
         });
 
+        // time-start 후 turnState별 대기시간
+        await this.timer(timer);
+
         // time-end event 처리
-        await setTimeout(async () => {
-            // 현재 턴이 마지막 턴일때 처리
-            if (event === 'discussionTimer') {
-                if (turn === nextTurn) {
-                    nextTurn.turn = 0;
-                }
-                return await this.server.to(`${roomId}`).emit('time-end', {
-                    data: {
-                        nextTurn: nextTurn.turn,
-                        timer,
-                        event,
-                    },
-                });
+        // 현재 턴이 마지막 턴일때 처리
+        let key = 'currentTurn';
+        if (event === 'discussionTimer') {
+            key = 'nextTurn';
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
             }
-            return await this.server.to(`${roomId}`).emit('time-end', {
-                data: {
-                    currentTurn: turn.turn,
-                    timer,
-                    event,
-                },
-            });
-        }, timer);
+        }
+        const data = {
+            timer,
+            event,
+        };
+        data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
+        return this.server.to(`${roomId}`).emit('time-end', { data });
     }
 
     @SubscribeMessage('send-chat')
@@ -388,10 +383,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         { data },
     ) {
         const event = 'webrtc-ice';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
@@ -401,10 +392,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('webrtc-offer')
     async handleOffer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const event = 'webrtc-offer';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
@@ -414,10 +401,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('webrtc-answer')
     async handleAnswer(@ConnectedSocket() socket: Socket, @MessageBody() { data }) {
         const event = 'webrtc-answer';
-        const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)

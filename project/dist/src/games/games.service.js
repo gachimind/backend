@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GamesService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const typeorm_2 = require("typeorm");
 const gameResult_entity_1 = require("./entities/gameResult.entity");
 const player_entity_1 = require("./entities/player.entity");
@@ -46,22 +45,17 @@ let GamesService = class GamesService {
         await this.gameResultRepository.save(data);
     }
     async createTurn(roomId) {
-        try {
-            const room = await this.roomRepository.findOne({ where: { roomId } });
-            let index = room.turns.length;
-            const newTurnData = {
-                roomInfo: room.roomId,
-                turn: index + 1,
-                currentEvent: 'start',
-                speechPlayer: room.players[index].userInfo,
-                keyword: keywords[index],
-                hint: null,
-            };
-            return await this.turnRepository.save(newTurnData);
-        }
-        catch (err) {
-            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
-        }
+        const room = await this.roomRepository.findOne({ where: { roomId } });
+        let index = room.turns.length;
+        const newTurnData = {
+            roomInfo: room.roomId,
+            turn: index + 1,
+            currentEvent: 'start',
+            speechPlayer: room.players[index].userInfo,
+            keyword: keywords[index],
+            hint: null,
+        };
+        return await this.turnRepository.save(newTurnData);
     }
     async updateTurn(turn, timer) {
         turn.currentEvent = timer;

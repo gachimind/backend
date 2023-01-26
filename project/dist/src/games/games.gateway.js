@@ -109,6 +109,8 @@ let GamesGateway = class GamesGateway {
         const event = 'ready';
         const requestUser = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player || requestUser.player.isHost) {
+            console.log('뭐가 문제인가??');
+            console.log(requestUser.user);
             throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
         }
         await this.playersService.setPlayerReady(requestUser.player);
@@ -128,43 +130,38 @@ let GamesGateway = class GamesGateway {
         let turnCount = 0;
         let turn = await this.gamesService.createTurn(room.roomId);
         await this.gameTimer(room, 'startCount', turn);
-        try {
-            while (turnCount < room.players.length) {
-                turnCount++;
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'readyTime', turn);
-                }, 10000);
-                setTimeout(async () => {
-                    await this.gameTimer(room, 'speechTime', turn);
-                }, 10000 + room.readyTime);
-                setTimeout(async () => {
-                    let currentTurn = turn;
-                    if (turn.turn < room.players.length) {
-                        turn = await this.gamesService.createTurn(room.roomId);
-                    }
-                    else {
-                        turn = currentTurn;
-                        turnCount++;
-                    }
-                    await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-                }, 10000 + room.readyTime + room.speechTime);
-                room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        while (turnCount < room.players.length) {
+            await this.gameTimer(room, 'readyTime', turn);
+            await this.gameTimer(room, 'speechTime', turn);
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-        }
-        catch (err) {
-            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
+            let nextTurn = turn;
+            if (turn.turn < room.players.length) {
+                nextTurn = await this.gamesService.createTurn(room.roomId);
+            }
+            await this.gameTimer(room, 'discussionTime', turn, nextTurn);
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            turn = nextTurn;
+            turnCount++;
         }
     }
+    timer(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
     async gameTimer(room, eventName, turn, nextTurn) {
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-        try {
-            turn = await this.gamesService.updateTurn(turn, eventName);
-        }
-        catch (err) {
-            throw new ws_exception_filter_1.SocketException(err.message, 500, 'start');
-        }
+        turn = await this.gamesService.updateTurn(turn, eventName);
         if (event === 'readyTimer') {
             const turnInfo = {
                 currentTurn: turn.turn,
@@ -172,36 +169,29 @@ let GamesGateway = class GamesGateway {
                 keyword: turn.keyword,
                 hint: turn.hint,
             };
-            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
         }
-        await this.server.to(`${roomId}`).emit('time-start', {
+        this.server.to(`${roomId}`).emit('time-start', {
             data: {
                 currentTurn: turn.turn,
                 timer,
                 event,
             },
         });
-        await setTimeout(async () => {
-            if (event === 'discussionTimer') {
-                if (turn === nextTurn) {
-                    nextTurn.turn = 0;
-                }
-                return await this.server.to(`${roomId}`).emit('time-end', {
-                    data: {
-                        nextTurn: nextTurn.turn,
-                        timer,
-                        event,
-                    },
-                });
+        await this.timer(timer);
+        let key = 'currentTurn';
+        if (event === 'discussionTimer') {
+            key = 'nextTurn';
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
             }
-            return await this.server.to(`${roomId}`).emit('time-end', {
-                data: {
-                    currentTurn: turn.turn,
-                    timer,
-                    event,
-                },
-            });
-        }, timer);
+        }
+        const data = {
+            timer,
+            event,
+        };
+        data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
+        return this.server.to(`${roomId}`).emit('time-end', { data });
     }
     async sendChatRequest(socket, { data }) {
         const event = 'send-chat';
@@ -237,10 +227,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleIce(socket, { data }) {
         const event = 'webrtc-ice';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
@@ -248,10 +234,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleOffer(socket, { data }) {
         const event = 'webrtc-offer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
@@ -259,10 +241,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleAnswer(socket, { data }) {
         const event = 'webrtc-answer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)
