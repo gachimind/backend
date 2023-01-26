@@ -8,6 +8,7 @@ import { Turn } from './src/games/entities/turn.entity';
 import { TurnResult } from './src/games/entities/turnResult.entity';
 import { GameResult } from './src/games/entities/gameResult.entity';
 import 'dotenv/config';
+import { Keyword } from './src/keyword/entities/keyword.entities';
 import { TodayResult } from './src/games/entities/todayResult.entity';
 
 const dataSource = new DataSource({
@@ -22,6 +23,7 @@ const dataSource = new DataSource({
         SocketIdMap,
         Room,
         Player,
+        Keyword,
         Turn,
         TurnResult,
         GameResult,

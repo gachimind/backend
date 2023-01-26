@@ -11,6 +11,8 @@ import { TokenMap } from './users/entities/token-map.entity';
 import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
+import { KeywordModule } from './keyword/keyword.module';
+import { Keyword } from './keyword/entities/keyword.entities';
 import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
@@ -39,6 +41,7 @@ import { TodayResult } from './games/entities/todayResult.entity';
                 Room,
                 Player,
                 SocketIdMap,
+                Keyword,
                 Turn,
                 TurnResult,
                 GameResult,
@@ -53,6 +56,7 @@ import { TodayResult } from './games/entities/todayResult.entity';
         }),
         UsersModule,
         GamesModule,
+        KeywordModule,
         PassportModule.register({ session: true }),
     ],
     controllers: [AppController],
