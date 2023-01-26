@@ -31,6 +31,7 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { GamesService } from './games.service';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
+import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -202,8 +203,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 1. ready를 요청한 유저가 방에 속해있는지 || 방장인지 확인 -> player 정보가 없거나 방장이라면 에러
         if (!requestUser.player || requestUser.player.isHost) {
-            console.log('뭐가 문제인가??');
-            console.log(requestUser.user);
             throw new SocketException('잘못된 접근입니다.', 400, event);
         }
         // 2. ready event를 emit한 Player 정보를 업데이트
@@ -271,7 +270,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         }
     }
 
-    timer(time) {
+    timer(time: number) {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
 
@@ -311,9 +310,22 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.timer(timer);
 
         // time-end event 처리
-        // 현재 턴이 마지막 턴일때 처리
         let key = 'currentTurn';
+        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
         if (event === 'discussionTimer') {
+            // 해당 턴 발표자의 turnResult 생성 & 합산 점수 emit
+            const turnResult = await this.gamesService.recordSpeechPlayerScore(
+                roomId,
+                turn.turn,
+                turn.speechPlayer,
+                turn.speechPlayerNickname,
+            );
+
+            this.server
+                .to(`${roomId}`)
+                .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
+
+            // 현재 턴이 마지막 턴일때 처리
             key = 'nextTurn';
             if (turn === nextTurn) {
                 nextTurn.turn = 0;
@@ -362,7 +374,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
             if (currentTurn.currentEvent === 'speechTime') {
                 if (isAnswer) {
-                    const result: TurnResult = await this.chatService.recordScore(
+                    const result: TurnResult = await this.gamesService.recordPlayerScore(
                         requestUser.player.user,
                         requestUser.player.roomInfo,
                     );
@@ -380,6 +392,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.server
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo, type } });
+    }
+
+    @SubscribeMessage('turn-evaluate')
+    async handleTurnEvaluation(
+        @ConnectedSocket() socket: Socket,
+        @MessageBody()
+        { data }: { data: TurnEvaluateRequestDto },
+    ) {
+        const event = 'turn-evaluate';
+        const requestUser = await this.socketAuthentication(socket.id, event);
+        const roomId = requestUser.player.roomInfo;
+        this.gamesService.saveEvaluationScore(roomId, data);
     }
 
     @SubscribeMessage('webrtc-ice')
@@ -441,8 +465,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     async socketAuthentication(socketId: string, event: string) {
         const requestUser: SocketIdMap = await this.playersService.getUserBySocketId(socketId);
-        if (requestUser.player) console.log('플레이어 정보 있음');
-
         if (!requestUser) {
             throw new SocketException('로그인이 필요한 서비스입니다.', 403, event);
         }

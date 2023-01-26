@@ -34,6 +34,9 @@ export class Turn {
     speechPlayer: number;
 
     @Column()
+    speechPlayerNickname: string;
+
+    @Column()
     keyword: string;
 
     @Column({ type: 'text', nullable: true })
