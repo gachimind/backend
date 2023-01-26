@@ -1,3 +1,4 @@
+import { TodayResult } from '../../games/entities/todayResult.entity';
 import { GameResult } from '../../games/entities/gameResult.entity';
 export declare class User {
     userId: number;
@@ -9,4 +10,5 @@ export declare class User {
     updatedAt: Date;
     deletedAt: Date | null;
     gameResults: GameResult[];
+    todayResults: TodayResult[];
 }

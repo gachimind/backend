@@ -7,18 +7,14 @@ import {
     OneToMany,
     JoinColumn,
 } from 'typeorm';
-import { TurnResult } from './turnResult.entity';
 import { User } from '../../users/entities/user.entity';
 import { ManyToOne } from 'typeorm/decorator/relations/ManyToOne';
-import { TodayResult } from './todayResult.entity';
+import { GameResult } from './gameResult.entity';
 
 @Entity()
-export class GameResult {
+export class TodayResult {
     @PrimaryGeneratedColumn()
-    gameResultId: number;
-
-    @Column()
-    roomId: number;
+    todayResultId: number;
 
     @Column({ name: 'userInfo' })
     userInfo: number;
@@ -26,11 +22,8 @@ export class GameResult {
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
-    @Column({ name: 'todayResultInfo' })
-    todayResultInfo: number;
-    @ManyToOne(() => TodayResult, (todayResult) => todayResult.gameResults)
-    @JoinColumn({ name: 'todayResultInfo' })
-    todayResult: TodayResult;
+    @Column({ type: 'int' })
+    todayScore: number;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -38,6 +31,6 @@ export class GameResult {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @OneToMany(() => TurnResult, (turnResult) => turnResult.gameResult)
-    turnResults: TurnResult[];
+    @OneToMany(() => GameResult, (gameResult) => gameResult.todayResult, { eager: true })
+    gameResults: GameResult[];
 }

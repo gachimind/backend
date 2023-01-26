@@ -23,6 +23,7 @@ const socketIdMap_entity_1 = require("./games/entities/socketIdMap.entity");
 const turn_entity_1 = require("./games/entities/turn.entity");
 const turnResult_entity_1 = require("./games/entities/turnResult.entity");
 const gameResult_entity_1 = require("./games/entities/gameResult.entity");
+const todayResult_entity_1 = require("./games/entities/todayResult.entity");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -39,7 +40,17 @@ AppModule = __decorate([
                 username: process.env.MYSQL_USERNAME,
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
-                entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap, turn_entity_1.Turn, turnResult_entity_1.TurnResult, gameResult_entity_1.GameResult],
+                entities: [
+                    user_entity_1.User,
+                    token_map_entity_1.TokenMap,
+                    room_entity_1.Room,
+                    player_entity_1.Player,
+                    socketIdMap_entity_1.SocketIdMap,
+                    turn_entity_1.Turn,
+                    turnResult_entity_1.TurnResult,
+                    gameResult_entity_1.GameResult,
+                    todayResult_entity_1.TodayResult,
+                ],
                 synchronize: true,
                 logging: false,
                 keepConnectionAlive: true,

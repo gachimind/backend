@@ -10,8 +10,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
-const gameResult_entity_1 = require("../../games/entities/gameResult.entity");
 const typeorm_1 = require("typeorm");
+const todayResult_entity_1 = require("../../games/entities/todayResult.entity");
+const gameResult_entity_1 = require("../../games/entities/gameResult.entity");
 let User = class User {
 };
 __decorate([
@@ -47,9 +48,13 @@ __decorate([
     __metadata("design:type", Date)
 ], User.prototype, "deletedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.user, { eager: true }),
+    (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.user),
     __metadata("design:type", Array)
 ], User.prototype, "gameResults", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => todayResult_entity_1.TodayResult, (todayResult) => todayResult.user, { eager: true }),
+    __metadata("design:type", Array)
+], User.prototype, "todayResults", void 0);
 User = __decorate([
     (0, typeorm_1.Entity)()
 ], User);

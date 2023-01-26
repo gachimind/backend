@@ -21,13 +21,22 @@ const turn_entity_1 = require("./entities/turn.entity");
 const turnResult_entity_1 = require("./entities/turnResult.entity");
 const gameResult_entity_1 = require("./entities/gameResult.entity");
 const games_service_1 = require("./games.service");
+const todayResult_entity_1 = require("./entities/todayResult.entity");
 let GamesModule = class GamesModule {
 };
 GamesModule = __decorate([
     (0, common_1.Module)({
         imports: [
             users_module_1.UsersModule,
-            typeorm_1.TypeOrmModule.forFeature([room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap, turn_entity_1.Turn, turnResult_entity_1.TurnResult, gameResult_entity_1.GameResult]),
+            typeorm_1.TypeOrmModule.forFeature([
+                room_entity_1.Room,
+                player_entity_1.Player,
+                socketIdMap_entity_1.SocketIdMap,
+                turn_entity_1.Turn,
+                turnResult_entity_1.TurnResult,
+                gameResult_entity_1.GameResult,
+                todayResult_entity_1.TodayResult,
+            ]),
         ],
         providers: [games_gateway_1.GamesGateway, room_service_1.RoomService, chat_service_1.ChatService, players_service_1.PlayersService, games_service_1.GamesService],
         exports: [games_gateway_1.GamesGateway, typeorm_1.TypeOrmModule],

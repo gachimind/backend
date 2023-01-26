@@ -12,11 +12,20 @@ import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { GameResult } from './entities/gameResult.entity';
 import { GamesService } from './games.service';
+import { TodayResult } from './entities/todayResult.entity';
 
 @Module({
     imports: [
         UsersModule,
-        TypeOrmModule.forFeature([Room, Player, SocketIdMap, Turn, TurnResult, GameResult]),
+        TypeOrmModule.forFeature([
+            Room,
+            Player,
+            SocketIdMap,
+            Turn,
+            TurnResult,
+            GameResult,
+            TodayResult,
+        ]),
     ],
     providers: [GamesGateway, RoomService, ChatService, PlayersService, GamesService],
     exports: [GamesGateway, TypeOrmModule],
