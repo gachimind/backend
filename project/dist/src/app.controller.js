@@ -92,7 +92,7 @@ let AppController = class AppController {
                     results.push({
                         gameResultInfo: gameResult.gameResultId,
                         roomId: gameResult.roomId,
-                        userInfo: userId,
+                        userId,
                         turn,
                         nickname: user.nickname,
                         score: 20 * (userId - 1),

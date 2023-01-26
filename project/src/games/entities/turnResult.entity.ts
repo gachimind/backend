@@ -8,7 +8,6 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { GameResult } from './gameResult.entity';
-import { Turn } from './turn.entity';
 
 @Entity()
 export class TurnResult {
@@ -26,6 +25,9 @@ export class TurnResult {
 
     @Column({ type: 'tinyint' })
     turn: number;
+
+    @Column({ type: 'int' })
+    userId: number;
 
     @Column()
     nickname: string;

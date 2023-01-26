@@ -63,6 +63,7 @@ let ChatService = class ChatService {
             gameResultInfo: gameResult.gameResultId,
             roomId: room.roomId,
             turn: currentTurn.turn,
+            userId: user.userId,
             nickname: user.nickname,
             score,
             keyword: currentTurn.keyword,

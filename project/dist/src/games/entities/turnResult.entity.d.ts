@@ -5,6 +5,7 @@ export declare class TurnResult {
     gameResult: GameResult;
     roomId: number;
     turn: number;
+    userId: number;
     nickname: string;
     score: number;
     keyword: string;

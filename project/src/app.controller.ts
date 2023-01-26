@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
 import { Repository } from 'typeorm';
 import { ResultToDataInterceptor } from './common/interceptors/resultToData.interceptor';
+import { TurnResultDataInsertDto } from './games/dto/turn-result.data.insert.dto';
 import { GameResult } from './games/entities/gameResult.entity';
 import { TodayResult } from './games/entities/todayResult.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
@@ -86,7 +87,7 @@ export class AppController {
     @Get('seed/result/turn')
     async createTurnResult() {
         const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
-        const results = [];
+        const results: TurnResultDataInsertDto[] = [];
 
         for (let userId = 1; userId <= 6; userId++) {
             const gameResults: GameResult[] = await this.gameResultRepository.find({
@@ -101,7 +102,7 @@ export class AppController {
                     results.push({
                         gameResultInfo: gameResult.gameResultId,
                         roomId: gameResult.roomId,
-                        userInfo: userId,
+                        userId,
                         turn,
                         nickname: user.nickname,
                         score: 20 * (userId - 1),
