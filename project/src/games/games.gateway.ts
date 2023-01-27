@@ -354,17 +354,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         let type = 'chat';
         // room이 game상태이고, 턴의 currentEvent가 speechTime일때만 정답 처리
-        if (requestUser.player.room.isGameOn) {
+        if (
+            requestUser.player.room.isGameOn &&
+            (currentTurn.currentEvent === 'readyTime' || currentTurn.currentEvent === 'speechTime')
+        ) {
             const isAnswer: boolean = this.chatService.checkAnswer(
                 data.message,
                 requestUser.player.room,
             );
 
-            if (
-                isAnswer &&
-                requestUser.userInfo === currentTurn.speechPlayer &&
-                (currentTurn.currentEvent === 'readyTime' || 'speechTime')
-            ) {
+            if (isAnswer && requestUser.userInfo === currentTurn.speechPlayer) {
                 throw new SocketException(
                     '발표자는 정답을 채팅으로 알릴 수 없습니다.',
                     400,

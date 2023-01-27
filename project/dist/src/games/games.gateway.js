@@ -204,11 +204,10 @@ let GamesGateway = class GamesGateway {
         }
         const currentTurn = requestUser.player.room.turns.at(-1);
         let type = 'chat';
-        if (requestUser.player.room.isGameOn) {
+        if (requestUser.player.room.isGameOn &&
+            (currentTurn.currentEvent === 'readyTime' || currentTurn.currentEvent === 'speechTime')) {
             const isAnswer = this.chatService.checkAnswer(data.message, requestUser.player.room);
-            if (isAnswer &&
-                requestUser.userInfo === currentTurn.speechPlayer &&
-                (currentTurn.currentEvent === 'readyTime' || 'speechTime')) {
+            if (isAnswer && requestUser.userInfo === currentTurn.speechPlayer) {
                 throw new ws_exception_filter_1.SocketException('발표자는 정답을 채팅으로 알릴 수 없습니다.', 400, 'send-chat');
             }
             if (currentTurn.currentEvent === 'speechTime') {
