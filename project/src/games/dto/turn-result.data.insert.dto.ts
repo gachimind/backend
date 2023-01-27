@@ -10,6 +10,9 @@ export class TurnResultDataInsertDto {
     @IsNumber()
     turn: number;
 
+    @IsNumber()
+    userId: number;
+
     @IsString()
     nickname: string;
 
