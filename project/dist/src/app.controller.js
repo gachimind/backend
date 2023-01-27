@@ -105,6 +105,13 @@ let AppController = class AppController {
         }
         return await this.turnResultRepository.save(results);
     }
+    async test() {
+        const today = new Date();
+        const date = today.toISOString().split('T')[0];
+        return await this.turnResultRepository.findBy({
+            createdAt: (0, typeorm_2.Raw)((dateTime) => `${dateTime} > :date`, { date }),
+        });
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -142,6 +149,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "createTurnResult", null);
+__decorate([
+    (0, common_1.Get)('test'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "test", null);
 AppController = __decorate([
     (0, common_1.UseInterceptors)(resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)(),

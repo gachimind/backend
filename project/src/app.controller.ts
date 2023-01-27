@@ -1,12 +1,13 @@
 import { Controller, Get, Post, UseInterceptors, Body } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { ResultToDataInterceptor } from './common/interceptors/resultToData.interceptor';
 import { TurnResultDataInsertDto } from './games/dto/turn-result.data.insert.dto';
 import { GameResult } from './games/entities/gameResult.entity';
 import { TodayResult } from './games/entities/todayResult.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
+import { getTodayDate } from './games/util/today.date.constructor';
 import { TokenMap } from './users/entities/token-map.entity';
 import { User } from './users/entities/user.entity';
 
@@ -115,5 +116,15 @@ export class AppController {
         }
 
         return await this.turnResultRepository.save(results);
+    }
+
+    @Get('test')
+    async test() {
+        const today = new Date();
+        const date = today.toISOString().split('T')[0];
+
+        return await this.turnResultRepository.findBy({
+            createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
+        });
     }
 }
