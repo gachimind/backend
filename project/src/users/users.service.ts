@@ -10,7 +10,6 @@ import { TodayResult } from '../games/entities/todayResult.entity';
 import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
-import { userInfo } from 'os';
 
 @Injectable()
 export class UsersService {
@@ -111,88 +110,64 @@ export class UsersService {
             select: { todayResults: true },
         });
 
-        const today: Date = getTodayDate();
-        // await this.todayResultRepository.find({
-        //     where: { userInfo: findUserTodayResult.userId, createdAt: today },
-        // });
-
-        const findTodayKeyword = await this.TurnResultRepository.find({
-            where: { userId: findUserTodayResult.userId, createdAt: today },
-            select: { userId: true, keyword: true, isSpeech: true },
-        });
-
-        const todaySpeechKeyword1 = [];
-        const todayQuizKeyword1 = [];
-        for (const result of findTodayKeyword) {
-            if (result.isSpeech === true) {
-                todaySpeechKeyword1.push({
-                    Keyword: result.keyword,
-                });
-            } else {
-                todayQuizKeyword1.push({
-                    Keyword: result.keyword,
-                });
-            }
-        }
-
-        const todaySpeechKeyword = [];
-        for (const result in todaySpeechKeyword1) {
-            todaySpeechKeyword.push(todaySpeechKeyword1[result].Keyword);
-        }
-
-        const todayQuizKeyword2 = [];
-        for (const result in todayQuizKeyword1) {
-            todayQuizKeyword2.push(todayQuizKeyword1[result].Keyword);
-        }
-
-        const todayQuizKeyword = todayQuizKeyword2.filter((val, idx) => {
-            return totalQuizKeyword2.indexOf(val) === idx;
-        });
-
         ///////////////////////////
 
+        // 전체 키워드 찾아오기
         const findTotalkeyword = await this.TurnResultRepository.find({
             where: { nickname: findUserTodayResult.nickname },
-            select: { keyword: true, isSpeech: true },
+            select: { keyword: true, isSpeech: true, createdAt: true },
         });
 
-        const totalSpeechKeyword1 = [];
-        const totalQuizKeyword1 = [];
+        // 발표 유무에 따라 각각 배열에 담기
+        const SpeechKeywordArray = [];
+        const totalKeywordArray = [];
         for (const result of findTotalkeyword) {
             if (result.isSpeech === true) {
-                totalSpeechKeyword1.push({
+                SpeechKeywordArray.push({
                     Keyword: result.keyword,
                 });
             } else {
-                totalQuizKeyword1.push({
+                totalKeywordArray.push({
                     Keyword: result.keyword,
                 });
             }
         }
 
-        const totalSpeechKeyword = [];
-        for (const result in totalSpeechKeyword1) {
-            totalSpeechKeyword.push(totalSpeechKeyword1[result].Keyword);
+        // 발표자일 경우 전체 단어
+        const totalSpeechKeywordExp = [];
+        for (const result in SpeechKeywordArray) {
+            totalSpeechKeywordExp.push(SpeechKeywordArray[result].Keyword);
         }
+        const totalSpeechKeywordCont = totalSpeechKeywordExp.join(); // 배열 합치기
+        const totalSpeechKeyword = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
 
-        const totalQuizKeyword2 = [];
-        for (const result in totalQuizKeyword1) {
-            totalQuizKeyword2.push(totalQuizKeyword1[result].Keyword);
+        // 발표자가 아닌 경우 전체 단어
+        const totalQuizKeywordExp = [];
+        for (const result in totalKeywordArray) {
+            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
         }
+        const totalQuizKeywordCont = totalQuizKeywordExp.join(); // 배열 합치기
+        const totalQuizKeyword = [...new Set(totalQuizKeywordCont)]; // 중복 제거
 
-        const totalQuizKeyword = totalQuizKeyword2.filter((val, idx) => {
-            return totalQuizKeyword2.indexOf(val) === idx;
-        });
-        console.log(totalQuizKeyword);
+        //////////////////////////////////////////
 
-        const usersKeyword = {
+        // const today: Date = getTodayDate();
+
+        // const todayKeywordArray = findTotalkeyword.find(
+        //     (findTotalkeyword) => findTotalkeyword.createdAt == today,
+        // );
+
+        // console.log(todayKeywordArray);
+        // // findTotalkeyword
+
+        //////////////////////////////////////////
+        const data = {
             userId: findUserTodayResult.userId,
-            todaySpeechKeyword,
-            todayQuizKeyword,
+            //todaySpeechKeyword,
+            //todayQuizKeyword,
             totalSpeechKeyword,
             totalQuizKeyword,
         };
-        console.log(usersKeyword);
-        return usersKeyword;
+        return data;
     }
 }

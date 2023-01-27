@@ -23,7 +23,6 @@ const config_1 = require("@nestjs/config");
 const todayResult_entity_1 = require("../games/entities/todayResult.entity");
 const gameResult_entity_1 = require("../games/entities/gameResult.entity");
 const turnResult_entity_1 = require("../games/entities/turnResult.entity");
-const today_date_constructor_1 = require("../games/util/today.date.constructor");
 let UsersService = class UsersService {
     constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, TurnResultRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
@@ -96,76 +95,40 @@ let UsersService = class UsersService {
         });
         const findTotalkeyword = await this.TurnResultRepository.find({
             where: { nickname: findUserTodayResult.nickname },
-            select: { keyword: true, isSpeech: true },
+            select: { keyword: true, isSpeech: true, createdAt: true },
         });
-        const today = (0, today_date_constructor_1.getTodayDate)();
-        await this.todayResultRepository.find({
-            where: { userInfo: findUserTodayResult.userId, createdAt: today },
-        });
-        const findTodayKeyword = await this.TurnResultRepository.find({
-            where: { userId: findUserTodayResult.userId, createdAt: today },
-            select: { userId: true, keyword: true, isSpeech: true },
-        });
-        const todaySpeechKeyword1 = [];
-        const todayQuizKeyword1 = [];
-        for (const result of findTodayKeyword) {
-            if (result.isSpeech === true) {
-                todaySpeechKeyword1.push({
-                    Keyword: result.keyword,
-                });
-            }
-            else
-                result.isSpeech === false;
-            todayQuizKeyword1.push({
-                Keyword: result.keyword,
-            });
-        }
-        const todaySpeechKeyword = [];
-        for (const result in todaySpeechKeyword1) {
-            todaySpeechKeyword.push(todaySpeechKeyword1[result].Keyword);
-        }
-        const todayQuizKeyword2 = [];
-        for (const result in todayQuizKeyword1) {
-            todayQuizKeyword2.push(todayQuizKeyword1[result].Keyword);
-        }
-        const todayQuizKeyword = todayQuizKeyword2.filter((val, idx) => {
-            return totalQuizKeyword2.indexOf(val) === idx;
-        });
-        const totalSpeechKeyword1 = [];
-        const totalQuizKeyword1 = [];
+        const SpeechKeywordArray = [];
+        const totalKeywordArray = [];
         for (const result of findTotalkeyword) {
             if (result.isSpeech === true) {
-                totalSpeechKeyword1.push({
+                SpeechKeywordArray.push({
                     Keyword: result.keyword,
                 });
             }
-            else
-                result.isSpeech === false;
-            totalQuizKeyword1.push({
-                Keyword: result.keyword,
-            });
+            else {
+                totalKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
         }
-        const totalSpeechKeyword = [];
-        for (const result in totalSpeechKeyword1) {
-            totalSpeechKeyword.push(totalSpeechKeyword1[result].Keyword);
+        const totalSpeechKeywordExp = [];
+        for (const result in SpeechKeywordArray) {
+            totalSpeechKeywordExp.push(SpeechKeywordArray[result].Keyword);
         }
-        const totalQuizKeyword2 = [];
-        for (const result in totalQuizKeyword1) {
-            totalQuizKeyword2.push(totalQuizKeyword1[result].Keyword);
+        const totalSpeechKeywordCont = totalSpeechKeywordExp.join();
+        const totalSpeechKeyword = [...new Set(totalSpeechKeywordCont)];
+        const totalQuizKeywordExp = [];
+        for (const result in totalKeywordArray) {
+            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
         }
-        const totalQuizKeyword = totalQuizKeyword2.filter((val, idx) => {
-            return totalQuizKeyword2.indexOf(val) === idx;
-        });
-        console.log(totalQuizKeyword);
-        const usersKeyword = {
+        const totalQuizKeywordCont = totalQuizKeywordExp.join();
+        const totalQuizKeyword = [...new Set(totalQuizKeywordCont)];
+        const data = {
             userId: findUserTodayResult.userId,
-            todaySpeechKeyword,
-            todayQuizKeyword,
             totalSpeechKeyword,
             totalQuizKeyword,
         };
-        console.log(usersKeyword);
-        return usersKeyword;
+        return data;
     }
 };
 UsersService = __decorate([

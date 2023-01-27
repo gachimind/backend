@@ -25,10 +25,8 @@ export declare class UsersController {
     getUserKeywordByToken(headers: any): Promise<{
         data: {
             userId: number;
-            todaySpeechKeyword: any[];
-            todayQuizKeyword: any[];
-            totalSpeechKeyword: any[];
-            totalQuizKeyword: any[];
+            totalSpeechKeyword: string[];
+            totalQuizKeyword: string[];
         };
     }>;
 }
