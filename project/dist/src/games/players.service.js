@@ -53,8 +53,17 @@ let PlayersService = class PlayersService {
         });
         return player;
     }
+    async getAllPlayersUserIdByRoomID(roomId) {
+        return await this.playerRepository.find({
+            where: { roomInfo: roomId },
+            select: { userInfo: true },
+        });
+    }
     async updatePlayerStatusByUserId(user) {
         return await this.playerRepository.save(user);
+    }
+    async updateAllPlayerStatusByUserId(users) {
+        return await this.playerRepository.save(users);
     }
     async removeSocketBySocketId(socketId) {
         return await this.socketIdMapRepository.delete(socketId);

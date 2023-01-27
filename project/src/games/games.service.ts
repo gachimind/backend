@@ -12,6 +12,8 @@ import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
+import { PlayersService } from './players.service';
+import { RoomService } from './room.service';
 import { scoreMap } from './util/score.map';
 import { getTodayDate } from './util/today.date.constructor';
 
@@ -20,10 +22,8 @@ const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래�
 @Injectable()
 export class GamesService {
     constructor(
-        @InjectRepository(Room)
-        private readonly roomRepository: Repository<Room>,
-        @InjectRepository(Player)
-        private readonly playerRepository: Repository<Player>,
+        private readonly roomService: RoomService,
+        private readonly playersService: PlayersService,
         @InjectRepository(Turn)
         private readonly turnRepository: Repository<Turn>,
         @InjectRepository(TurnResult)
@@ -39,10 +39,7 @@ export class GamesService {
     }
 
     async createGameResultPerPlayer(roomId) {
-        const playersUserId = await this.playerRepository.find({
-            where: { roomInfo: roomId },
-            select: { userInfo: true },
-        });
+        const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
         const today = getTodayDate();
         let data = [];
@@ -62,10 +59,7 @@ export class GamesService {
     }
 
     async createTurn(roomId: number) {
-        const room: Room = await this.roomRepository.findOne({
-            where: { roomId },
-            order: { players: { createdAt: 'ASC' } },
-        });
+        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
         let index = room.turns.length;
 
         const newTurnData: TurnDataInsertDto = {
@@ -90,7 +84,7 @@ export class GamesService {
     }
 
     async recordPlayerScore(user: User, roomId: number): Promise<TurnResult> {
-        const room: Room = await this.roomRepository.findOneBy({ roomId });
+        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
         const currentTurn = room.turns.at(-1);
 
         const turnResults: TurnResult[] = await this.turnResultRepository.find({
@@ -130,10 +124,7 @@ export class GamesService {
     }
 
     async recordSpeechPlayerScore(roomId: number, turn: number, userId: number, nickname: string) {
-        const room = await this.roomRepository.findOne({
-            where: { roomId },
-            select: { players: { userInfo: true }, turns: { keyword: true } },
-        });
+        const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
 
         const gameResult: GameResult = await this.gameResultRepository.findOne({
             where: { userInfo: userId, roomId },
@@ -161,5 +152,21 @@ export class GamesService {
             isSpeech: true,
         };
         return await this.createTurnResult(turnResult);
+    }
+
+    async handleGameEndEvent(room: Room): Promise<Room> {
+        // player's isReady to false
+        let users: { userInfo: number; isReady: boolean }[] = [];
+        for (let player of room.players) {
+            users.push({ userInfo: player.userInfo, isReady: false });
+        }
+        await this.playersService.updateAllPlayerStatusByUserId(users);
+
+        // room's isGameOn to false
+        return await this.roomService.updateRoomStatusByRoomId({
+            roomId: room.roomId,
+            isGameReadyToStart: false,
+            isGameOn: false,
+        });
     }
 }

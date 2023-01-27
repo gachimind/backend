@@ -44,6 +44,13 @@ export class RoomService {
         });
     }
 
+    async getOneRoomByRoomIdWithTurnKeyword(roomId: number): Promise<Room> {
+        return await this.roomRepository.findOne({
+            where: { roomId },
+            select: { players: { userInfo: true }, turns: { keyword: true } },
+        });
+    }
+
     async removeRoomByRoomId(roomId: number): Promise<number | any> {
         return await this.roomRepository.delete(roomId);
     }

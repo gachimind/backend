@@ -194,7 +194,14 @@ let GamesGateway = class GamesGateway {
             event,
         };
         data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
-        return this.server.to(`${roomId}`).emit('time-end', { data });
+        this.server.to(`${roomId}`).emit('time-end', { data });
+        if (event === 'discussionTimer' && !nextTurn.turn) {
+            const updateRoom = await this.gamesService.handleGameEndEvent(room);
+            this.server.to(`${updateRoom.roomId}`).emit('update-room', {
+                data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
+            });
+            this.updateRoomListToMain;
+        }
     }
     async sendChatRequest(socket, { data }) {
         const event = 'send-chat';

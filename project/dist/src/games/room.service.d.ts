@@ -11,6 +11,7 @@ export declare class RoomService {
     constructor(roomRepository: Repository<Room>, playerRepository: Repository<Player>);
     getAllRoomList(): Promise<RoomInfoToMainDto[]>;
     getOneRoomByRoomId(roomId: number): Promise<Room>;
+    getOneRoomByRoomIdWithTurnKeyword(roomId: number): Promise<Room>;
     removeRoomByRoomId(roomId: number): Promise<number | any>;
     updateRoomStatusByRoomId(data: any): Promise<Room>;
     createRoom(room: CreateRoomRequestDto): Promise<number>;

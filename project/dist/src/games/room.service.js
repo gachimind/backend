@@ -46,6 +46,12 @@ let RoomService = class RoomService {
             order: { players: { createdAt: 'ASC' } },
         });
     }
+    async getOneRoomByRoomIdWithTurnKeyword(roomId) {
+        return await this.roomRepository.findOne({
+            where: { roomId },
+            select: { players: { userInfo: true }, turns: { keyword: true } },
+        });
+    }
     async removeRoomByRoomId(roomId) {
         return await this.roomRepository.delete(roomId);
     }
