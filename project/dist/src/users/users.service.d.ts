@@ -30,11 +30,11 @@ export declare class UsersService {
         nickname: string;
         profileImg: string;
     }>;
-    getUserKeywordByToken(token: string): Promise<{
+    userKeyword(token: string): Promise<{
         userId: number;
-        todaySpeechKeyword: string[];
-        todayQuizKeyword: string[];
-        totalSpeechKeyword: string[];
-        totalQuizKeyword: string[];
+        todaySpeechKeyword: Set<any>;
+        todayQuizKeyword: Set<any>;
+        totalSpeechKeyword: Set<any>;
+        totalQuizKeyword: Set<any>;
     }>;
 }

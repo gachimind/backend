@@ -98,71 +98,37 @@ export class UsersService {
     }
 
     // 회원 키워드 조회
-    async getUserKeywordByToken(token: string) {
-        const getUserKeywordByToken = await this.tokenMapRepository.findOneBy({
+    async userKeyword(token: string) {
+        const user = await this.tokenMapRepository.findOneBy({
             token,
         });
 
-        if (!getUserKeywordByToken) throw new HttpException('정상적인 접근이 아닙니다.', 401);
-
-        const findUserTodayResult = await this.usersRepository.findOne({
-            where: { userId: getUserKeywordByToken.userInfo },
-            select: { todayResults: true },
-        });
+        if (!user) throw new HttpException('정상적인 접근이 아닙니다.', 401);
 
         // 전체 키워드 찾아오기
         const findTotalkeyword = await this.TurnResultRepository.find({
-            where: { nickname: findUserTodayResult.nickname },
-            select: { keyword: true, isSpeech: true },
+            where: { userId: user.userInfo },
+            select: { keyword: true, isSpeech: true, createdAt: true },
         });
 
-        // 발표 유무에 따라 각각 배열에 담기
         const speechKeywordArray = [];
-        const totalKeywordArray = [];
+        const quizKeywordArray = [];
         for (const result of findTotalkeyword) {
-            if (result.isSpeech === true) {
-                speechKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            if (result.isSpeech) {
+                speechKeywordArray.push(result.keyword);
+            } else {
+                quizKeywordArray.push(result.keyword);
             }
-            for (const result of findTotalkeyword) {
-                totalKeywordArray.push({
-                    Keyword: result.keyword,
-                });
-            }
-            // else {
-            //     totalKeywordArray.push({
-            //         Keyword: result.keyword,
-            //     });
-            // }
         }
 
-        // 발표자일 경우 전체 단어
-        const totalSpeechKeywordExp = [];
-        for (const result in speechKeywordArray) {
-            totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
-        }
-        const totalSpeechKeywordCont = totalSpeechKeywordExp.join(); // 배열 합치기
-        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
-        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
-
-        // 발표자가 아닌 경우 전체 단어
-        const totalQuizKeywordExp = [];
-        for (const result in totalKeywordArray) {
-            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
-        }
-        const totalQuizKeywordCont = totalQuizKeywordExp.join(); // 배열 합치기
-        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)]; // 중복 제거
-        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
-
-        //////////////////////////////////////////
+        const totalSpeechKeyword = new Set(speechKeywordArray);
+        const totalQuizKeyword = new Set(quizKeywordArray);
 
         // 오늘 전체 키워드 찾아오기
-
         const today: Date = getTodayDate();
         const findTodaykeyword = await this.TurnResultRepository.find({
             where: {
-                userId: getUserKeywordByToken.userInfo,
+                userId: user.userInfo,
                 createdAt: MoreThan(today),
             },
             select: { keyword: true, isSpeech: true },
@@ -170,47 +136,20 @@ export class UsersService {
 
         // 발표 유무에 따라 각각 배열에 담기
         const todaySpeechKeywordArray = [];
-        const todayKeywordArray = [];
+        const todayQuizKeywordArray = [];
         for (const result of findTodaykeyword) {
-            if (result.isSpeech === true) {
-                todaySpeechKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            if (result.isSpeech) {
+                todaySpeechKeywordArray.push(result.keyword);
+            } else {
+                todayQuizKeywordArray.push(result.keyword);
             }
-            for (const result of findTodaykeyword) {
-                todayKeywordArray.push({
-                    Keyword: result.keyword,
-                });
-            }
-            // else {
-            //     todayKeywordArray.push({
-            //         Keyword: result.keyword,
-            //     });
-            // }
         }
 
-        // 발표자일 경우 오늘 전체 단어
-        const todaySpeechKeywordExp = [];
-        for (const result in todaySpeechKeywordArray) {
-            todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
-        }
-        const todaySpeechKeywordCont = todaySpeechKeywordExp.join(); // 배열 합치기
-        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)]; // 중복 제거
-        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
-
-        // 발표자가 아닌 경우 오늘 전체 단어
-        const todayQuizKeywordExp = [];
-        for (const result in todayKeywordArray) {
-            todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
-        }
-        const todayQuizKeywordCont = todayQuizKeywordExp.join(); // 배열 합치기
-        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)]; // 중복 제거
-        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
-
-        //////////////////////////////////////////
+        const todaySpeechKeyword = new Set(todaySpeechKeywordArray);
+        const todayQuizKeyword = new Set(todayQuizKeywordArray);
 
         const data = {
-            userId: findUserTodayResult.userId,
+            userId: user.userInfo,
             todaySpeechKeyword,
             todayQuizKeyword,
             totalSpeechKeyword,

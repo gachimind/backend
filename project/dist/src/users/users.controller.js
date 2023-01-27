@@ -35,17 +35,13 @@ let UsersController = class UsersController {
         return { url: this.configService.get('REDIRECT') + token };
     }
     async getUserDetailsByToken(headers) {
-        const tokenParsing = headers.authorization;
-        console.log('controller headers:', tokenParsing);
-        const token = tokenParsing.replace('Bearer ', '');
+        const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        console.log('controller, data :', data);
         return { data };
     }
-    async getUserKeywordByToken(headers) {
-        const tokenParsing = headers.authorization;
-        const token = tokenParsing.replace('Bearer ', '');
-        const data = await this.usersService.getUserKeywordByToken(token);
+    async userKeyword(headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        const data = await this.usersService.userKeyword(token);
         return { data };
     }
 };
@@ -82,7 +78,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], UsersController.prototype, "getUserKeywordByToken", null);
+], UsersController.prototype, "userKeyword", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
