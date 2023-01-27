@@ -108,7 +108,7 @@ let AppController = class AppController {
     async test() {
         const today = new Date();
         const date = today.toISOString().split('T')[0];
-        return await this.turnResultRepository.findBy({
+        return await this.turnResultRepository.countBy({
             createdAt: (0, typeorm_2.Raw)((dateTime) => `${dateTime} > :date`, { date }),
         });
     }

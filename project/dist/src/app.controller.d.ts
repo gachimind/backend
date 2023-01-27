@@ -18,5 +18,5 @@ export declare class AppController {
     createTodayResult(): Promise<any[]>;
     createGameResult(): Promise<any[]>;
     createTurnResult(): Promise<(TurnResultDataInsertDto & TurnResult)[]>;
-    test(): Promise<TurnResult[]>;
+    test(): Promise<number>;
 }

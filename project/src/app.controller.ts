@@ -122,8 +122,11 @@ export class AppController {
     async test() {
         const today = new Date();
         const date = today.toISOString().split('T')[0];
+        // return await this.turnResultRepository.findBy({
+        //     createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
+        // });
 
-        return await this.turnResultRepository.findBy({
+        return await this.turnResultRepository.countBy({
             createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
         });
     }
