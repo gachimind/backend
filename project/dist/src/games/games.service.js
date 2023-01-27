@@ -114,6 +114,7 @@ let GamesService = class GamesService {
     async saveEvaluationScore(roomId, data) {
         const { score, turn } = data;
         score_map_1.scoreMap[roomId][turn].push(score);
+        console.log('중간점수 합계 : ');
     }
     async recordSpeechPlayerScore(roomId, turn, userId, nickname) {
         const room = await this.roomRepository.findOne({
@@ -125,7 +126,11 @@ let GamesService = class GamesService {
             select: { gameResultId: true },
         });
         const unevaluatedNum = room.players.length - 1 - score_map_1.scoreMap[roomId][turn].length;
-        const score = ((score_map_1.scoreMap[roomId][turn] + unevaluatedNum * 5) * 20) / (room.players.length - 1);
+        let sum = 0;
+        for (let score of score_map_1.scoreMap[roomId][turn]) {
+            sum += score;
+        }
+        const score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
         const turnResult = {
             gameResultInfo: gameResult.gameResultId,
             roomId,

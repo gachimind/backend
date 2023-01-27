@@ -126,6 +126,7 @@ export class GamesService {
         const { score, turn } = data;
         // TODO : redis 붙이고 cache로 이동
         scoreMap[roomId][turn].push(score);
+        console.log('중간점수 합계 : ');
     }
 
     async recordSpeechPlayerScore(roomId: number, turn: number, userId: number, nickname: string) {
@@ -142,8 +143,12 @@ export class GamesService {
         // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
         const unevaluatedNum = room.players.length - 1 - scoreMap[roomId][turn].length;
 
-        const score =
-            ((scoreMap[roomId][turn] + unevaluatedNum * 5) * 20) / (room.players.length - 1);
+        let sum: number = 0;
+        for (let score of scoreMap[roomId][turn]) {
+            sum += score;
+        }
+
+        const score: number = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
 
         const turnResult: TurnResultDataInsertDto = {
             gameResultInfo: gameResult.gameResultId,
