@@ -38,6 +38,10 @@ export class GamesService {
         return await this.turnResultRepository.save(turnResult);
     }
 
+    async deleteTurnByRoomId(roomInfo: number): Promise<void> {
+        await this.turnRepository.softDelete({ roomInfo });
+    }
+
     async createGameResultPerPlayer(roomId) {
         const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 

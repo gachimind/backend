@@ -56,13 +56,17 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Room.prototype, "isGameReadyToStart", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], Room.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], Room.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ select: false }),
+    __metadata("design:type", Date)
+], Room.prototype, "deletedAt", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => player_entity_1.Player, (player) => player.room, { eager: true }),
     __metadata("design:type", Array)

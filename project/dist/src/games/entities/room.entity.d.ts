@@ -13,6 +13,7 @@ export declare class Room {
     isGameReadyToStart: boolean;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
     players: Player[];
     turns: Turn[];
 }

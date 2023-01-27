@@ -34,7 +34,7 @@ __decorate([
     __metadata("design:type", Number)
 ], TodayResult.prototype, "todayScore", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], TodayResult.prototype, "createdAt", void 0);
 __decorate([
@@ -42,7 +42,7 @@ __decorate([
     __metadata("design:type", Date)
 ], TodayResult.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.DeleteDateColumn)(),
+    (0, typeorm_1.DeleteDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], TodayResult.prototype, "deletedAt", void 0);
 __decorate([

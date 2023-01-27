@@ -35,6 +35,10 @@ __decorate([
     __metadata("design:type", user_entity_1.User)
 ], GameResult.prototype, "user", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], GameResult.prototype, "gameScore", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'todayResultInfo', nullable: true }),
     __metadata("design:type", Number)
 ], GameResult.prototype, "todayResultInfo", void 0);
@@ -48,11 +52,11 @@ __decorate([
     __metadata("design:type", todayResult_entity_1.TodayResult)
 ], GameResult.prototype, "todayResult", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], GameResult.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], GameResult.prototype, "updatedAt", void 0);
 __decorate([

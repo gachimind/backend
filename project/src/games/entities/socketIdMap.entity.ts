@@ -16,6 +16,6 @@ export class SocketIdMap {
     @OneToOne(() => Player, (player) => player.socket)
     player: Player;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 }

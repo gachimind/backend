@@ -5,7 +5,9 @@ import { Repository } from 'typeorm';
 import { ResultToDataInterceptor } from './common/interceptors/resultToData.interceptor';
 import { TurnResultDataInsertDto } from './games/dto/turn-result.data.insert.dto';
 import { GameResult } from './games/entities/gameResult.entity';
+import { Room } from './games/entities/room.entity';
 import { TodayResult } from './games/entities/todayResult.entity';
+import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
 import { TokenMap } from './users/entities/token-map.entity';
 import { User } from './users/entities/user.entity';
@@ -24,6 +26,10 @@ export class AppController {
         private readonly gameResultRepository: Repository<GameResult>,
         @InjectRepository(TurnResult)
         private readonly turnResultRepository: Repository<TurnResult>,
+        @InjectRepository(Turn)
+        private readonly turnRepository: Repository<Turn>,
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
     ) {}
 
     @Get()
@@ -115,5 +121,14 @@ export class AppController {
         }
 
         return await this.turnResultRepository.save(results);
+    }
+
+    @Get('test')
+    async test() {
+        return this.gameResultRepository
+            .createQueryBuilder('gameResult')
+            .select('SUM(turnResults.score)', 'sum')
+            .where('userInfo = :id', { id: 8 })
+            .getRawMany();
     }
 }

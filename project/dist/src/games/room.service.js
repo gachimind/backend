@@ -53,7 +53,7 @@ let RoomService = class RoomService {
         });
     }
     async removeRoomByRoomId(roomId) {
-        return await this.roomRepository.delete(roomId);
+        return await this.roomRepository.softDelete(roomId);
     }
     async updateRoomStatusByRoomId(data) {
         return this.roomRepository.save(data);

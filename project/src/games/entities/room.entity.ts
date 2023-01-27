@@ -5,6 +5,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
     OneToMany,
+    DeleteDateColumn,
 } from 'typeorm';
 import { Player } from './player.entity';
 import { Turn } from './turn.entity';
@@ -41,11 +42,14 @@ export class Room {
     @Column()
     isGameReadyToStart: boolean;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
+
+    @DeleteDateColumn({ select: false })
+    deletedAt: Date | null;
 
     @OneToMany(() => Player, (player) => player.room, { eager: true })
     players: Player[];

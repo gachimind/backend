@@ -6,6 +6,7 @@ export declare class GameResult {
     roomId: number;
     userInfo: number;
     user: User;
+    gameScore: number;
     todayResultInfo: number;
     todayResult: TodayResult;
     createdAt: Date;

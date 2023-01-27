@@ -27,13 +27,13 @@ export class User {
     @Column('text')
     profileImg: string;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 
-    @DeleteDateColumn()
+    @DeleteDateColumn({ select: false })
     deletedAt: Date | null;
 
     @OneToMany(() => GameResult, (gameResult) => gameResult.user)

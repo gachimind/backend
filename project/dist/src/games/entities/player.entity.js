@@ -58,7 +58,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Player.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], Player.prototype, "updatedAt", void 0);
 Player = __decorate([

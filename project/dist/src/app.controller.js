@@ -18,17 +18,21 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const resultToData_interceptor_1 = require("./common/interceptors/resultToData.interceptor");
 const gameResult_entity_1 = require("./games/entities/gameResult.entity");
+const room_entity_1 = require("./games/entities/room.entity");
 const todayResult_entity_1 = require("./games/entities/todayResult.entity");
+const turn_entity_1 = require("./games/entities/turn.entity");
 const turnResult_entity_1 = require("./games/entities/turnResult.entity");
 const token_map_entity_1 = require("./users/entities/token-map.entity");
 const user_entity_1 = require("./users/entities/user.entity");
 let AppController = class AppController {
-    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, turnResultRepository) {
+    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, turnResultRepository, turnRepository, roomRepository) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
         this.todayResultRepository = todayResultRepository;
         this.gameResultRepository = gameResultRepository;
         this.turnResultRepository = turnResultRepository;
+        this.turnRepository = turnRepository;
+        this.roomRepository = roomRepository;
     }
     greetings() {
         return `welcome to gachimind project nest server!`;
@@ -105,6 +109,13 @@ let AppController = class AppController {
         }
         return await this.turnResultRepository.save(results);
     }
+    async test() {
+        return this.gameResultRepository
+            .createQueryBuilder('gameResult')
+            .select('SUM(turnResults.score)', 'sum')
+            .where('userInfo = :id', { id: 8 })
+            .getRawMany();
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -142,6 +153,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "createTurnResult", null);
+__decorate([
+    (0, common_1.Get)('test'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "test", null);
 AppController = __decorate([
     (0, common_1.UseInterceptors)(resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)(),
@@ -150,7 +167,11 @@ AppController = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
     __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
     __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
+    __param(5, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
+    __param(6, (0, typeorm_1.InjectRepository)(room_entity_1.Room)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
