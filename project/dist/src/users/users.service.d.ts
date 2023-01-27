@@ -32,9 +32,9 @@ export declare class UsersService {
     }>;
     userKeyword(token: string): Promise<{
         userId: number;
-        todaySpeechKeyword: Set<any>;
-        todayQuizKeyword: Set<any>;
-        totalSpeechKeyword: Set<any>;
-        totalQuizKeyword: Set<any>;
+        todaySpeechKeyword: any[];
+        todayQuizKeyword: any[];
+        totalSpeechKeyword: any[];
+        totalQuizKeyword: any[];
     }>;
 }

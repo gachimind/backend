@@ -121,28 +121,19 @@ export class UsersService {
             }
         }
 
-        const totalSpeechKeyword = new Set(speechKeywordArray);
-        const totalQuizKeyword = new Set(quizKeywordArray);
+        const totalSpeechKeyword = [...new Set(speechKeywordArray)];
+        const totalQuizKeyword = [...new Set(quizKeywordArray)];
 
         // 오늘 전체 키워드 찾아오기
         const today: Date = getTodayDate();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: user.userInfo,
+                createdAt: MoreThan(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
 
-        // const findTodaykeyword = await this.TurnResultRepository.find({
-        //     where: {
-        //         userId: user.userInfo,
-        //         createdAt: MoreThan(today),
-        //     },
-        //     select: { keyword: true, isSpeech: true },
-        // });
-
-        function arr(findTotalkeyword) {
-            if (findTotalkeyword.createdAt == today) {
-                return true;
-            }
-        }
-        const findTodaykeyword = findTotalkeyword.filter(arr);
-
-        // 발표 유무에 따라 각각 배열에 담기
         const todaySpeechKeywordArray = [];
         const todayQuizKeywordArray = [];
         for (const result of findTodaykeyword) {
@@ -152,10 +143,10 @@ export class UsersService {
                 todayQuizKeywordArray.push(result.keyword);
             }
         }
+        const todaySpeechKeyword = [...new Set(todaySpeechKeywordArray)];
+        const todayQuizKeyword = [...new Set(todayQuizKeywordArray)];
 
-        const todaySpeechKeyword = new Set(todaySpeechKeywordArray);
-        const todayQuizKeyword = new Set(todayQuizKeywordArray);
-
+        // 데이터 정렬
         const data = {
             userId: user.userInfo,
             todaySpeechKeyword,

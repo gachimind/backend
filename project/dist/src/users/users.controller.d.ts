@@ -25,10 +25,10 @@ export declare class UsersController {
     userKeyword(headers: any): Promise<{
         data: {
             userId: number;
-            todaySpeechKeyword: Set<any>;
-            todayQuizKeyword: Set<any>;
-            totalSpeechKeyword: Set<any>;
-            totalQuizKeyword: Set<any>;
+            todaySpeechKeyword: any[];
+            todayQuizKeyword: any[];
+            totalSpeechKeyword: any[];
+            totalQuizKeyword: any[];
         };
     }>;
 }
