@@ -32,6 +32,8 @@ export declare class UsersService {
     }>;
     getUserKeywordByToken(token: string): Promise<{
         userId: number;
+        todaySpeechKeyword: string[];
+        todayQuizKeyword: string[];
         totalSpeechKeyword: string[];
         totalQuizKeyword: string[];
     }>;

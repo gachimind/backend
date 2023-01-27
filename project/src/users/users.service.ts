@@ -1,6 +1,6 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
@@ -110,20 +110,18 @@ export class UsersService {
             select: { todayResults: true },
         });
 
-        ///////////////////////////
-
         // 전체 키워드 찾아오기
         const findTotalkeyword = await this.TurnResultRepository.find({
             where: { nickname: findUserTodayResult.nickname },
-            select: { keyword: true, isSpeech: true, createdAt: true },
+            select: { keyword: true, isSpeech: true },
         });
 
         // 발표 유무에 따라 각각 배열에 담기
-        const SpeechKeywordArray = [];
+        const speechKeywordArray = [];
         const totalKeywordArray = [];
         for (const result of findTotalkeyword) {
             if (result.isSpeech === true) {
-                SpeechKeywordArray.push({
+                speechKeywordArray.push({
                     Keyword: result.keyword,
                 });
             } else {
@@ -135,8 +133,8 @@ export class UsersService {
 
         // 발표자일 경우 전체 단어
         const totalSpeechKeywordExp = [];
-        for (const result in SpeechKeywordArray) {
-            totalSpeechKeywordExp.push(SpeechKeywordArray[result].Keyword);
+        for (const result in speechKeywordArray) {
+            totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
         }
         const totalSpeechKeywordCont = totalSpeechKeywordExp.join(); // 배열 합치기
         const totalSpeechKeyword = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
@@ -151,23 +149,58 @@ export class UsersService {
 
         //////////////////////////////////////////
 
-        // const today: Date = getTodayDate();
+        // 오늘 전체 키워드 찾아오기
 
-        // const todayKeywordArray = findTotalkeyword.find(
-        //     (findTotalkeyword) => findTotalkeyword.createdAt == today,
-        // );
+        const today: Date = getTodayDate();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: getUserKeywordByToken.userInfo,
+                createdAt: MoreThan(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
 
-        // console.log(todayKeywordArray);
-        // // findTotalkeyword
+        // 발표 유무에 따라 각각 배열에 담기
+        const todaySpeechKeywordArray = [];
+        const todayKeywordArray = [];
+        for (const result of findTodaykeyword) {
+            if (result.isSpeech === true) {
+                todaySpeechKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            } else {
+                todayKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+        }
+
+        // 발표자일 경우 오늘 전체 단어
+        const todaySpeechKeywordExp = [];
+        for (const result in todaySpeechKeywordArray) {
+            todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
+        }
+        const todaySpeechKeywordCont = todaySpeechKeywordExp.join(); // 배열 합치기
+        const todaySpeechKeyword = [...new Set(todaySpeechKeywordCont)]; // 중복 제거
+
+        // 발표자가 아닌 경우 오늘 전체 단어
+        const todayQuizKeywordExp = [];
+        for (const result in todayKeywordArray) {
+            todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
+        }
+        const todayQuizKeywordCont = todayQuizKeywordExp.join(); // 배열 합치기
+        const todayQuizKeyword = [...new Set(todayQuizKeywordCont)]; // 중복 제거
 
         //////////////////////////////////////////
+
         const data = {
             userId: findUserTodayResult.userId,
-            //todaySpeechKeyword,
-            //todayQuizKeyword,
+            todaySpeechKeyword,
+            todayQuizKeyword,
             totalSpeechKeyword,
             totalQuizKeyword,
         };
+        console.log(data);
         return data;
     }
 }
