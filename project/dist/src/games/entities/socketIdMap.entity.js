@@ -33,7 +33,7 @@ __decorate([
     __metadata("design:type", player_entity_1.Player)
 ], SocketIdMap.prototype, "player", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], SocketIdMap.prototype, "createdAt", void 0);
 SocketIdMap = __decorate([

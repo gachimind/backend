@@ -32,11 +32,11 @@ __decorate([
     __metadata("design:type", user_entity_1.User)
 ], TokenMap.prototype, "user", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], TokenMap.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], TokenMap.prototype, "updatedAt", void 0);
 TokenMap = __decorate([

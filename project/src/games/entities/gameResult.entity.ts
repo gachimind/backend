@@ -26,6 +26,9 @@ export class GameResult {
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
+    @Column({ type: 'int' })
+    gameScore: number;
+
     @Column({ name: 'todayResultInfo', nullable: true })
     todayResultInfo: number;
     @ManyToOne(() => TodayResult, (todayResult) => todayResult.gameResults, {
@@ -36,10 +39,10 @@ export class GameResult {
     @JoinColumn({ name: 'todayResultInfo' })
     todayResult: TodayResult;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 
     @OneToMany(() => TurnResult, (turnResult) => turnResult.gameResult)

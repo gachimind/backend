@@ -38,6 +38,9 @@ let GamesService = class GamesService {
     async createTurnResult(turnResult) {
         return await this.turnResultRepository.save(turnResult);
     }
+    async deleteTurnByRoomId(roomInfo) {
+        await this.turnRepository.softDelete({ roomInfo });
+    }
     async createGameResultPerPlayer(roomId) {
         const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
         const today = (0, today_date_constructor_1.getTodayDate)();

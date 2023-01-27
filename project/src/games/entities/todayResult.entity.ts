@@ -26,13 +26,13 @@ export class TodayResult {
     @Column({ type: 'int' })
     todayScore: number;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @DeleteDateColumn()
+    @DeleteDateColumn({ select: false })
     deletedAt: Date | null;
 
     @OneToMany(() => GameResult, (gameResult) => gameResult.todayResult, { eager: true })

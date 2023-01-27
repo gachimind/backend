@@ -24,7 +24,7 @@ __decorate([
 ], Turn.prototype, "roomInfo", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
+        cascade: true,
     }),
     (0, typeorm_1.JoinColumn)({ name: 'roomInfo' }),
     __metadata("design:type", room_entity_1.Room)
@@ -54,11 +54,11 @@ __decorate([
     __metadata("design:type", String)
 ], Turn.prototype, "hint", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], Turn.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
+    (0, typeorm_1.UpdateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], Turn.prototype, "updatedAt", void 0);
 Turn = __decorate([
