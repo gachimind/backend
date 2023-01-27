@@ -22,4 +22,13 @@ export declare class UsersController {
             profileImg: string;
         };
     }>;
+    getUserKeywordByToken(headers: any): Promise<{
+        data: {
+            userId: number;
+            todaySpeechKeyword: string[];
+            todayQuizKeyword: string[];
+            totalSpeechKeyword: string[];
+            totalQuizKeyword: string[];
+        };
+    }>;
 }

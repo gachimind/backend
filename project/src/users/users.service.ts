@@ -1,11 +1,15 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
+import { TodayResult } from '../games/entities/todayResult.entity';
+import { GameResult } from '../games/entities/gameResult.entity';
+import { TurnResult } from '../games/entities/turnResult.entity';
+import { getTodayDate } from '../games/util/today.date.constructor';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +18,12 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
+        @InjectRepository(TodayResult)
+        private readonly todayResultRepository: Repository<TodayResult>,
+        @InjectRepository(GameResult)
+        private readonly gameResultRepository: Repository<GameResult>,
+        @InjectRepository(TurnResult)
+        private readonly TurnResultRepository: Repository<TurnResult>,
         private jwtService: JwtService,
         private configService: ConfigService,
     ) {}
@@ -85,5 +95,128 @@ export class UsersService {
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
 
         return { userId, email, nickname, profileImg };
+    }
+
+    // 회원 키워드 조회
+    async getUserKeywordByToken(token: string) {
+        const getUserKeywordByToken = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+
+        if (!getUserKeywordByToken) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+
+        const findUserTodayResult = await this.usersRepository.findOne({
+            where: { userId: getUserKeywordByToken.userInfo },
+            select: { todayResults: true },
+        });
+
+        // 전체 키워드 찾아오기
+        const findTotalkeyword = await this.TurnResultRepository.find({
+            where: { nickname: findUserTodayResult.nickname },
+            select: { keyword: true, isSpeech: true },
+        });
+
+        // 발표 유무에 따라 각각 배열에 담기
+        const speechKeywordArray = [];
+        const totalKeywordArray = [];
+        for (const result of findTotalkeyword) {
+            if (result.isSpeech === true) {
+                speechKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            for (const result of findTotalkeyword) {
+                totalKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            // else {
+            //     totalKeywordArray.push({
+            //         Keyword: result.keyword,
+            //     });
+            // }
+        }
+
+        // 발표자일 경우 전체 단어
+        const totalSpeechKeywordExp = [];
+        for (const result in speechKeywordArray) {
+            totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
+        }
+        const totalSpeechKeywordCont = totalSpeechKeywordExp.join(); // 배열 합치기
+        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
+        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
+
+        // 발표자가 아닌 경우 전체 단어
+        const totalQuizKeywordExp = [];
+        for (const result in totalKeywordArray) {
+            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
+        }
+        const totalQuizKeywordCont = totalQuizKeywordExp.join(); // 배열 합치기
+        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)]; // 중복 제거
+        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
+
+        //////////////////////////////////////////
+
+        // 오늘 전체 키워드 찾아오기
+
+        const today: Date = getTodayDate();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: getUserKeywordByToken.userInfo,
+                createdAt: MoreThan(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
+
+        // 발표 유무에 따라 각각 배열에 담기
+        const todaySpeechKeywordArray = [];
+        const todayKeywordArray = [];
+        for (const result of findTodaykeyword) {
+            if (result.isSpeech === true) {
+                todaySpeechKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            for (const result of findTodaykeyword) {
+                todayKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            // else {
+            //     todayKeywordArray.push({
+            //         Keyword: result.keyword,
+            //     });
+            // }
+        }
+
+        // 발표자일 경우 오늘 전체 단어
+        const todaySpeechKeywordExp = [];
+        for (const result in todaySpeechKeywordArray) {
+            todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
+        }
+        const todaySpeechKeywordCont = todaySpeechKeywordExp.join(); // 배열 합치기
+        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)]; // 중복 제거
+        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
+
+        // 발표자가 아닌 경우 오늘 전체 단어
+        const todayQuizKeywordExp = [];
+        for (const result in todayKeywordArray) {
+            todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
+        }
+        const todayQuizKeywordCont = todayQuizKeywordExp.join(); // 배열 합치기
+        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)]; // 중복 제거
+        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
+
+        //////////////////////////////////////////
+
+        const data = {
+            userId: findUserTodayResult.userId,
+            todaySpeechKeyword,
+            todayQuizKeyword,
+            totalSpeechKeyword,
+            totalQuizKeyword,
+        };
+        console.log(data);
+        return data;
     }
 }

@@ -64,4 +64,16 @@ export class UsersController {
 
         return { data };
     }
+
+    // 회원 키워드 조회
+    @UseGuards(JwtAuthGuard)
+    @Get('/me/keyword')
+    async getUserKeywordByToken(@Headers() headers) {
+        const tokenParsing = headers.authorization;
+
+        const token = tokenParsing.replace('Bearer ', '');
+        const data = await this.usersService.getUserKeywordByToken(token);
+
+        return { data };
+    }
 }

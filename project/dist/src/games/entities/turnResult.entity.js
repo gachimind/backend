@@ -36,6 +36,10 @@ __decorate([
     __metadata("design:type", Number)
 ], TurnResult.prototype, "turn", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], TurnResult.prototype, "userId", void 0);
+__decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], TurnResult.prototype, "nickname", void 0);

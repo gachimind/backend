@@ -19,12 +19,15 @@ const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const config_1 = require("@nestjs/config");
 const jwt_guard_1 = require("./auth/jwt.guard");
+const todayResult_entity_1 = require("../games/entities/todayResult.entity");
+const gameResult_entity_1 = require("../games/entities/gameResult.entity");
+const turnResult_entity_1 = require("../games/entities/turnResult.entity");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, token_map_entity_1.TokenMap, todayResult_entity_1.TodayResult, gameResult_entity_1.GameResult, turnResult_entity_1.TurnResult]),
             jwt_1.JwtModule.registerAsync({
                 inject: [config_1.ConfigService],
                 useFactory: (configService) => ({

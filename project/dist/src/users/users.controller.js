@@ -42,6 +42,12 @@ let UsersController = class UsersController {
         console.log('controller, data :', data);
         return { data };
     }
+    async getUserKeywordByToken(headers) {
+        const tokenParsing = headers.authorization;
+        const token = tokenParsing.replace('Bearer ', '');
+        const data = await this.usersService.getUserKeywordByToken(token);
+        return { data };
+    }
 };
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
@@ -69,6 +75,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('/me/keyword'),
+    __param(0, (0, common_1.Headers)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getUserKeywordByToken", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,

@@ -20,10 +20,17 @@ const jwt_1 = require("@nestjs/jwt");
 const user_entity_1 = require("./entities/user.entity");
 const token_map_entity_1 = require("./entities/token-map.entity");
 const config_1 = require("@nestjs/config");
+const todayResult_entity_1 = require("../games/entities/todayResult.entity");
+const gameResult_entity_1 = require("../games/entities/gameResult.entity");
+const turnResult_entity_1 = require("../games/entities/turnResult.entity");
+const today_date_constructor_1 = require("../games/util/today.date.constructor");
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository, jwtService, configService) {
+    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, TurnResultRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
+        this.todayResultRepository = todayResultRepository;
+        this.gameResultRepository = gameResultRepository;
+        this.TurnResultRepository = TurnResultRepository;
         this.jwtService = jwtService;
         this.configService = configService;
     }
@@ -77,12 +84,106 @@ let UsersService = class UsersService {
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
         return { userId, email, nickname, profileImg };
     }
+    async getUserKeywordByToken(token) {
+        const getUserKeywordByToken = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+        if (!getUserKeywordByToken)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
+        const findUserTodayResult = await this.usersRepository.findOne({
+            where: { userId: getUserKeywordByToken.userInfo },
+            select: { todayResults: true },
+        });
+        const findTotalkeyword = await this.TurnResultRepository.find({
+            where: { nickname: findUserTodayResult.nickname },
+            select: { keyword: true, isSpeech: true },
+        });
+        const speechKeywordArray = [];
+        const totalKeywordArray = [];
+        for (const result of findTotalkeyword) {
+            if (result.isSpeech === true) {
+                speechKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            for (const result of findTotalkeyword) {
+                totalKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+        }
+        const totalSpeechKeywordExp = [];
+        for (const result in speechKeywordArray) {
+            totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
+        }
+        const totalSpeechKeywordCont = totalSpeechKeywordExp.join();
+        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)];
+        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ',');
+        const totalQuizKeywordExp = [];
+        for (const result in totalKeywordArray) {
+            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
+        }
+        const totalQuizKeywordCont = totalQuizKeywordExp.join();
+        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)];
+        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ',');
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: getUserKeywordByToken.userInfo,
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
+        const todaySpeechKeywordArray = [];
+        const todayKeywordArray = [];
+        for (const result of findTodaykeyword) {
+            if (result.isSpeech === true) {
+                todaySpeechKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+            for (const result of findTodaykeyword) {
+                todayKeywordArray.push({
+                    Keyword: result.keyword,
+                });
+            }
+        }
+        const todaySpeechKeywordExp = [];
+        for (const result in todaySpeechKeywordArray) {
+            todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
+        }
+        const todaySpeechKeywordCont = todaySpeechKeywordExp.join();
+        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)];
+        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ',');
+        const todayQuizKeywordExp = [];
+        for (const result in todayKeywordArray) {
+            todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
+        }
+        const todayQuizKeywordCont = todayQuizKeywordExp.join();
+        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)];
+        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ',');
+        const data = {
+            userId: findUserTodayResult.userId,
+            todaySpeechKeyword,
+            todayQuizKeyword,
+            totalSpeechKeyword,
+            totalQuizKeyword,
+        };
+        console.log(data);
+        return data;
+    }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
+    __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
+    __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         jwt_1.JwtService,
         config_1.ConfigService])
