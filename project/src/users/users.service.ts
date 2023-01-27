@@ -124,11 +124,17 @@ export class UsersService {
                 speechKeywordArray.push({
                     Keyword: result.keyword,
                 });
-            } else {
+            }
+            for (const result of findTotalkeyword) {
                 totalKeywordArray.push({
                     Keyword: result.keyword,
                 });
             }
+            // else {
+            //     totalKeywordArray.push({
+            //         Keyword: result.keyword,
+            //     });
+            // }
         }
 
         // 발표자일 경우 전체 단어
@@ -137,7 +143,8 @@ export class UsersService {
             totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
         }
         const totalSpeechKeywordCont = totalSpeechKeywordExp.join(); // 배열 합치기
-        const totalSpeechKeyword = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
+        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)]; // 중복 제거
+        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
 
         // 발표자가 아닌 경우 전체 단어
         const totalQuizKeywordExp = [];
@@ -145,7 +152,8 @@ export class UsersService {
             totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
         }
         const totalQuizKeywordCont = totalQuizKeywordExp.join(); // 배열 합치기
-        const totalQuizKeyword = [...new Set(totalQuizKeywordCont)]; // 중복 제거
+        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)]; // 중복 제거
+        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
 
         //////////////////////////////////////////
 
@@ -168,11 +176,17 @@ export class UsersService {
                 todaySpeechKeywordArray.push({
                     Keyword: result.keyword,
                 });
-            } else {
+            }
+            for (const result of findTodaykeyword) {
                 todayKeywordArray.push({
                     Keyword: result.keyword,
                 });
             }
+            // else {
+            //     todayKeywordArray.push({
+            //         Keyword: result.keyword,
+            //     });
+            // }
         }
 
         // 발표자일 경우 오늘 전체 단어
@@ -181,7 +195,8 @@ export class UsersService {
             todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
         }
         const todaySpeechKeywordCont = todaySpeechKeywordExp.join(); // 배열 합치기
-        const todaySpeechKeyword = [...new Set(todaySpeechKeywordCont)]; // 중복 제거
+        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)]; // 중복 제거
+        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ','); // ',' 제거
 
         // 발표자가 아닌 경우 오늘 전체 단어
         const todayQuizKeywordExp = [];
@@ -189,7 +204,8 @@ export class UsersService {
             todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
         }
         const todayQuizKeywordCont = todayQuizKeywordExp.join(); // 배열 합치기
-        const todayQuizKeyword = [...new Set(todayQuizKeywordCont)]; // 중복 제거
+        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)]; // 중복 제거
+        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ','); // ',' 제거
 
         //////////////////////////////////////////
 

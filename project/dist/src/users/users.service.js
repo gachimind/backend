@@ -106,7 +106,7 @@ let UsersService = class UsersService {
                     Keyword: result.keyword,
                 });
             }
-            else {
+            for (const result of findTotalkeyword) {
                 totalKeywordArray.push({
                     Keyword: result.keyword,
                 });
@@ -117,13 +117,15 @@ let UsersService = class UsersService {
             totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
         }
         const totalSpeechKeywordCont = totalSpeechKeywordExp.join();
-        const totalSpeechKeyword = [...new Set(totalSpeechKeywordCont)];
+        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)];
+        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ',');
         const totalQuizKeywordExp = [];
         for (const result in totalKeywordArray) {
             totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
         }
         const totalQuizKeywordCont = totalQuizKeywordExp.join();
-        const totalQuizKeyword = [...new Set(totalQuizKeywordCont)];
+        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)];
+        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ',');
         const today = (0, today_date_constructor_1.getTodayDate)();
         const findTodaykeyword = await this.TurnResultRepository.find({
             where: {
@@ -140,7 +142,7 @@ let UsersService = class UsersService {
                     Keyword: result.keyword,
                 });
             }
-            else {
+            for (const result of findTodaykeyword) {
                 todayKeywordArray.push({
                     Keyword: result.keyword,
                 });
@@ -151,13 +153,15 @@ let UsersService = class UsersService {
             todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
         }
         const todaySpeechKeywordCont = todaySpeechKeywordExp.join();
-        const todaySpeechKeyword = [...new Set(todaySpeechKeywordCont)];
+        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)];
+        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ',');
         const todayQuizKeywordExp = [];
         for (const result in todayKeywordArray) {
             todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
         }
         const todayQuizKeywordCont = todayQuizKeywordExp.join();
-        const todayQuizKeyword = [...new Set(todayQuizKeywordCont)];
+        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)];
+        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ',');
         const data = {
             userId: findUserTodayResult.userId,
             todaySpeechKeyword,
