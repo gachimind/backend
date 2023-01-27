@@ -126,13 +126,21 @@ export class UsersService {
 
         // 오늘 전체 키워드 찾아오기
         const today: Date = getTodayDate();
-        const findTodaykeyword = await this.TurnResultRepository.find({
-            where: {
-                userId: user.userInfo,
-                createdAt: MoreThan(today),
-            },
-            select: { keyword: true, isSpeech: true },
-        });
+
+        // const findTodaykeyword = await this.TurnResultRepository.find({
+        //     where: {
+        //         userId: user.userInfo,
+        //         createdAt: MoreThan(today),
+        //     },
+        //     select: { keyword: true, isSpeech: true },
+        // });
+
+        function arr(findTotalkeyword) {
+            if (findTotalkeyword.createdAt == today) {
+                return true;
+            }
+        }
+        const findTodaykeyword = findTotalkeyword.filter(arr);
 
         // 발표 유무에 따라 각각 배열에 담기
         const todaySpeechKeywordArray = [];

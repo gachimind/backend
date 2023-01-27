@@ -107,13 +107,13 @@ let UsersService = class UsersService {
         const totalSpeechKeyword = new Set(speechKeywordArray);
         const totalQuizKeyword = new Set(quizKeywordArray);
         const today = (0, today_date_constructor_1.getTodayDate)();
-        const findTodaykeyword = await this.TurnResultRepository.find({
-            where: {
-                userId: user.userInfo,
-                createdAt: (0, typeorm_2.MoreThan)(today),
-            },
-            select: { keyword: true, isSpeech: true },
-        });
+        function arr(findTotalkeyword) {
+            if (findTotalkeyword.createdAt == today) {
+                return true;
+            }
+        }
+        const findTodaykeyword = findTotalkeyword.filter(arr);
+        console.log(findTodaykeyword, '111111111');
         const todaySpeechKeywordArray = [];
         const todayQuizKeywordArray = [];
         for (const result of findTodaykeyword) {
