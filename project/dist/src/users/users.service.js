@@ -89,16 +89,13 @@ let UsersService = class UsersService {
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         const { userId, nickname, profileImg } = getUserInfoByToken.user;
         const today = (0, today_date_constructor_1.getTodayDate)();
-        const findTodayScore = await this.todayResultRepository.find({
+        const findTodayScore = await this.todayResultRepository.findOne({
             where: {
+                userInfo: userId,
                 createdAt: (0, typeorm_2.MoreThan)(today),
             },
-            select: { todayScore: true },
         });
-        const todayScore = findTodayScore
-            .map((item) => item.todayScore)
-            .reduce((prev, curr) => prev + curr, 0);
-        return { userId, nickname, profileImg, todayScore };
+        return { userId, nickname, profileImg, todayScore: findTodayScore.todayScore };
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({

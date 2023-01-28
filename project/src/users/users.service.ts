@@ -110,17 +110,14 @@ export class UsersService {
 
         // 오늘 전체 스코어 찾아오기
         const today: Date = getTodayDate();
-        const findTodayScore = await this.todayResultRepository.find({
+        const findTodayScore = await this.todayResultRepository.findOne({
             where: {
+                userInfo: userId,
                 createdAt: MoreThan(today),
             },
-            select: { todayScore: true },
         });
 
-        const todayScore = findTodayScore
-            .map((item) => item.todayScore)
-            .reduce((prev, curr) => prev + curr, 0);
-        return { userId, nickname, profileImg, todayScore };
+        return { userId, nickname, profileImg, todayScore: findTodayScore.todayScore };
     }
 
     // 회원 키워드 조회 API
@@ -183,29 +180,4 @@ export class UsersService {
         console.log(data);
         return data;
     }
-
-    // // 오늘 랭킹 조회 API
-    // async todayRanking(token: string) {
-    //     const user = await this.tokenMapRepository.findOneBy({
-    //         token,
-    //     });
-
-    //     // 오늘 전체 스코어 찾아오기
-    //     const today: Date = getTodayDate();
-    //     const findTodayScore = await this.TurnResultRepository.find({
-    //         where: {
-    //             createdAt: MoreThan(today),
-    //         },
-    //         select: { userId: true, score: true },
-    //     });
-
-    //     // 동일한 ID끼리 배열 분류
-    //     const sortById = findTodayScore.reduce((acc, current) => {
-    //         acc[current.userId] = acc[current.userId] || [];
-    //         acc[current.userId].push(current.score);
-    //         return acc;
-    //     }, {});
-
-    //     // console.log(sortById);
-    // }
 }
