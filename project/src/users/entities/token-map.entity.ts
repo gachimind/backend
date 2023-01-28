@@ -25,9 +25,9 @@ export class TokenMap {
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 }

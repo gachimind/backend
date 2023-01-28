@@ -8,6 +8,7 @@ import {
     ManyToOne,
     JoinColumn,
     PrimaryColumn,
+    DeleteDateColumn,
 } from 'typeorm';
 import { Room } from './room.entity';
 import { SocketIdMap } from './socketIdMap.entity';
@@ -43,6 +44,6 @@ export class Player {
     @CreateDateColumn()
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 }

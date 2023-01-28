@@ -23,7 +23,7 @@ export class UsersController {
         private readonly usersService: UsersService,
         private configService: ConfigService,
     ) {}
-    // 카카로 로그인
+    // 카카로 로그인 API
     @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao')
     handleLogin() {
@@ -51,17 +51,31 @@ export class UsersController {
         // .redirect(this.configService.get('REDIRECT'));
     }
 
-    // // 회원 정보 상세 조회
+    // 로그아웃 API
+    @UseGuards(JwtAuthGuard)
+    @Get('/logout')
+    async logout(@Headers() headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        await this.usersService.logout(token);
+        const message = '로그아웃 되었습니다.';
+        return { data: message };
+    }
+
+    // 회원 정보 상세 조회 API
     @UseGuards(JwtAuthGuard)
     @Get('/me')
     async getUserDetailsByToken(@Headers() headers) {
-        const tokenParsing = headers.authorization;
-        console.log('controller headers:', tokenParsing);
-
-        const token = tokenParsing.replace('Bearer ', '');
+        const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
-        console.log('controller, data :', data);
+        return { data };
+    }
 
+    // 회원 키워드 조회 API
+    @UseGuards(JwtAuthGuard)
+    @Get('/me/keyword')
+    async userKeyword(@Headers() headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        const data = await this.usersService.userKeyword(token);
         return { data };
     }
 }

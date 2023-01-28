@@ -41,9 +41,9 @@ export class TurnResult {
     @Column()
     isSpeech: boolean;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 }

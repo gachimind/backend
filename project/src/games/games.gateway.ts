@@ -247,17 +247,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             await this.gameTimer(room, 'readyTime', turn);
             // speechTimer 시작
             await this.gameTimer(room, 'speechTime', turn);
-            // discussionTimer시작
+
             // player 정보를 확인하기 위해 room 정보 갱신
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-
+            // 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
             let nextTurn = turn;
             if (turn.turn < room.players.length) {
                 nextTurn = await this.gamesService.createTurn(room.roomId);
             }
+            // discussionTimer시작
             await this.gameTimer(room, 'discussionTime', turn, nextTurn);
 
             // 턴 종료 후 게임 데이터 업데이트
@@ -336,7 +337,15 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             event,
         };
         data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
-        return this.server.to(`${roomId}`).emit('time-end', { data });
+        this.server.to(`${roomId}`).emit('time-end', { data });
+
+        if (event === 'discussionTimer' && !nextTurn.turn) {
+            const updateRoom = await this.gamesService.handleGameEndEvent(room);
+            this.server.to(`${updateRoom.roomId}`).emit('update-room', {
+                data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
+            });
+            this.updateRoomListToMain;
+        }
     }
 
     @SubscribeMessage('send-chat')
@@ -508,6 +517,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const updateRoom = await this.roomService.updateIsGameReadyToStart(room.roomId);
         return { room: updateRoom, state: 'updated' };
     }
+
+    //
 
     // ###################### update Room announcement #######################
 
