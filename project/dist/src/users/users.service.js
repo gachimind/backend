@@ -77,6 +77,16 @@ let UsersService = class UsersService {
             secret: this.configService.get('TOKEN_SECRETE_KEY'),
         });
     }
+    async logout(token) {
+        const findUser = await this.tokenMapRepository.findOneBy({ token });
+        if (!findUser) {
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
+        }
+        else {
+            await this.usersRepository.delete(token);
+        }
+        return findUser;
+    }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
