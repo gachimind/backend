@@ -1,11 +1,15 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
+import { TodayResult } from '../games/entities/todayResult.entity';
+import { GameResult } from '../games/entities/gameResult.entity';
+import { TurnResult } from '../games/entities/turnResult.entity';
+import { getTodayDate } from '../games/util/today.date.constructor';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +18,12 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
         @InjectRepository(TokenMap)
         private readonly tokenMapRepository: Repository<TokenMap>,
+        @InjectRepository(TodayResult)
+        private readonly todayResultRepository: Repository<TodayResult>,
+        @InjectRepository(GameResult)
+        private readonly gameResultRepository: Repository<GameResult>,
+        @InjectRepository(TurnResult)
+        private readonly TurnResultRepository: Repository<TurnResult>,
         private jwtService: JwtService,
         private configService: ConfigService,
     ) {}
@@ -76,7 +86,7 @@ export class UsersService {
         });
     }
 
-    // 회원 정보 상세 조회
+    // 회원 정보 상세 조회 API
     async getUserDetailsByToken(token: string) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
 
@@ -85,5 +95,66 @@ export class UsersService {
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
 
         return { userId, email, nickname, profileImg };
+    }
+
+    // 회원 키워드 조회 API
+    async userKeyword(token: string) {
+        const user = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+
+        if (!user) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+
+        // 전체 키워드 찾아오기
+        const findTotalkeyword = await this.TurnResultRepository.find({
+            where: { userId: user.userInfo },
+            select: { keyword: true, isSpeech: true, createdAt: true },
+        });
+
+        const speechKeywordArray = [];
+        const quizKeywordArray = [];
+        for (const result of findTotalkeyword) {
+            if (result.isSpeech) {
+                speechKeywordArray.push(result.keyword);
+            } else {
+                quizKeywordArray.push(result.keyword);
+            }
+        }
+
+        const totalSpeechKeyword = [...new Set(speechKeywordArray)];
+        const totalQuizKeyword = [...new Set(quizKeywordArray)];
+
+        // 오늘 전체 키워드 찾아오기
+        const today: Date = getTodayDate();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: user.userInfo,
+                createdAt: MoreThan(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
+
+        const todaySpeechKeywordArray = [];
+        const todayQuizKeywordArray = [];
+        for (const result of findTodaykeyword) {
+            if (result.isSpeech) {
+                todaySpeechKeywordArray.push(result.keyword);
+            } else {
+                todayQuizKeywordArray.push(result.keyword);
+            }
+        }
+        const todaySpeechKeyword = [...new Set(todaySpeechKeywordArray)];
+        const todayQuizKeyword = [...new Set(todayQuizKeywordArray)];
+
+        // 데이터 정렬
+        const data = {
+            userId: user.userInfo,
+            todaySpeechKeyword,
+            todayQuizKeyword,
+            totalSpeechKeyword,
+            totalQuizKeyword,
+        };
+        console.log(data);
+        return data;
     }
 }
