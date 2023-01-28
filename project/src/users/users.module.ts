@@ -10,10 +10,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './auth/jwt.guard';
+import { TodayResult } from 'src/games/entities/todayResult.entity';
+import { GameResult } from 'src/games/entities/gameResult.entity';
+import { TurnResult } from 'src/games/entities/turnResult.entity';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([User, TokenMap]),
+        TypeOrmModule.forFeature([User, TokenMap, TodayResult, GameResult, TurnResult]),
         JwtModule.registerAsync({
             inject: [ConfigService],
             useFactory: (configService: ConfigService) => ({
