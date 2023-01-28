@@ -385,7 +385,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(7);
@@ -410,10 +410,11 @@ let UsersController = class UsersController {
         const token = await this.usersService.createToken(user, isNewUser);
         return { url: this.configService.get('REDIRECT') + token };
     }
-    async logout(req, res, headers) {
+    async logout(headers) {
         const token = headers.authorization.replace('Bearer ', '');
         await this.usersService.logout(token);
-        res.json({ message: '로그아웃 되었습니다.' });
+        const message = '로그아웃 되었습니다.';
+        return { data: message };
     }
     async getUserDetailsByToken(headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -423,11 +424,6 @@ let UsersController = class UsersController {
     async userKeyword(headers) {
         const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.userKeyword(token);
-        return { data };
-    }
-    async todayScore(headers) {
-        const token = headers.authorization.replace('Bearer ', '');
-        const data = await this.usersService.todayScore(token);
         return { data };
     }
 };
@@ -452,11 +448,9 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Res)()),
-    __param(2, (0, common_1.Headers)()),
+    __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_d = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _d : Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "logout", null);
 __decorate([
@@ -475,14 +469,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "userKeyword", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
-    (0, common_1.Get)('/me/score'),
-    __param(0, (0, common_1.Headers)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "todayScore", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
@@ -583,17 +569,27 @@ let UsersService = class UsersService {
         });
     }
     async logout(token) {
-        const findUser = await this.tokenMapRepository.findOneBy({ token });
+        const findUser = await this.tokenMapRepository.delete({ token });
         if (!findUser)
             throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
-        return await this.tokenMapRepository.delete(token);
+        return findUser;
     }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
-        return { userId, email, nickname, profileImg };
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const findTodayScore = await this.todayResultRepository.find({
+            where: {
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
+            select: { todayScore: true },
+        });
+        const todayScore = findTodayScore
+            .map((item) => item.todayScore)
+            .reduce((prev, curr) => prev + curr, 0);
+        return { userId, email, nickname, profileImg, todayScore };
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({
@@ -645,25 +641,6 @@ let UsersService = class UsersService {
             totalQuizKeyword,
         };
         console.log(data);
-        return data;
-    }
-    async todayScore(token) {
-        const user = await this.tokenMapRepository.findOneBy({
-            token,
-        });
-        if (!user)
-            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
-        const today = (0, today_date_constructor_1.getTodayDate)();
-        const findTodayScore = await this.TurnResultRepository.find({
-            where: {
-                userId: user.userInfo,
-                createdAt: (0, typeorm_2.MoreThan)(today),
-            },
-            select: { score: true },
-        });
-        const data = findTodayScore
-            .map((item) => item.score)
-            .reduce((prev, curr) => prev + curr, 0);
         return data;
     }
 };
@@ -3125,7 +3102,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("8990d31b54d6055ecf6d")
+/******/ 		__webpack_require__.h = () => ("2fbad6905773e70eda52")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

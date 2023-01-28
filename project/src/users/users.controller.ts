@@ -54,10 +54,11 @@ export class UsersController {
     // 로그아웃 API
     @UseGuards(JwtAuthGuard)
     @Get('/logout')
-    async logout(@Req() req, @Res() res: Response, @Headers() headers) {
+    async logout(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
         await this.usersService.logout(token);
-        res.json({ message: '로그아웃 되었습니다.' });
+        const message = '로그아웃 되었습니다.';
+        return { data: message };
     }
 
     // 회원 정보 상세 조회 API
@@ -78,12 +79,12 @@ export class UsersController {
         return { data };
     }
 
-    // 오늘 스코어 조회 API
-    @UseGuards(JwtAuthGuard)
-    @Get('/me/score')
-    async todayScore(@Headers() headers) {
-        const token = headers.authorization.replace('Bearer ', '');
-        const data = await this.usersService.todayScore(token);
-        return { data };
-    }
+    // 오늘 랭킹 조회 API
+    // @UseGuards(JwtAuthGuard)
+    // @Get('/me/ranking')
+    // async todayRanking(@Headers() headers) {
+    //     const token = headers.authorization.replace('Bearer ', '');
+    //     const data = await this.usersService.todayRanking(token);
+    //     return { data };
+    // }
 }
