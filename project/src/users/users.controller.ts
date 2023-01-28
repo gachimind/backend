@@ -54,10 +54,10 @@ export class UsersController {
     // 로그아웃 API
     @UseGuards(JwtAuthGuard)
     @Get('/logout')
-    async logout(@Headers() headers) {
+    async logout(@Req() req, @Res() res: Response, @Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
-        const data = await this.usersService.getUserDetailsByToken(token);
-        return { data };
+        await this.usersService.logout(token);
+        res.json({ message: '로그아웃 되었습니다.' });
     }
 
     // 회원 정보 상세 조회 API

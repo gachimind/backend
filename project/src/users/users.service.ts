@@ -10,6 +10,7 @@ import { TodayResult } from '../games/entities/todayResult.entity';
 import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
+import { ConsoleLogger } from '@nestjs/common/services';
 
 @Injectable()
 export class UsersService {
@@ -91,12 +92,9 @@ export class UsersService {
     async logout(token: string) {
         const findUser = await this.tokenMapRepository.findOneBy({ token });
 
-        if (!findUser) {
-            throw new HttpException('정상적인 접근이 아닙니다.', 401);
-        } else {
-            await this.usersRepository.delete(token);
-        }
-        return findUser;
+        if (!findUser) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+
+        return await this.tokenMapRepository.delete(token);
     }
 
     // 회원 정보 상세 조회 API
