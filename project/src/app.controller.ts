@@ -1,7 +1,7 @@
-import { Controller, Get, Post, UseInterceptors, Body } from '@nestjs/common';
+import { Controller, Get, Post, UseInterceptors, Body, Param } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
-import { Raw, Repository } from 'typeorm';
+import { Like, Raw, Repository } from 'typeorm';
 import { ResultToDataInterceptor } from './common/interceptors/resultToData.interceptor';
 import { TurnResultDataInsertDto } from './games/dto/turn-result.data.insert.dto';
 import { GameResult } from './games/entities/gameResult.entity';
@@ -141,5 +141,16 @@ export class AppController {
             .select('SUM(turnResults.score)', 'sum')
             .where('userInfo = :id', { id: 8 })
             .getRawMany();
+    }
+
+    @Post('test/user')
+    async addUser(@Body() { nickname }) {
+        const users = await this.usersRepository.findBy({
+            nickname: Like(`${nickname}%`),
+        });
+        if (users.length) {
+            nickname = nickname + (users.length + 1);
+        }
+        return nickname;
     }
 }

@@ -1,6 +1,6 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, Like } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
@@ -33,6 +33,10 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
+    async findUserByNickname(nickname: string) {
+        return await this.usersRepository.findBy({ nickname: Like(`${nickname}%`) });
+    }
+
     async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
 
@@ -46,6 +50,11 @@ export class UsersService {
     }
 
     async validateUser(userData: CreateUserDto): Promise<User> {
+        const sameNickname = await this.findUserByNickname(userData.nickname);
+        if (sameNickname.length) {
+            userData.nickname = userData.nickname + (sameNickname.length + 1);
+        }
+
         let user: User = await this.findUser(
             userData.kakaoUserId,
             userData.email,

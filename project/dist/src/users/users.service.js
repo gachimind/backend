@@ -37,6 +37,9 @@ let UsersService = class UsersService {
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
+    async findUserByNickname(nickname) {
+        return await this.usersRepository.findBy({ nickname: (0, typeorm_2.Like)(`${nickname}%`) });
+    }
     async findUser(kakaoUserId, email, nickname) {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
         if (!user && email) {
@@ -48,6 +51,10 @@ let UsersService = class UsersService {
         return user;
     }
     async validateUser(userData) {
+        const sameNickname = await this.findUserByNickname(userData.nickname);
+        if (sameNickname.length) {
+            userData.nickname = userData.nickname + (sameNickname.length + 1);
+        }
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
         if (!user) {
             userData.isFirstLogin = true;
@@ -78,13 +85,17 @@ let UsersService = class UsersService {
         return findUser;
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const getUserInfoByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: {
+                user: { userId: true, nickname: true, profileImg: true, isFirstLogin: true },
+            },
+        });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         const { userId, nickname, profileImg, isFirstLogin } = getUserInfoByToken.user;
-        console.log('user before update', isFirstLogin);
         if (isFirstLogin) {
-            console.log(await this.usersRepository.save({ userId, isFirstLogin: false }));
+            await this.usersRepository.save({ userId, isFirstLogin: false });
         }
         const todayScore = await this.getTodayScoreByUserId(userId);
         return {

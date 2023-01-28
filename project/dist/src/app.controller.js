@@ -122,6 +122,15 @@ let AppController = class AppController {
             .where('userInfo = :id', { id: 8 })
             .getRawMany();
     }
+    async addUser({ nickname }) {
+        const users = await this.usersRepository.findBy({
+            nickname: (0, typeorm_2.Like)(`${nickname}%`),
+        });
+        if (users.length) {
+            nickname = nickname + (users.length + 1);
+        }
+        return nickname;
+    }
 };
 __decorate([
     (0, common_1.Get)(),
@@ -165,6 +174,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "test", null);
+__decorate([
+    (0, common_1.Post)('test/user'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "addUser", null);
 AppController = __decorate([
     (0, common_1.UseInterceptors)(resultToData_interceptor_1.ResultToDataInterceptor),
     (0, common_1.Controller)(),

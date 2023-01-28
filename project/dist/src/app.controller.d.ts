@@ -23,4 +23,7 @@ export declare class AppController {
     createGameResult(): Promise<any[]>;
     createTurnResult(): Promise<(TurnResultDataInsertDto & TurnResult)[]>;
     test(): Promise<number | any[]>;
+    addUser({ nickname }: {
+        nickname: any;
+    }): Promise<any>;
 }
