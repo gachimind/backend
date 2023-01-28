@@ -1,11 +1,15 @@
 import { Controller, Get, Post, UseInterceptors, Body } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { userInfo } from 'os';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 import { ResultToDataInterceptor } from './common/interceptors/resultToData.interceptor';
+import { TurnResultDataInsertDto } from './games/dto/turn-result.data.insert.dto';
 import { GameResult } from './games/entities/gameResult.entity';
+import { Room } from './games/entities/room.entity';
 import { TodayResult } from './games/entities/todayResult.entity';
+import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
+import { getTodayDate } from './games/util/today.date.constructor';
 import { TokenMap } from './users/entities/token-map.entity';
 import { User } from './users/entities/user.entity';
 
@@ -23,6 +27,10 @@ export class AppController {
         private readonly gameResultRepository: Repository<GameResult>,
         @InjectRepository(TurnResult)
         private readonly turnResultRepository: Repository<TurnResult>,
+        @InjectRepository(Turn)
+        private readonly turnRepository: Repository<Turn>,
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
     ) {}
 
     @Get()
@@ -86,7 +94,7 @@ export class AppController {
     @Get('seed/result/turn')
     async createTurnResult() {
         const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
-        const results = [];
+        const results: TurnResultDataInsertDto[] = [];
 
         for (let userId = 1; userId <= 6; userId++) {
             const gameResults: GameResult[] = await this.gameResultRepository.find({
@@ -101,7 +109,7 @@ export class AppController {
                     results.push({
                         gameResultInfo: gameResult.gameResultId,
                         roomId: gameResult.roomId,
-                        userInfo: userId,
+                        userId,
                         turn,
                         nickname: user.nickname,
                         score: 20 * (userId - 1),
@@ -114,5 +122,24 @@ export class AppController {
         }
 
         return await this.turnResultRepository.save(results);
+    }
+
+    @Get('test')
+    async test() {
+        const today = new Date();
+        const date = today.toISOString().split('T')[0];
+        // return await this.turnResultRepository.findBy({
+        //     createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
+        // });
+
+        return await this.turnResultRepository.countBy({
+            createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
+        });
+
+        return this.gameResultRepository
+            .createQueryBuilder('gameResult')
+            .select('SUM(turnResults.score)', 'sum')
+            .where('userInfo = :id', { id: 8 })
+            .getRawMany();
     }
 }

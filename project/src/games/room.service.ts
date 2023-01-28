@@ -9,6 +9,8 @@ import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
+import { scoreMap } from './util/score.map';
+import { GamesService } from './games.service';
 
 @Injectable()
 export class RoomService {
@@ -43,8 +45,15 @@ export class RoomService {
         });
     }
 
+    async getOneRoomByRoomIdWithTurnKeyword(roomId: number): Promise<Room> {
+        return await this.roomRepository.findOne({
+            where: { roomId },
+            select: { players: { userInfo: true }, turns: { keyword: true } },
+        });
+    }
+
     async removeRoomByRoomId(roomId: number): Promise<number | any> {
-        return await this.roomRepository.delete(roomId);
+        return await this.roomRepository.softDelete(roomId);
     }
 
     async updateRoomStatusByRoomId(data: any): Promise<Room> {
@@ -72,7 +81,10 @@ export class RoomService {
         };
 
         const roomInsert = await this.roomRepository.insert(newRoom);
-        return roomInsert.identifiers[0].roomId;
+        const roomId = roomInsert.identifiers[0].roomId;
+        scoreMap[roomId] = {};
+
+        return roomId;
     }
 
     async enterRoom(

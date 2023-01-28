@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { TokenMap } from 'src/users/entities/token-map.entity';
@@ -8,6 +8,8 @@ import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Socket } from 'socket.io';
+import { TodayResult } from './entities/todayResult.entity';
+import { getTodayDate } from './util/today.date.constructor';
 
 @Injectable()
 export class PlayersService {
@@ -18,6 +20,8 @@ export class PlayersService {
         private readonly socketIdMapRepository: Repository<SocketIdMap>,
         @InjectRepository(Player)
         private readonly playerRepository: Repository<Player>,
+        @InjectRepository(TodayResult)
+        private readonly todayResultRepository: Repository<TodayResult>,
     ) {}
 
     async getUserBySocketId(socketId: string): Promise<SocketIdMap> {
@@ -48,8 +52,21 @@ export class PlayersService {
         return player;
     }
 
+    async getAllPlayersUserIdByRoomID(roomId: number): Promise<Player[]> {
+        return await this.playerRepository.find({
+            where: { roomInfo: roomId },
+            select: { userInfo: true },
+        });
+    }
+
     async updatePlayerStatusByUserId(user): Promise<Player> {
         return await this.playerRepository.save(user);
+    }
+
+    async updateAllPlayerStatusByUserId(
+        users: { userInfo: number; isReady: boolean }[],
+    ): Promise<Player[]> {
+        return await this.playerRepository.save(users);
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
@@ -63,6 +80,7 @@ export class PlayersService {
     async socketIdMapToLoginUser(token: string, socketId: string) {
         // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
         const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({ token });
+
         const userId: number = requestUser.userInfo;
 
         if (!userId) {
@@ -84,6 +102,24 @@ export class PlayersService {
         // 위의 검사를 통과했다면, socketIdMap에 매핑
         const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.save(user);
+    }
+
+    async createTodayResult(userInfo: number) {
+        // userId & 오늘 날짜로 todayResult 테이블을 조회해서, 데이터가 있으면 만들지 않고, 없으면 새로 생성하기
+        const today: Date = getTodayDate();
+        // todayResult를 회원이 로그인 하고 30분동안 캐슁
+        const todayResult: TodayResult = await this.todayResultRepository.findOne({
+            where: { userInfo, createdAt: MoreThan(today) },
+            cache: 5 * 60 * 1000,
+        });
+
+        if (!todayResult) {
+            await this.todayResultRepository.save({ userInfo, todayScore: 0 });
+            await this.todayResultRepository.findOne({
+                where: { userInfo, createdAt: MoreThan(today) },
+                cache: 5 * 60 * 1000,
+            });
+        }
     }
 
     async setPlayerReady(player: Player): Promise<Player> {

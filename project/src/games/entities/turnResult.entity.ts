@@ -8,7 +8,6 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { GameResult } from './gameResult.entity';
-import { Turn } from './turn.entity';
 
 @Entity()
 export class TurnResult {
@@ -27,6 +26,9 @@ export class TurnResult {
     @Column({ type: 'tinyint' })
     turn: number;
 
+    @Column({ type: 'int' })
+    userId: number;
+
     @Column()
     nickname: string;
 
@@ -39,9 +41,9 @@ export class TurnResult {
     @Column()
     isSpeech: boolean;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 }

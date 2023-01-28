@@ -6,10 +6,9 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
-    OneToMany,
+    DeleteDateColumn,
 } from 'typeorm';
 import { Room } from './room.entity';
-import { TurnResult } from './turnResult.entity';
 
 @Entity()
 export class Turn {
@@ -19,7 +18,7 @@ export class Turn {
     @Column({ name: 'roomInfo' })
     roomInfo: number;
     @ManyToOne(() => Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
+        cascade: true,
     })
     @JoinColumn({ name: 'roomInfo' })
     room: Room;
@@ -34,14 +33,17 @@ export class Turn {
     speechPlayer: number;
 
     @Column()
+    speechPlayerNickname: string;
+
+    @Column()
     keyword: string;
 
     @Column({ type: 'text', nullable: true })
     hint: string | null;
 
-    @CreateDateColumn()
+    @CreateDateColumn({ select: false })
     createdAt: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ select: false })
     updatedAt: Date;
 }
