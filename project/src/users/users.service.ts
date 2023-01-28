@@ -101,7 +101,8 @@ export class UsersService {
     async getUserDetailsByToken(token: string) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
 
-        if (!getUserInfoByToken) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+        if (!getUserInfoByToken)
+            throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
 
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
 
