@@ -28,6 +28,7 @@ export class UsersService {
         private configService: ConfigService,
     ) {}
 
+    // 카카오 로그인 API
     async createUser(details: CreateUserDto): Promise<User> {
         return await this.usersRepository.save(details);
     }
@@ -86,7 +87,19 @@ export class UsersService {
         });
     }
 
-    // 회원 정보 상세 조회
+    // 로그아웃 API
+    async logout(token: string) {
+        const findUser = await this.tokenMapRepository.findOneBy({ token });
+
+        if (!findUser) {
+            throw new HttpException('정상적인 접근이 아닙니다.', 401);
+        } else {
+            await this.usersRepository.delete(token);
+        }
+        return findUser;
+    }
+
+    // 회원 정보 상세 조회 API
     async getUserDetailsByToken(token: string) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
 
@@ -97,7 +110,7 @@ export class UsersService {
         return { userId, email, nickname, profileImg };
     }
 
-    // 회원 키워드 조회
+    // 회원 키워드 조회 API
     async userKeyword(token: string) {
         const user = await this.tokenMapRepository.findOneBy({
             token,

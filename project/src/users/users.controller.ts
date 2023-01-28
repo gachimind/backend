@@ -23,7 +23,7 @@ export class UsersController {
         private readonly usersService: UsersService,
         private configService: ConfigService,
     ) {}
-    // 카카로 로그인
+    // 카카로 로그인 API
     @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao')
     handleLogin() {
@@ -50,8 +50,16 @@ export class UsersController {
         // .status(301)
         // .redirect(this.configService.get('REDIRECT'));
     }
+    // 로그아웃 API
+    @UseGuards(JwtAuthGuard)
+    @Get('/logout')
+    async logout(@Headers() headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        const data = await this.usersService.getUserDetailsByToken(token);
+        return { data };
+    }
 
-    // // 회원 정보 상세 조회
+    // 회원 정보 상세 조회 API
     @UseGuards(JwtAuthGuard)
     @Get('/me')
     async getUserDetailsByToken(@Headers() headers) {
@@ -60,7 +68,7 @@ export class UsersController {
         return { data };
     }
 
-    // 회원 키워드 조회
+    // 회원 키워드 조회 API
     @UseGuards(JwtAuthGuard)
     @Get('/me/keyword')
     async userKeyword(@Headers() headers) {
