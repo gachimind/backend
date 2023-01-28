@@ -29,6 +29,7 @@ export declare class UsersService {
         userId: number;
         nickname: string;
         profileImg: string;
+        isFirstLogin: boolean;
         today: {
             todayScore: number;
             todayRank: number;

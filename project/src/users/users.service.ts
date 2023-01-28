@@ -114,6 +114,7 @@ export class UsersService {
             userId,
             nickname,
             profileImg,
+            isFirstLogin: false,
             today: { todayScore, todayRank: 0 },
             total: { totalScore: 0 },
         };

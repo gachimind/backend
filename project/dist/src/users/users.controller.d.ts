@@ -22,6 +22,7 @@ export declare class UsersController {
             userId: number;
             nickname: string;
             profileImg: string;
+            isFirstLogin: boolean;
             today: {
                 todayScore: number;
                 todayRank: number;
