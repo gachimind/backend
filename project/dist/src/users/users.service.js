@@ -40,23 +40,20 @@ let UsersService = class UsersService {
     async findUserByNickname(nickname) {
         return await this.usersRepository.findBy({ nickname: (0, typeorm_2.Like)(`${nickname}%`) });
     }
-    async findUser(kakaoUserId, email, nickname) {
+    async findUser(kakaoUserId, email) {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
         }
-        if (!user && nickname) {
-            user = await this.usersRepository.findOne({ where: { nickname } });
-        }
         return user;
     }
     async validateUser(userData) {
-        const sameNickname = await this.findUserByNickname(userData.nickname);
-        if (sameNickname.length) {
-            userData.nickname = userData.nickname + (sameNickname.length + 1);
-        }
-        let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
+        let user = await this.findUser(userData.kakaoUserId, userData.email);
         if (!user) {
+            const sameNickname = await this.findUserByNickname(userData.nickname);
+            if (sameNickname.length) {
+                userData.nickname = userData.nickname + (sameNickname.length + 1);
+            }
             userData.isFirstLogin = true;
             user = await this.createUser(userData);
         }
@@ -67,10 +64,15 @@ let UsersService = class UsersService {
         const token = this.jwtService.sign({
             payload,
         });
-        await this.tokenMapRepository.save({
-            userInfo: user.userId,
-            token: token,
+        const tokenMapId = await this.tokenMapRepository.findOne({
+            where: { userInfo: user.userId },
+            select: { tokenMapId: true },
         });
+        let tokenMapData = { userInfo: user.userId, token: token };
+        if (tokenMapId) {
+            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
+        }
+        await this.tokenMapRepository.save(tokenMapData);
         return token;
     }
     async tokenValidate(token) {

@@ -18,7 +18,7 @@ export declare class UsersService {
     constructor(usersRepository: Repository<User>, tokenMapRepository: Repository<TokenMap>, todayResultRepository: Repository<TodayResult>, gameResultRepository: Repository<GameResult>, TurnResultRepository: Repository<TurnResult>, jwtService: JwtService, configService: ConfigService);
     createUser(details: CreateUserDto): Promise<User>;
     findUserByNickname(nickname: string): Promise<User[]>;
-    findUser(kakaoUserId: number, email: string, nickname: string): Promise<User>;
+    findUser(kakaoUserId: number, email: string): Promise<User>;
     validateUser(userData: CreateUserDto): Promise<User>;
     createToken(user: User): Promise<string>;
     tokenValidate(token: string): Promise<any>;

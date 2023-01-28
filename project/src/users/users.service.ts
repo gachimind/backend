@@ -37,32 +37,24 @@ export class UsersService {
         return await this.usersRepository.findBy({ nickname: Like(`${nickname}%`) });
     }
 
-    async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
+    async findUser(kakaoUserId: number, email: string): Promise<User> {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
 
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
         }
-        if (!user && nickname) {
-            user = await this.usersRepository.findOne({ where: { nickname } });
-        }
         return user;
     }
 
     async validateUser(userData: CreateUserDto): Promise<User> {
-        const sameNickname = await this.findUserByNickname(userData.nickname);
-        if (sameNickname.length) {
-            userData.nickname = userData.nickname + (sameNickname.length + 1);
-        }
-
-        let user: User = await this.findUser(
-            userData.kakaoUserId,
-            userData.email,
-            userData.nickname,
-        );
+        let user: User = await this.findUser(userData.kakaoUserId, userData.email);
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {
+            const sameNickname = await this.findUserByNickname(userData.nickname);
+            if (sameNickname.length) {
+                userData.nickname = userData.nickname + (sameNickname.length + 1);
+            }
             userData.isFirstLogin = true;
             user = await this.createUser(userData);
         }
@@ -77,10 +69,17 @@ export class UsersService {
             payload,
         });
 
-        await this.tokenMapRepository.save({
-            userInfo: user.userId,
-            token: token,
+        const tokenMapId: TokenMap = await this.tokenMapRepository.findOne({
+            where: { userInfo: user.userId },
+            select: { tokenMapId: true },
         });
+
+        let tokenMapData = { userInfo: user.userId, token: token };
+        if (tokenMapId) {
+            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
+        }
+
+        await this.tokenMapRepository.save(tokenMapData);
 
         return token;
     }
