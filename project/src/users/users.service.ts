@@ -94,12 +94,21 @@ export class UsersService {
 
     // 회원 정보 상세 조회 API
     async getUserDetailsByToken(token: string) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const getUserInfoByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: {
+                user: { userId: true, nickname: true, profileImg: true, isFirstLogin: true },
+            },
+        });
 
         if (!getUserInfoByToken)
             throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
 
-        const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg, isFirstLogin } = getUserInfoByToken.user;
+
+        if (isFirstLogin) {
+            await this.usersRepository.save({ userId, isFirstLogin: false });
+        }
 
         const todayScore: number = await this.getTodayScoreByUserId(userId);
 
@@ -107,7 +116,7 @@ export class UsersService {
             userId,
             nickname,
             profileImg,
-            isFirstLogin: false,
+            isFirstLogin,
             today: { todayScore, todayRank: 0 },
             total: { totalScore: 0 },
         };

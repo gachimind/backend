@@ -81,13 +81,17 @@ let UsersService = class UsersService {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
-        const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg, isFirstLogin } = getUserInfoByToken.user;
+        console.log('user before update', isFirstLogin);
+        if (isFirstLogin) {
+            console.log(await this.usersRepository.save({ userId, isFirstLogin: false }));
+        }
         const todayScore = await this.getTodayScoreByUserId(userId);
         return {
             userId,
             nickname,
             profileImg,
-            isFirstLogin: false,
+            isFirstLogin,
             today: { todayScore, todayRank: 0 },
             total: { totalScore: 0 },
         };

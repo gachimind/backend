@@ -45,8 +45,8 @@ export class AppController {
             users.push({
                 email: `test${num}@email.com`,
                 nickname: `테스트닉네임${num}`,
-                profileImg:
-                    'https://ichef.bbci.co.uk/news/640/cpsprodpb/E172/production/_126241775_getty_cats.png',
+                profileImg: 'white-red',
+                isFirstLogin: true,
             });
         }
         return await this.usersRepository.save(users);
