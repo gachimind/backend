@@ -52,8 +52,21 @@ export class PlayersService {
         return player;
     }
 
+    async getAllPlayersUserIdByRoomID(roomId: number): Promise<Player[]> {
+        return await this.playerRepository.find({
+            where: { roomInfo: roomId },
+            select: { userInfo: true },
+        });
+    }
+
     async updatePlayerStatusByUserId(user): Promise<Player> {
         return await this.playerRepository.save(user);
+    }
+
+    async updateAllPlayerStatusByUserId(
+        users: { userInfo: number; isReady: boolean }[],
+    ): Promise<Player[]> {
+        return await this.playerRepository.save(users);
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
