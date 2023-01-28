@@ -578,7 +578,7 @@ let UsersService = class UsersService {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
-        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg } = getUserInfoByToken.user;
         const today = (0, today_date_constructor_1.getTodayDate)();
         const findTodayScore = await this.todayResultRepository.find({
             where: {
@@ -589,7 +589,7 @@ let UsersService = class UsersService {
         const todayScore = findTodayScore
             .map((item) => item.todayScore)
             .reduce((prev, curr) => prev + curr, 0);
-        return { userId, email, nickname, profileImg, todayScore };
+        return { userId, nickname, profileImg, todayScore };
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({
@@ -3102,7 +3102,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("2fbad6905773e70eda52")
+/******/ 		__webpack_require__.h = () => ("1b73e76f2c8e6a79d396")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

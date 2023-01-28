@@ -78,13 +78,4 @@ export class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
-
-    // 오늘 랭킹 조회 API
-    // @UseGuards(JwtAuthGuard)
-    // @Get('/me/ranking')
-    // async todayRanking(@Headers() headers) {
-    //     const token = headers.authorization.replace('Bearer ', '');
-    //     const data = await this.usersService.todayRanking(token);
-    //     return { data };
-    // }
 }

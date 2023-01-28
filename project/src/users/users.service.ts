@@ -106,7 +106,7 @@ export class UsersService {
         if (!getUserInfoByToken)
             throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
 
-        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg } = getUserInfoByToken.user;
 
         // 오늘 전체 스코어 찾아오기
         const today: Date = getTodayDate();
@@ -120,7 +120,7 @@ export class UsersService {
         const todayScore = findTodayScore
             .map((item) => item.todayScore)
             .reduce((prev, curr) => prev + curr, 0);
-        return { userId, email, nickname, profileImg, todayScore };
+        return { userId, nickname, profileImg, todayScore };
     }
 
     // 회원 키워드 조회 API
