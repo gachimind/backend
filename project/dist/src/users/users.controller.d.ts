@@ -22,4 +22,13 @@ export declare class UsersController {
             profileImg: string;
         };
     }>;
+    userKeyword(headers: any): Promise<{
+        data: {
+            userId: number;
+            todaySpeechKeyword: any[];
+            todayQuizKeyword: any[];
+            totalSpeechKeyword: any[];
+            totalQuizKeyword: any[];
+        };
+    }>;
 }

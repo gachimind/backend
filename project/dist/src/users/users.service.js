@@ -20,10 +20,17 @@ const jwt_1 = require("@nestjs/jwt");
 const user_entity_1 = require("./entities/user.entity");
 const token_map_entity_1 = require("./entities/token-map.entity");
 const config_1 = require("@nestjs/config");
+const todayResult_entity_1 = require("../games/entities/todayResult.entity");
+const gameResult_entity_1 = require("../games/entities/gameResult.entity");
+const turnResult_entity_1 = require("../games/entities/turnResult.entity");
+const today_date_constructor_1 = require("../games/util/today.date.constructor");
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository, jwtService, configService) {
+    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, TurnResultRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
+        this.todayResultRepository = todayResultRepository;
+        this.gameResultRepository = gameResultRepository;
+        this.TurnResultRepository = TurnResultRepository;
         this.jwtService = jwtService;
         this.configService = configService;
     }
@@ -77,12 +84,70 @@ let UsersService = class UsersService {
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
         return { userId, email, nickname, profileImg };
     }
+    async userKeyword(token) {
+        const user = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+        if (!user)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
+        const findTotalkeyword = await this.TurnResultRepository.find({
+            where: { userId: user.userInfo },
+            select: { keyword: true, isSpeech: true, createdAt: true },
+        });
+        const speechKeywordArray = [];
+        const quizKeywordArray = [];
+        for (const result of findTotalkeyword) {
+            if (result.isSpeech) {
+                speechKeywordArray.push(result.keyword);
+            }
+            else {
+                quizKeywordArray.push(result.keyword);
+            }
+        }
+        const totalSpeechKeyword = [...new Set(speechKeywordArray)];
+        const totalQuizKeyword = [...new Set(quizKeywordArray)];
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const findTodaykeyword = await this.TurnResultRepository.find({
+            where: {
+                userId: user.userInfo,
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
+            select: { keyword: true, isSpeech: true },
+        });
+        const todaySpeechKeywordArray = [];
+        const todayQuizKeywordArray = [];
+        for (const result of findTodaykeyword) {
+            if (result.isSpeech) {
+                todaySpeechKeywordArray.push(result.keyword);
+            }
+            else {
+                todayQuizKeywordArray.push(result.keyword);
+            }
+        }
+        const todaySpeechKeyword = [...new Set(todaySpeechKeywordArray)];
+        const todayQuizKeyword = [...new Set(todayQuizKeywordArray)];
+        const data = {
+            userId: user.userInfo,
+            todaySpeechKeyword,
+            todayQuizKeyword,
+            totalSpeechKeyword,
+            totalQuizKeyword,
+        };
+        console.log(data);
+        return data;
+    }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
+    __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
+    __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         jwt_1.JwtService,
         config_1.ConfigService])
