@@ -84,86 +84,50 @@ let UsersService = class UsersService {
         const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
         return { userId, email, nickname, profileImg };
     }
-    async getUserKeywordByToken(token) {
-        const getUserKeywordByToken = await this.tokenMapRepository.findOneBy({
+    async userKeyword(token) {
+        const user = await this.tokenMapRepository.findOneBy({
             token,
         });
-        if (!getUserKeywordByToken)
+        if (!user)
             throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
-        const findUserTodayResult = await this.usersRepository.findOne({
-            where: { userId: getUserKeywordByToken.userInfo },
-            select: { todayResults: true },
-        });
         const findTotalkeyword = await this.TurnResultRepository.find({
-            where: { nickname: findUserTodayResult.nickname },
-            select: { keyword: true, isSpeech: true },
+            where: { userId: user.userInfo },
+            select: { keyword: true, isSpeech: true, createdAt: true },
         });
         const speechKeywordArray = [];
-        const totalKeywordArray = [];
+        const quizKeywordArray = [];
         for (const result of findTotalkeyword) {
-            if (result.isSpeech === true) {
-                speechKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            if (result.isSpeech) {
+                speechKeywordArray.push(result.keyword);
             }
-            for (const result of findTotalkeyword) {
-                totalKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            else {
+                quizKeywordArray.push(result.keyword);
             }
         }
-        const totalSpeechKeywordExp = [];
-        for (const result in speechKeywordArray) {
-            totalSpeechKeywordExp.push(speechKeywordArray[result].Keyword);
-        }
-        const totalSpeechKeywordCont = totalSpeechKeywordExp.join();
-        const totalSpeechKeywordFil = [...new Set(totalSpeechKeywordCont)];
-        const totalSpeechKeyword = totalSpeechKeywordFil.filter((element) => element !== ',');
-        const totalQuizKeywordExp = [];
-        for (const result in totalKeywordArray) {
-            totalQuizKeywordExp.push(totalKeywordArray[result].Keyword);
-        }
-        const totalQuizKeywordCont = totalQuizKeywordExp.join();
-        const totalQuizKeywordFil = [...new Set(totalQuizKeywordCont)];
-        const totalQuizKeyword = totalQuizKeywordFil.filter((element) => element !== ',');
+        const totalSpeechKeyword = [...new Set(speechKeywordArray)];
+        const totalQuizKeyword = [...new Set(quizKeywordArray)];
         const today = (0, today_date_constructor_1.getTodayDate)();
         const findTodaykeyword = await this.TurnResultRepository.find({
             where: {
-                userId: getUserKeywordByToken.userInfo,
+                userId: user.userInfo,
                 createdAt: (0, typeorm_2.MoreThan)(today),
             },
             select: { keyword: true, isSpeech: true },
         });
         const todaySpeechKeywordArray = [];
-        const todayKeywordArray = [];
+        const todayQuizKeywordArray = [];
         for (const result of findTodaykeyword) {
-            if (result.isSpeech === true) {
-                todaySpeechKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            if (result.isSpeech) {
+                todaySpeechKeywordArray.push(result.keyword);
             }
-            for (const result of findTodaykeyword) {
-                todayKeywordArray.push({
-                    Keyword: result.keyword,
-                });
+            else {
+                todayQuizKeywordArray.push(result.keyword);
             }
         }
-        const todaySpeechKeywordExp = [];
-        for (const result in todaySpeechKeywordArray) {
-            todaySpeechKeywordExp.push(todaySpeechKeywordArray[result].Keyword);
-        }
-        const todaySpeechKeywordCont = todaySpeechKeywordExp.join();
-        const todaySpeechKeywordFil = [...new Set(todaySpeechKeywordCont)];
-        const todaySpeechKeyword = todaySpeechKeywordFil.filter((element) => element !== ',');
-        const todayQuizKeywordExp = [];
-        for (const result in todayKeywordArray) {
-            todayQuizKeywordExp.push(todayKeywordArray[result].Keyword);
-        }
-        const todayQuizKeywordCont = todayQuizKeywordExp.join();
-        const todayQuizKeywordFil = [...new Set(todayQuizKeywordCont)];
-        const todayQuizKeyword = todayQuizKeywordFil.filter((element) => element !== ',');
+        const todaySpeechKeyword = [...new Set(todaySpeechKeywordArray)];
+        const todayQuizKeyword = [...new Set(todayQuizKeywordArray)];
         const data = {
-            userId: findUserTodayResult.userId,
+            userId: user.userInfo,
             todaySpeechKeyword,
             todayQuizKeyword,
             totalSpeechKeyword,
