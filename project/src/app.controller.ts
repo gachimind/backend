@@ -135,10 +135,7 @@ export class AppController {
         return await this.turnResultRepository.countBy({
             createdAt: Raw((dateTime) => `${dateTime} > :date`, { date }),
         });
-    }
 
-    @Get('test')
-    async test() {
         return this.gameResultRepository
             .createQueryBuilder('gameResult')
             .select('SUM(turnResults.score)', 'sum')

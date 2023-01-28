@@ -38,6 +38,12 @@ let GamesService = class GamesService {
     async createTurnResult(turnResult) {
         return await this.turnResultRepository.save(turnResult);
     }
+    async updateGameResult(gameResultId, gameScore) {
+        return await this.gameResultRepository.save({ gameResultId, gameScore });
+    }
+    async updateTodayResult(todayResultId, gameScore) {
+        return await this.todayResultRepository.increment({ todayResultId }, 'todayScore', gameScore);
+    }
     async deleteTurnByRoomId(roomInfo) {
         await this.turnRepository.softDelete({ roomInfo });
     }
@@ -138,6 +144,22 @@ let GamesService = class GamesService {
         return await this.createTurnResult(turnResult);
     }
     async handleGameEndEvent(room) {
+        const playerUserIds = await this.gameResultRepository.find({
+            where: { roomId: room.roomId },
+            select: { gameResultId: true, userInfo: true, todayResultInfo: true },
+        });
+        for (let user of playerUserIds) {
+            console.log(user);
+            const { sum } = await this.turnResultRepository
+                .createQueryBuilder('turnResult')
+                .select('SUM(turnResult.score)', 'sum')
+                .where('turnResult.roomId = :roomId', { roomId: room.roomId })
+                .andWhere('turnResult.userId = :userId', { userId: user.userInfo })
+                .getRawOne();
+            const gameResult = await this.updateGameResult(user.gameResultId, Number(sum));
+            console.log('gameResult :', gameResult);
+            await this.updateTodayResult(user.todayResultInfo, Number(sum));
+        }
         let users = [];
         for (let player of room.players) {
             users.push({ userInfo: player.userInfo, isReady: false });

@@ -29,12 +29,12 @@ export class GameResult {
     @Column({ type: 'int' })
     gameScore: number;
 
-    @Column({ name: 'todayResultInfo', nullable: true })
+    @Column({ name: 'todayResultInfo', nullable: true, select: true })
     todayResultInfo: number;
     @ManyToOne(() => TodayResult, (todayResult) => todayResult.gameResults, {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
-        createForeignKeyConstraints: false,
+        //createForeignKeyConstraints: false,
     })
     @JoinColumn({ name: 'todayResultInfo' })
     todayResult: TodayResult;

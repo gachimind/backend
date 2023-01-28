@@ -110,19 +110,16 @@ let AppController = class AppController {
         return await this.turnResultRepository.save(results);
     }
     async test() {
-<<<<<<< HEAD
         const today = new Date();
         const date = today.toISOString().split('T')[0];
         return await this.turnResultRepository.countBy({
             createdAt: (0, typeorm_2.Raw)((dateTime) => `${dateTime} > :date`, { date }),
         });
-=======
         return this.gameResultRepository
             .createQueryBuilder('gameResult')
             .select('SUM(turnResults.score)', 'sum')
             .where('userInfo = :id', { id: 8 })
             .getRawMany();
->>>>>>> 3ad62daa91bbfb825c0e34d6afa4dd8427a92130
     }
 };
 __decorate([

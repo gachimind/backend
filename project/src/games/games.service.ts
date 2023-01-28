@@ -38,6 +38,18 @@ export class GamesService {
         return await this.turnResultRepository.save(turnResult);
     }
 
+    async updateGameResult(gameResultId: number, gameScore: number) {
+        return await this.gameResultRepository.save({ gameResultId, gameScore });
+    }
+
+    async updateTodayResult(todayResultId: number, gameScore: number) {
+        return await this.todayResultRepository.increment(
+            { todayResultId },
+            'todayScore',
+            gameScore,
+        );
+    }
+
     async deleteTurnByRoomId(roomInfo: number): Promise<void> {
         await this.turnRepository.softDelete({ roomInfo });
     }
@@ -159,6 +171,28 @@ export class GamesService {
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
+        // 게임에 참여한 모든 플레이어의 gameResult 업데이트
+        // 1. roomId로 gameResult 조회
+        const playerUserIds = await this.gameResultRepository.find({
+            where: { roomId: room.roomId },
+            select: { gameResultId: true, userInfo: true, todayResultInfo: true },
+        });
+
+        for (let user of playerUserIds) {
+            console.log(user);
+            const { sum } = await this.turnResultRepository
+                .createQueryBuilder('turnResult')
+                .select('SUM(turnResult.score)', 'sum')
+                .where('turnResult.roomId = :roomId', { roomId: room.roomId })
+                .andWhere('turnResult.userId = :userId', { userId: user.userInfo })
+                .getRawOne();
+
+            const gameResult = await this.updateGameResult(user.gameResultId, Number(sum));
+            console.log('gameResult :', gameResult);
+
+            await this.updateTodayResult(user.todayResultInfo, Number(sum));
+        }
+
         // player's isReady to false
         let users: { userInfo: number; isReady: boolean }[] = [];
         for (let player of room.players) {

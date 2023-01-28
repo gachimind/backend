@@ -19,6 +19,11 @@ export declare class GamesService {
     private readonly todayResultRepository;
     constructor(roomService: RoomService, playersService: PlayersService, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
     createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
+    updateGameResult(gameResultId: number, gameScore: number): Promise<{
+        gameResultId: number;
+        gameScore: number;
+    } & GameResult>;
+    updateTodayResult(todayResultId: number, gameScore: number): Promise<import("typeorm").UpdateResult>;
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
     createGameResultPerPlayer(roomId: any): Promise<void>;
     createTurn(roomId: number): Promise<TurnDataInsertDto & Turn>;
