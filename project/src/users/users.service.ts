@@ -10,6 +10,9 @@ import { TodayResult } from '../games/entities/todayResult.entity';
 import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
+import { ConsoleLogger } from '@nestjs/common/services';
+import { kMaxLength } from 'buffer';
+import { userInfo } from 'os';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +31,7 @@ export class UsersService {
         private configService: ConfigService,
     ) {}
 
+    // 카카오 로그인 API
     async createUser(details: CreateUserDto): Promise<User> {
         return await this.usersRepository.save(details);
     }
@@ -86,18 +90,40 @@ export class UsersService {
         });
     }
 
-    // 회원 정보 상세 조회
+    // 로그아웃 API
+    async logout(token: string) {
+        const findUser = await this.tokenMapRepository.delete({ token });
+
+        if (!findUser) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+
+        return findUser;
+    }
+
+    // 회원 정보 상세 조회 API
     async getUserDetailsByToken(token: string) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
 
-        if (!getUserInfoByToken) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+        if (!getUserInfoByToken)
+            throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
 
-        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg } = getUserInfoByToken.user;
 
-        return { userId, email, nickname, profileImg };
+        // 오늘 전체 스코어 찾아오기
+        const today: Date = getTodayDate();
+        const findTodayScore = await this.todayResultRepository.find({
+            where: {
+                createdAt: MoreThan(today),
+            },
+            select: { todayScore: true },
+        });
+
+        const todayScore = findTodayScore
+            .map((item) => item.todayScore)
+            .reduce((prev, curr) => prev + curr, 0);
+        return { userId, nickname, profileImg, todayScore };
     }
 
-    // 회원 키워드 조회
+    // 회원 키워드 조회 API
     async userKeyword(token: string) {
         const user = await this.tokenMapRepository.findOneBy({
             token,
@@ -157,4 +183,29 @@ export class UsersService {
         console.log(data);
         return data;
     }
+
+    // // 오늘 랭킹 조회 API
+    // async todayRanking(token: string) {
+    //     const user = await this.tokenMapRepository.findOneBy({
+    //         token,
+    //     });
+
+    //     // 오늘 전체 스코어 찾아오기
+    //     const today: Date = getTodayDate();
+    //     const findTodayScore = await this.TurnResultRepository.find({
+    //         where: {
+    //             createdAt: MoreThan(today),
+    //         },
+    //         select: { userId: true, score: true },
+    //     });
+
+    //     // 동일한 ID끼리 배열 분류
+    //     const sortById = findTodayScore.reduce((acc, current) => {
+    //         acc[current.userId] = acc[current.userId] || [];
+    //         acc[current.userId].push(current.score);
+    //         return acc;
+    //     }, {});
+
+    //     // console.log(sortById);
+    // }
 }
