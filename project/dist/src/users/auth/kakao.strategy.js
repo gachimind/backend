@@ -25,9 +25,9 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
     async validate(accessToken, refreshToken, profile, done) {
         const user = {
             kakaoUserId: profile._json.id,
-            email: profile._json.kakao_account.email || null,
+            email: profile._json.kakao_account.email || `email${profile._json.id}@gachimind.com`,
             nickname: profile._json.properties.nickname,
-            profileImg: profile._json.properties.profile_image,
+            profileImg: 'white-red',
         };
         done(null, user);
     }
