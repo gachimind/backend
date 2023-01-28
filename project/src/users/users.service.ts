@@ -49,9 +49,6 @@ export class UsersService {
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
-        if (!userData.email) {
-            userData.email = `email${userData.kakaoUserId}@gachimind.com`;
-        }
         let user: User = await this.findUser(
             userData.kakaoUserId,
             userData.email,

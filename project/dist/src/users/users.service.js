@@ -48,9 +48,6 @@ let UsersService = class UsersService {
         return user;
     }
     async validateUser(userData) {
-        if (!userData.email) {
-            userData.email = `email${userData.kakaoUserId}@gachimind.com`;
-        }
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
         if (!user) {
             user = await this.createUser(userData);
