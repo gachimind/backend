@@ -133,6 +133,28 @@ export class UsersService {
         let todayScore = 0;
         if (findTodayScore) todayScore = findTodayScore.todayScore;
 
+        // 오늘 전체 유저 스코어 찾아오기
+        const findTodayScoreAll = await this.todayResultRepository.find({
+            select: {
+                userInfo: true,
+                todayScore: true,
+            },
+        });
+
+        // 스코어 내림차순 정렬
+        // const sortScore = findTodayScoreAll.sort(function (a, b) {
+        //     return b.todayScore - a.todayScore;
+        // });
+
+        // function findUserRank(element) {
+        //     if (element.userId === findTodayScore.userInfo) return userInfo;
+        // }
+
+        // 인덱스 번호 찾기
+        // const findUserIndex = sortScore.indexOf(findUserRank);
+
+        // console.log(findUserIndex);
+
         return todayScore;
     }
 

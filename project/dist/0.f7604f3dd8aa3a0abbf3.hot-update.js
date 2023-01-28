@@ -1,4 +1,12 @@
 "use strict";
+exports.id = 0;
+exports.ids = null;
+exports.modules = {
+
+/***/ 12:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,19 +19,20 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+var _a, _b, _c, _d, _e, _f, _g;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersService = void 0;
-const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
-const typeorm_2 = require("typeorm");
-const jwt_1 = require("@nestjs/jwt");
-const user_entity_1 = require("./entities/user.entity");
-const token_map_entity_1 = require("./entities/token-map.entity");
-const config_1 = require("@nestjs/config");
-const todayResult_entity_1 = require("../games/entities/todayResult.entity");
-const gameResult_entity_1 = require("../games/entities/gameResult.entity");
-const turnResult_entity_1 = require("../games/entities/turnResult.entity");
-const today_date_constructor_1 = require("../games/util/today.date.constructor");
+const common_1 = __webpack_require__(7);
+const typeorm_1 = __webpack_require__(9);
+const typeorm_2 = __webpack_require__(13);
+const jwt_1 = __webpack_require__(14);
+const user_entity_1 = __webpack_require__(15);
+const token_map_entity_1 = __webpack_require__(20);
+const config_1 = __webpack_require__(11);
+const todayResult_entity_1 = __webpack_require__(16);
+const gameResult_entity_1 = __webpack_require__(18);
+const turnResult_entity_1 = __webpack_require__(19);
+const today_date_constructor_1 = __webpack_require__(21);
 let UsersService = class UsersService {
     constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, TurnResultRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
@@ -109,6 +118,12 @@ let UsersService = class UsersService {
         let todayScore = 0;
         if (findTodayScore)
             todayScore = findTodayScore.todayScore;
+        const findTodayScoreAll = await this.todayResultRepository.find({
+            select: {
+                userInfo: true,
+                todayScore: true,
+            },
+        });
         return todayScore;
     }
     async userKeyword(token) {
@@ -171,13 +186,20 @@ UsersService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
     __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
     __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
-        jwt_1.JwtService,
-        config_1.ConfigService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object, typeof (_f = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _f : Object, typeof (_g = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _g : Object])
 ], UsersService);
 exports.UsersService = UsersService;
-//# sourceMappingURL=users.service.js.map
+
+
+/***/ })
+
+};
+exports.runtime =
+/******/ function(__webpack_require__) { // webpackRuntimeModules
+/******/ /* webpack/runtime/getFullHash */
+/******/ (() => {
+/******/ 	__webpack_require__.h = () => ("3df1408624aff538b8e1")
+/******/ })();
+/******/ 
+/******/ }
+;
