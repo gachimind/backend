@@ -169,4 +169,29 @@ export class UsersService {
         console.log(data);
         return data;
     }
+
+    // 오늘 스코어 조회 API
+    async todayScore(token: string) {
+        const user = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+
+        if (!user) throw new HttpException('정상적인 접근이 아닙니다.', 401);
+
+        // 오늘 전체 스코어 찾아오기
+        const today: Date = getTodayDate();
+        const findTodayScore = await this.TurnResultRepository.find({
+            where: {
+                userId: user.userInfo,
+                createdAt: MoreThan(today),
+            },
+            select: { score: true },
+        });
+
+        const data = findTodayScore
+            .map((item) => item.score)
+            .reduce((prev, curr) => prev + curr, 0);
+
+        return data;
+    }
 }

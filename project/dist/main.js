@@ -425,6 +425,11 @@ let UsersController = class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
+    async todayScore(headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        const data = await this.usersService.todayScore(token);
+        return { data };
+    }
 };
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
@@ -470,6 +475,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "userKeyword", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('/me/score'),
+    __param(0, (0, common_1.Headers)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "todayScore", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [typeof (_a = typeof users_service_1.UsersService !== "undefined" && users_service_1.UsersService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
@@ -632,6 +645,25 @@ let UsersService = class UsersService {
             totalQuizKeyword,
         };
         console.log(data);
+        return data;
+    }
+    async todayScore(token) {
+        const user = await this.tokenMapRepository.findOneBy({
+            token,
+        });
+        if (!user)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const findTodayScore = await this.TurnResultRepository.find({
+            where: {
+                userId: user.userInfo,
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
+            select: { score: true },
+        });
+        const data = findTodayScore
+            .map((item) => item.score)
+            .reduce((prev, curr) => prev + curr, 0);
         return data;
     }
 };
@@ -3093,7 +3125,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("9bc0c7a5ea969a730a3d")
+/******/ 		__webpack_require__.h = () => ("8990d31b54d6055ecf6d")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

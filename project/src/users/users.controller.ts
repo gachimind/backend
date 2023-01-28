@@ -77,4 +77,13 @@ export class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
+
+    // 오늘 스코어 조회 API
+    @UseGuards(JwtAuthGuard)
+    @Get('/me/score')
+    async todayScore(@Headers() headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        const data = await this.usersService.todayScore(token);
+        return { data };
+    }
 }
