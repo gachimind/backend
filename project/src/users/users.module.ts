@@ -10,12 +10,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './auth/jwt.guard';
-<<<<<<< HEAD
-=======
 import { TodayResult } from 'src/games/entities/todayResult.entity';
 import { GameResult } from 'src/games/entities/gameResult.entity';
 import { TurnResult } from 'src/games/entities/turnResult.entity';
->>>>>>> d2eb81175c84e1dd58b74aeb9756e95ed4c3839d
 
 @Module({
     imports: [

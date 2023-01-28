@@ -5,10 +5,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Player } from '../games/entities/player.entity';
 import { Room } from '../games/entities/room.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-//import { CoreModule } from 'src/core/core.module';
-//import { GameResultModule } from '../gameResult/gameResult.module';
+import { GamesModule } from 'src/games/games.module';
+
 @Module({
-    imports: [ScheduleModule.forRoot(), TypeOrmModule.forFeature([Player, Room])],
+    imports: [ScheduleModule.forRoot(), GamesModule, TypeOrmModule.forFeature([Player, Room])],
     providers: [CronService, NotionService],
 })
 export class AdminModule {}

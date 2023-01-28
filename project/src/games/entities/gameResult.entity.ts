@@ -26,32 +26,20 @@ export class GameResult {
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
-<<<<<<< HEAD
-    @Column({ name: 'todayResultInfo', nullable: true })
-=======
     @Column({ type: 'int' })
     gameScore: number;
 
     @Column({ name: 'todayResultInfo', nullable: true, select: true })
->>>>>>> d2eb81175c84e1dd58b74aeb9756e95ed4c3839d
     todayResultInfo: number;
     @ManyToOne(() => TodayResult, (todayResult) => todayResult.gameResults, {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
-<<<<<<< HEAD
-        createForeignKeyConstraints: false,
-=======
         //createForeignKeyConstraints: false,
->>>>>>> d2eb81175c84e1dd58b74aeb9756e95ed4c3839d
     })
     @JoinColumn({ name: 'todayResultInfo' })
     todayResult: TodayResult;
 
-<<<<<<< HEAD
-    @CreateDateColumn()
-=======
     @CreateDateColumn({ select: false })
->>>>>>> d2eb81175c84e1dd58b74aeb9756e95ed4c3839d
     createdAt: Date;
 
     @UpdateDateColumn({ select: false })
