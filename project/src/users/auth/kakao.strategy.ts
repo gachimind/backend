@@ -20,7 +20,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
             kakaoUserId: profile._json.id,
             email: profile._json.kakao_account.email || null,
             nickname: profile._json.properties.nickname,
-            profileImg: profile._json.properties.profile_image,
+            profileImg: 'white-red',
         };
         done(null, user);
     }

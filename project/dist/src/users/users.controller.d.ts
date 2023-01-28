@@ -22,7 +22,13 @@ export declare class UsersController {
             userId: number;
             nickname: string;
             profileImg: string;
-            todayScore: number;
+            today: {
+                todayScore: number;
+                todayRank: number;
+            };
+            total: {
+                totalScore: number;
+            };
         };
     }>;
     userKeyword(headers: any): Promise<{

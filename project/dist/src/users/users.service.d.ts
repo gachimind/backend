@@ -29,8 +29,15 @@ export declare class UsersService {
         userId: number;
         nickname: string;
         profileImg: string;
-        todayScore: number;
+        today: {
+            todayScore: number;
+            todayRank: number;
+        };
+        total: {
+            totalScore: number;
+        };
     }>;
+    getTodayScoreByUserId(userInfo: number): Promise<number>;
     userKeyword(token: string): Promise<{
         userId: number;
         todaySpeechKeyword: any[];

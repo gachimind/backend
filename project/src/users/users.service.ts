@@ -49,6 +49,9 @@ export class UsersService {
     }
 
     async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
+        if (!userData.email) {
+            userData.email = `email${userData.kakaoUserId}@gachimind.com`;
+        }
         let user: User = await this.findUser(
             userData.kakaoUserId,
             userData.email,
@@ -108,16 +111,31 @@ export class UsersService {
 
         const { userId, nickname, profileImg } = getUserInfoByToken.user;
 
-        // 오늘 전체 스코어 찾아오기
+        const todayScore: number = await this.getTodayScoreByUserId(userId);
+
+        return {
+            userId,
+            nickname,
+            profileImg,
+            today: { todayScore, todayRank: 0 },
+            total: { totalScore: 0 },
+        };
+    }
+
+    async getTodayScoreByUserId(userInfo: number): Promise<number> {
+        // 오늘 스코어 찾아오기
         const today: Date = getTodayDate();
-        const findTodayScore = await this.todayResultRepository.findOne({
+        const findTodayScore: TodayResult = await this.todayResultRepository.findOne({
             where: {
-                userInfo: userId,
+                userInfo,
                 createdAt: MoreThan(today),
             },
         });
 
-        return { userId, nickname, profileImg, todayScore: findTodayScore.todayScore };
+        let todayScore = 0;
+        if (findTodayScore) todayScore = findTodayScore.todayScore;
+
+        return todayScore;
     }
 
     // 회원 키워드 조회 API

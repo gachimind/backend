@@ -48,6 +48,9 @@ let UsersService = class UsersService {
         return user;
     }
     async validateUser(userData) {
+        if (!userData.email) {
+            userData.email = `email${userData.kakaoUserId}@gachimind.com`;
+        }
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
         if (!user) {
             user = await this.createUser(userData);
@@ -88,14 +91,27 @@ let UsersService = class UsersService {
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const todayScore = await this.getTodayScoreByUserId(userId);
+        return {
+            userId,
+            nickname,
+            profileImg,
+            today: { todayScore, todayRank: 0 },
+            total: { totalScore: 0 },
+        };
+    }
+    async getTodayScoreByUserId(userInfo) {
         const today = (0, today_date_constructor_1.getTodayDate)();
         const findTodayScore = await this.todayResultRepository.findOne({
             where: {
-                userInfo: userId,
+                userInfo,
                 createdAt: (0, typeorm_2.MoreThan)(today),
             },
         });
-        return { userId, nickname, profileImg, todayScore: findTodayScore.todayScore };
+        let todayScore = 0;
+        if (findTodayScore)
+            todayScore = findTodayScore.todayScore;
+        return todayScore;
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({
