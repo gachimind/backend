@@ -10,9 +10,6 @@ import { TodayResult } from '../games/entities/todayResult.entity';
 import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
-import { ConsoleLogger } from '@nestjs/common/services';
-import { kMaxLength } from 'buffer';
-import { userInfo } from 'os';
 
 @Injectable()
 export class UsersService {
@@ -48,7 +45,7 @@ export class UsersService {
         return user;
     }
 
-    async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
+    async validateUser(userData: CreateUserDto): Promise<User> {
         let user: User = await this.findUser(
             userData.kakaoUserId,
             userData.email,
@@ -57,28 +54,24 @@ export class UsersService {
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {
+            userData.isFirstLogin = true;
             user = await this.createUser(userData);
-            const isNewUser = true;
-            return { user, isNewUser };
         }
 
-        return { user, isNewUser: false };
+        return user;
     }
 
     // AccessToken 생성
-    async createToken(user: User, isNewUSer: boolean): Promise<string> {
+    async createToken(user: User): Promise<string> {
         const payload = {}; // 공갈빵 만들기
         const token: string = this.jwtService.sign({
             payload,
         });
-        if (isNewUSer) {
-            await this.tokenMapRepository.save({
-                userInfo: user.userId,
-                token: token,
-            });
-        } else {
-            await this.tokenMapRepository.update({ user }, { token: token });
-        }
+
+        await this.tokenMapRepository.save({
+            userInfo: user.userId,
+            token: token,
+        });
 
         return token;
     }

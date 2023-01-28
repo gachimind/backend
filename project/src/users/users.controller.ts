@@ -41,9 +41,8 @@ export class UsersController {
         if (!req.user) {
             throw new HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser }: { user: User; isNewUser: boolean } =
-            await this.usersService.validateUser(req.user);
-        const token: string = await this.usersService.createToken(user, isNewUser);
+        const user: User = await this.usersService.validateUser(req.user);
+        const token: string = await this.usersService.createToken(user);
 
         return { url: this.configService.get('REDIRECT') + token };
         // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })

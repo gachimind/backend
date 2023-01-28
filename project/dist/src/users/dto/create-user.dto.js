@@ -30,8 +30,8 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, swagger_1.ApiProperty)({
         example: 'test@email.com',
-        required: true,
-        description: 'OAuth 서버에서 받아온 회원의 email을 게임 서버 db에 저장',
+        required: false,
+        description: 'OAuth 서버에서 받아온 회원의 email을 게임 서버 db에 저장, 없으면 서버에서 랜덤으로 자동 생성',
     }),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "email", void 0);
@@ -54,5 +54,10 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "profileImg", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateUserDto.prototype, "isFirstLogin", void 0);
 exports.CreateUserDto = CreateUserDto;
 //# sourceMappingURL=create-user.dto.js.map

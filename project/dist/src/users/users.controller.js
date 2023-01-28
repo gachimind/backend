@@ -30,8 +30,8 @@ let UsersController = class UsersController {
         if (!req.user) {
             throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser } = await this.usersService.validateUser(req.user);
-        const token = await this.usersService.createToken(user, isNewUser);
+        const user = await this.usersService.validateUser(req.user);
+        const token = await this.usersService.createToken(user);
         return { url: this.configService.get('REDIRECT') + token };
     }
     async logout(headers) {

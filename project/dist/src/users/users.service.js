@@ -50,26 +50,20 @@ let UsersService = class UsersService {
     async validateUser(userData) {
         let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
         if (!user) {
+            userData.isFirstLogin = true;
             user = await this.createUser(userData);
-            const isNewUser = true;
-            return { user, isNewUser };
         }
-        return { user, isNewUser: false };
+        return user;
     }
-    async createToken(user, isNewUSer) {
+    async createToken(user) {
         const payload = {};
         const token = this.jwtService.sign({
             payload,
         });
-        if (isNewUSer) {
-            await this.tokenMapRepository.save({
-                userInfo: user.userId,
-                token: token,
-            });
-        }
-        else {
-            await this.tokenMapRepository.update({ user }, { token: token });
-        }
+        await this.tokenMapRepository.save({
+            userInfo: user.userId,
+            token: token,
+        });
         return token;
     }
     async tokenValidate(token) {

@@ -6,6 +6,8 @@ export declare class User {
     email: string | null;
     nickname: string;
     profileImg: string;
+    updateIsFirstLogin(): void;
+    isFirstLogin: boolean;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;

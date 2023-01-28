@@ -14,6 +14,9 @@ const typeorm_1 = require("typeorm");
 const todayResult_entity_1 = require("../../games/entities/todayResult.entity");
 const gameResult_entity_1 = require("../../games/entities/gameResult.entity");
 let User = class User {
+    updateIsFirstLogin() {
+        this.isFirstLogin = false;
+    }
 };
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
@@ -35,6 +38,16 @@ __decorate([
     (0, typeorm_1.Column)('text'),
     __metadata("design:type", String)
 ], User.prototype, "profileImg", void 0);
+__decorate([
+    (0, typeorm_1.AfterLoad)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], User.prototype, "updateIsFirstLogin", null);
+__decorate([
+    (0, typeorm_1.Column)({ select: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isFirstLogin", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)

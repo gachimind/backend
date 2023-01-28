@@ -18,11 +18,8 @@ export declare class UsersService {
     constructor(usersRepository: Repository<User>, tokenMapRepository: Repository<TokenMap>, todayResultRepository: Repository<TodayResult>, gameResultRepository: Repository<GameResult>, TurnResultRepository: Repository<TurnResult>, jwtService: JwtService, configService: ConfigService);
     createUser(details: CreateUserDto): Promise<User>;
     findUser(kakaoUserId: number, email: string, nickname: string): Promise<User>;
-    validateUser(userData: CreateUserDto): Promise<{
-        user: User;
-        isNewUser: boolean;
-    }>;
-    createToken(user: User, isNewUSer: boolean): Promise<string>;
+    validateUser(userData: CreateUserDto): Promise<User>;
+    createToken(user: User): Promise<string>;
     tokenValidate(token: string): Promise<any>;
     logout(token: string): Promise<import("typeorm").DeleteResult>;
     getUserDetailsByToken(token: string): Promise<{
