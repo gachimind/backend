@@ -50,6 +50,7 @@ export class UsersController {
         // .status(301)
         // .redirect(this.configService.get('REDIRECT'));
     }
+
     // 로그아웃 API
     @UseGuards(JwtAuthGuard)
     @Get('/logout')
