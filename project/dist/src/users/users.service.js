@@ -77,12 +77,25 @@ let UsersService = class UsersService {
             secret: this.configService.get('TOKEN_SECRETE_KEY'),
         });
     }
+    async logout(token) {
+        const findUser = await this.tokenMapRepository.delete({ token });
+        if (!findUser)
+            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
+        return findUser;
+    }
     async getUserDetailsByToken(token) {
         const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
         if (!getUserInfoByToken)
-            throw new common_1.HttpException('정상적인 접근이 아닙니다.', 401);
-        const { userId, email, nickname, profileImg } = getUserInfoByToken.user;
-        return { userId, email, nickname, profileImg };
+            throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
+        const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const findTodayScore = await this.todayResultRepository.findOne({
+            where: {
+                userInfo: userId,
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
+        });
+        return { userId, nickname, profileImg, todayScore: findTodayScore.todayScore };
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({

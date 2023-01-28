@@ -14,12 +14,15 @@ export declare class UsersController {
     }, res: Response): Promise<{
         url: string;
     }>;
+    logout(headers: any): Promise<{
+        data: string;
+    }>;
     getUserDetailsByToken(headers: any): Promise<{
         data: {
             userId: number;
-            email: string;
             nickname: string;
             profileImg: string;
+            todayScore: number;
         };
     }>;
     userKeyword(headers: any): Promise<{

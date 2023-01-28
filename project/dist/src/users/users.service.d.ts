@@ -24,11 +24,12 @@ export declare class UsersService {
     }>;
     createToken(user: User, isNewUSer: boolean): Promise<string>;
     tokenValidate(token: string): Promise<any>;
+    logout(token: string): Promise<import("typeorm").DeleteResult>;
     getUserDetailsByToken(token: string): Promise<{
         userId: number;
-        email: string;
         nickname: string;
         profileImg: string;
+        todayScore: number;
     }>;
     userKeyword(token: string): Promise<{
         userId: number;

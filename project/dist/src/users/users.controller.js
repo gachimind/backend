@@ -34,6 +34,12 @@ let UsersController = class UsersController {
         const token = await this.usersService.createToken(user, isNewUser);
         return { url: this.configService.get('REDIRECT') + token };
     }
+    async logout(headers) {
+        const token = headers.authorization.replace('Bearer ', '');
+        await this.usersService.logout(token);
+        const message = '로그아웃 되었습니다.';
+        return { data: message };
+    }
     async getUserDetailsByToken(headers) {
         const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.getUserDetailsByToken(token);
@@ -63,6 +69,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('/logout'),
+    __param(0, (0, common_1.Headers)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
