@@ -167,10 +167,9 @@ const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(109);
-const session = __webpack_require__(110);
-const passport = __webpack_require__(111);
-const cookieParser = __webpack_require__(112);
+const http_exception_filter_1 = __webpack_require__(118);
+const passport = __webpack_require__(119);
+const cookieParser = __webpack_require__(120);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const port = process.env.PORT || 3000;
@@ -182,16 +181,7 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
-    app.use(session({
-        secret: 'secret',
-        saveUninitialized: false,
-        resave: false,
-        cookie: {
-            maxAge: 60000,
-        },
-    }));
     app.use(passport.initialize());
-    app.use(passport.session());
     const config = new swagger_1.DocumentBuilder()
         .setTitle('가치마인드 API 명세')
         .setDescription('가치마인드 HTTP API 명세서')
@@ -240,21 +230,24 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
 const common_1 = __webpack_require__(7);
 const users_module_1 = __webpack_require__(8);
-const games_module_1 = __webpack_require__(30);
+const games_module_1 = __webpack_require__(27);
 const config_1 = __webpack_require__(11);
-const logger_middleware_1 = __webpack_require__(46);
-const app_controller_1 = __webpack_require__(51);
-const passport_1 = __webpack_require__(22);
+const logger_middleware_1 = __webpack_require__(47);
+const app_controller_1 = __webpack_require__(52);
+const passport_1 = __webpack_require__(23);
 const typeorm_1 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(15);
-const token_map_entity_1 = __webpack_require__(19);
-const room_entity_1 = __webpack_require__(35);
-const player_entity_1 = __webpack_require__(36);
-const socketIdMap_entity_1 = __webpack_require__(37);
-const turn_entity_1 = __webpack_require__(38);
-const turnResult_entity_1 = __webpack_require__(17);
-const gameResult_entity_1 = __webpack_require__(16);
-const admin_module_1 = __webpack_require__(52);
+const token_map_entity_1 = __webpack_require__(20);
+const room_entity_1 = __webpack_require__(32);
+const player_entity_1 = __webpack_require__(33);
+const socketIdMap_entity_1 = __webpack_require__(34);
+const keyword_module_1 = __webpack_require__(55);
+const keyword_entities_1 = __webpack_require__(56);
+const turn_entity_1 = __webpack_require__(35);
+const turnResult_entity_1 = __webpack_require__(19);
+const gameResult_entity_1 = __webpack_require__(18);
+const admin_module_1 = __webpack_require__(61);
+const todayResult_entity_1 = __webpack_require__(16);
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -271,14 +264,28 @@ AppModule = __decorate([
                 username: process.env.MYSQL_USERNAME,
                 password: process.env.MYSQL_PASSWORD,
                 database: process.env.MYSQL_DATABASE,
-                entities: [user_entity_1.User, token_map_entity_1.TokenMap, room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap, turn_entity_1.Turn, turnResult_entity_1.TurnResult, gameResult_entity_1.GameResult],
+                entities: [
+                    user_entity_1.User,
+                    token_map_entity_1.TokenMap,
+                    room_entity_1.Room,
+                    player_entity_1.Player,
+                    socketIdMap_entity_1.SocketIdMap,
+                    keyword_entities_1.Keyword,
+                    turn_entity_1.Turn,
+                    turnResult_entity_1.TurnResult,
+                    gameResult_entity_1.GameResult,
+                    todayResult_entity_1.TodayResult,
+                ],
                 synchronize: false,
                 logging: false,
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
+                timezone: 'Z',
+                cache: true,
             }),
             users_module_1.UsersModule,
             games_module_1.GamesModule,
+            keyword_module_1.KeywordModule,
             passport_1.PassportModule.register({ session: true }),
             admin_module_1.AdminModule,
         ],
@@ -314,15 +321,14 @@ const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const users_controller_1 = __webpack_require__(10);
 const users_service_1 = __webpack_require__(12);
-const kakao_serializer_1 = __webpack_require__(23);
+const kakao_serializer_1 = __webpack_require__(24);
 const user_entity_1 = __webpack_require__(15);
-const kakao_strategy_1 = __webpack_require__(24);
-const token_map_entity_1 = __webpack_require__(19);
+const kakao_strategy_1 = __webpack_require__(25);
+const token_map_entity_1 = __webpack_require__(20);
 const jwt_1 = __webpack_require__(14);
-const passport_1 = __webpack_require__(22);
+const passport_1 = __webpack_require__(23);
 const config_1 = __webpack_require__(11);
-const jwt_guard_1 = __webpack_require__(21);
-const seeding_controller_1 = __webpack_require__(26);
+const jwt_guard_1 = __webpack_require__(22);
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
@@ -338,7 +344,7 @@ UsersModule = __decorate([
             }),
             passport_1.PassportModule,
         ],
-        controllers: [users_controller_1.UsersController, seeding_controller_1.SeedingController],
+        controllers: [users_controller_1.UsersController],
         providers: [
             users_service_1.UsersService,
             kakao_serializer_1.SessionSerializer,
@@ -386,9 +392,9 @@ exports.UsersController = void 0;
 const common_1 = __webpack_require__(7);
 const config_1 = __webpack_require__(11);
 const users_service_1 = __webpack_require__(12);
-const express_1 = __webpack_require__(20);
-const jwt_guard_1 = __webpack_require__(21);
-const passport_1 = __webpack_require__(22);
+const express_1 = __webpack_require__(21);
+const jwt_guard_1 = __webpack_require__(22);
+const passport_1 = __webpack_require__(23);
 let UsersController = class UsersController {
     constructor(usersService, configService) {
         this.usersService = usersService;
@@ -480,7 +486,7 @@ const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(13);
 const jwt_1 = __webpack_require__(14);
 const user_entity_1 = __webpack_require__(15);
-const token_map_entity_1 = __webpack_require__(19);
+const token_map_entity_1 = __webpack_require__(20);
 const config_1 = __webpack_require__(11);
 let UsersService = class UsersService {
     constructor(usersRepository, tokenMapRepository, jwtService, configService) {
@@ -581,8 +587,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.User = void 0;
-const gameResult_entity_1 = __webpack_require__(16);
 const typeorm_1 = __webpack_require__(13);
+const todayResult_entity_1 = __webpack_require__(16);
+const gameResult_entity_1 = __webpack_require__(18);
 let User = class User {
 };
 __decorate([
@@ -618,9 +625,13 @@ __decorate([
     __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
 ], User.prototype, "deletedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.user, { eager: true }),
+    (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.user),
     __metadata("design:type", Array)
 ], User.prototype, "gameResults", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => todayResult_entity_1.TodayResult, (todayResult) => todayResult.user, { eager: true }),
+    __metadata("design:type", Array)
+], User.prototype, "todayResults", void 0);
 User = __decorate([
     (0, typeorm_1.Entity)()
 ], User);
@@ -642,13 +653,84 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TodayResult = void 0;
+const typeorm_1 = __webpack_require__(13);
+const user_entity_1 = __webpack_require__(15);
+const ManyToOne_1 = __webpack_require__(17);
+const gameResult_entity_1 = __webpack_require__(18);
+let TodayResult = class TodayResult {
+};
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], TodayResult.prototype, "todayResultId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'userInfo' }),
+    __metadata("design:type", Number)
+], TodayResult.prototype, "userInfo", void 0);
+__decorate([
+    (0, ManyToOne_1.ManyToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
+    __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
+], TodayResult.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], TodayResult.prototype, "todayScore", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], TodayResult.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
+], TodayResult.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)(),
+    __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
+], TodayResult.prototype, "deletedAt", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => gameResult_entity_1.GameResult, (gameResult) => gameResult.todayResult, { eager: true }),
+    __metadata("design:type", Array)
+], TodayResult.prototype, "gameResults", void 0);
+TodayResult = __decorate([
+    (0, typeorm_1.Entity)()
+], TodayResult);
+exports.TodayResult = TodayResult;
+
+
+/***/ }),
+/* 17 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("typeorm/decorator/relations/ManyToOne");
+
+/***/ }),
+/* 18 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GameResult = void 0;
 const typeorm_1 = __webpack_require__(13);
-const turnResult_entity_1 = __webpack_require__(17);
+const turnResult_entity_1 = __webpack_require__(19);
 const user_entity_1 = __webpack_require__(15);
-const ManyToOne_1 = __webpack_require__(18);
+const ManyToOne_1 = __webpack_require__(17);
+const todayResult_entity_1 = __webpack_require__(16);
 let GameResult = class GameResult {
 };
 __decorate([
@@ -669,15 +751,28 @@ __decorate([
     __metadata("design:type", typeof (_a = typeof user_entity_1.User !== "undefined" && user_entity_1.User) === "function" ? _a : Object)
 ], GameResult.prototype, "user", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'todayResultInfo', nullable: true }),
+    __metadata("design:type", Number)
+], GameResult.prototype, "todayResultInfo", void 0);
+__decorate([
+    (0, ManyToOne_1.ManyToOne)(() => todayResult_entity_1.TodayResult, (todayResult) => todayResult.gameResults, {
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        createForeignKeyConstraints: false,
+    }),
+    (0, typeorm_1.JoinColumn)({ name: 'todayResultInfo' }),
+    __metadata("design:type", typeof (_b = typeof todayResult_entity_1.TodayResult !== "undefined" && todayResult_entity_1.TodayResult) === "function" ? _b : Object)
+], GameResult.prototype, "todayResult", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)(),
-    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
 ], GameResult.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", typeof (_c = typeof Date !== "undefined" && Date) === "function" ? _c : Object)
+    __metadata("design:type", typeof (_d = typeof Date !== "undefined" && Date) === "function" ? _d : Object)
 ], GameResult.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => turnResult_entity_1.TurnResult, (turnResult) => turnResult.gameResult, { eager: true }),
+    (0, typeorm_1.OneToMany)(() => turnResult_entity_1.TurnResult, (turnResult) => turnResult.gameResult),
     __metadata("design:type", Array)
 ], GameResult.prototype, "turnResults", void 0);
 GameResult = __decorate([
@@ -687,7 +782,7 @@ exports.GameResult = GameResult;
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -705,7 +800,7 @@ var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TurnResult = void 0;
 const typeorm_1 = __webpack_require__(13);
-const gameResult_entity_1 = __webpack_require__(16);
+const gameResult_entity_1 = __webpack_require__(18);
 let TurnResult = class TurnResult {
 };
 __decorate([
@@ -729,6 +824,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'tinyint' }),
     __metadata("design:type", Number)
 ], TurnResult.prototype, "turn", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int' }),
+    __metadata("design:type", Number)
+], TurnResult.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
@@ -760,14 +859,7 @@ exports.TurnResult = TurnResult;
 
 
 /***/ }),
-/* 18 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("typeorm/decorator/relations/ManyToOne");
-
-/***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -820,14 +912,14 @@ exports.TokenMap = TokenMap;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("express");
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -871,14 +963,14 @@ exports.JwtAuthGuard = JwtAuthGuard;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/passport");
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -899,7 +991,7 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SessionSerializer = void 0;
 const common_1 = __webpack_require__(7);
-const passport_1 = __webpack_require__(22);
+const passport_1 = __webpack_require__(23);
 const users_service_1 = __webpack_require__(12);
 let SessionSerializer = class SessionSerializer extends passport_1.PassportSerializer {
     constructor(usersService) {
@@ -923,7 +1015,7 @@ exports.SessionSerializer = SessionSerializer;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -942,8 +1034,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KakaoStrategy = void 0;
 const common_1 = __webpack_require__(7);
 const config_1 = __webpack_require__(11);
-const passport_1 = __webpack_require__(22);
-const passport_kakao_oauth2_1 = __webpack_require__(25);
+const passport_1 = __webpack_require__(23);
+const passport_kakao_oauth2_1 = __webpack_require__(26);
 let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
     constructor(configService) {
         super({
@@ -970,88 +1062,11 @@ exports.KakaoStrategy = KakaoStrategy;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("passport-kakao-oauth2");
-
-/***/ }),
-/* 26 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SeedingController = void 0;
-const common_1 = __webpack_require__(7);
-const undefinedToNull_interceptor_1 = __webpack_require__(27);
-const resultToData_interceptor_1 = __webpack_require__(29);
-const user_entity_1 = __webpack_require__(15);
-const typeorm_1 = __webpack_require__(9);
-const typeorm_2 = __webpack_require__(13);
-const token_map_entity_1 = __webpack_require__(19);
-let SeedingController = class SeedingController {
-    constructor(usersRepository, tokenMapRepository) {
-        this.usersRepository = usersRepository;
-        this.tokenMapRepository = tokenMapRepository;
-    }
-    async createTestUser() {
-        const user = [];
-        for (let num = 1; num <= 6; num++) {
-            user.push({
-                email: `test${num}@email.com`,
-                nickname: `테스트닉네임${num}`,
-                profileImg: 'https://ichef.bbci.co.uk/news/640/cpsprodpb/E172/production/_126241775_getty_cats.png',
-            });
-        }
-        return await this.usersRepository.insert(user);
-    }
-    async createTestToken() {
-        const user = [];
-        for (let num = 1; num <= 6; num++) {
-            user.push({
-                userInfo: num,
-                token: `token${num}`,
-            });
-        }
-        return await this.tokenMapRepository.insert(user);
-    }
-};
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], SeedingController.prototype, "createTestUser", null);
-__decorate([
-    (0, common_1.Get)('token'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], SeedingController.prototype, "createTestToken", null);
-SeedingController = __decorate([
-    (0, common_1.UseInterceptors)(undefinedToNull_interceptor_1.UndefinedToNullInterceptor, resultToData_interceptor_1.ResultToDataInterceptor),
-    (0, common_1.Controller)('api/users'),
-    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
-    __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object])
-], SeedingController);
-exports.SeedingController = SeedingController;
-
 
 /***/ }),
 /* 27 */
@@ -1066,89 +1081,37 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UndefinedToNullInterceptor = void 0;
-const common_1 = __webpack_require__(7);
-const rxjs_1 = __webpack_require__(28);
-let UndefinedToNullInterceptor = class UndefinedToNullInterceptor {
-    intercept(context, next) {
-        return next.handle().pipe((0, rxjs_1.map)((data) => (data === undefined ? null : data)));
-    }
-};
-UndefinedToNullInterceptor = __decorate([
-    (0, common_1.Injectable)()
-], UndefinedToNullInterceptor);
-exports.UndefinedToNullInterceptor = UndefinedToNullInterceptor;
-
-
-/***/ }),
-/* 28 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("rxjs");
-
-/***/ }),
-/* 29 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ResultToDataInterceptor = void 0;
-const common_1 = __webpack_require__(7);
-const rxjs_1 = __webpack_require__(28);
-let ResultToDataInterceptor = class ResultToDataInterceptor {
-    intercept(context, next) {
-        return next.handle().pipe((0, rxjs_1.map)((data) => ({ data })));
-    }
-};
-ResultToDataInterceptor = __decorate([
-    (0, common_1.Injectable)()
-], ResultToDataInterceptor);
-exports.ResultToDataInterceptor = ResultToDataInterceptor;
-
-
-/***/ }),
-/* 30 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesModule = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
-const games_gateway_1 = __webpack_require__(31);
-const room_service_1 = __webpack_require__(34);
-const chat_service_1 = __webpack_require__(43);
+const games_gateway_1 = __webpack_require__(28);
+const room_service_1 = __webpack_require__(31);
+const chat_service_1 = __webpack_require__(44);
 const users_module_1 = __webpack_require__(8);
 const players_service_1 = __webpack_require__(41);
-const room_entity_1 = __webpack_require__(35);
-const player_entity_1 = __webpack_require__(36);
-const socketIdMap_entity_1 = __webpack_require__(37);
-const turn_entity_1 = __webpack_require__(38);
-const turnResult_entity_1 = __webpack_require__(17);
-const gameResult_entity_1 = __webpack_require__(16);
-const games_service_1 = __webpack_require__(45);
+const room_entity_1 = __webpack_require__(32);
+const player_entity_1 = __webpack_require__(33);
+const socketIdMap_entity_1 = __webpack_require__(34);
+const turn_entity_1 = __webpack_require__(35);
+const turnResult_entity_1 = __webpack_require__(19);
+const gameResult_entity_1 = __webpack_require__(18);
+const games_service_1 = __webpack_require__(46);
+const todayResult_entity_1 = __webpack_require__(16);
 let GamesModule = class GamesModule {
 };
 GamesModule = __decorate([
     (0, common_1.Module)({
         imports: [
             users_module_1.UsersModule,
-            typeorm_1.TypeOrmModule.forFeature([room_entity_1.Room, player_entity_1.Player, socketIdMap_entity_1.SocketIdMap, turn_entity_1.Turn, turnResult_entity_1.TurnResult, gameResult_entity_1.GameResult]),
+            typeorm_1.TypeOrmModule.forFeature([
+                room_entity_1.Room,
+                player_entity_1.Player,
+                socketIdMap_entity_1.SocketIdMap,
+                turn_entity_1.Turn,
+                turnResult_entity_1.TurnResult,
+                gameResult_entity_1.GameResult,
+                todayResult_entity_1.TodayResult,
+            ]),
         ],
         providers: [games_gateway_1.GamesGateway, room_service_1.RoomService, chat_service_1.ChatService, players_service_1.PlayersService, games_service_1.GamesService],
         exports: [games_gateway_1.GamesGateway, typeorm_1.TypeOrmModule],
@@ -1158,7 +1121,7 @@ exports.GamesModule = GamesModule;
 
 
 /***/ }),
-/* 31 */
+/* 28 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1175,19 +1138,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesGateway = void 0;
-const websockets_1 = __webpack_require__(32);
-const socket_io_1 = __webpack_require__(33);
-const room_service_1 = __webpack_require__(34);
-const ws_exception_filter_1 = __webpack_require__(39);
+const websockets_1 = __webpack_require__(29);
+const socket_io_1 = __webpack_require__(30);
+const room_service_1 = __webpack_require__(31);
+const ws_exception_filter_1 = __webpack_require__(36);
 const players_service_1 = __webpack_require__(41);
-const event_user_info_constructor_1 = __webpack_require__(42);
-const chat_service_1 = __webpack_require__(43);
+const event_user_info_constructor_1 = __webpack_require__(43);
+const chat_service_1 = __webpack_require__(44);
 const common_1 = __webpack_require__(7);
-const update_room_info_constructor_1 = __webpack_require__(44);
-const games_service_1 = __webpack_require__(45);
+const update_room_info_constructor_1 = __webpack_require__(45);
+const games_service_1 = __webpack_require__(46);
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
@@ -1219,7 +1182,8 @@ let GamesGateway = class GamesGateway {
         if (!token) {
             throw new ws_exception_filter_1.SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
-        await this.playersService.socketIdMapToLoginUser(token, socket.id);
+        const requestUser = await this.playersService.socketIdMapToLoginUser(token, socket.id);
+        await this.playersService.createTodayResult(requestUser.userInfo);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
@@ -1294,28 +1258,33 @@ let GamesGateway = class GamesGateway {
         let turn = await this.gamesService.createTurn(room.roomId);
         await this.gameTimer(room, 'startCount', turn);
         while (turnCount < room.players.length) {
-            turnCount++;
-            setTimeout(async () => {
-                await this.gameTimer(room, 'readyTime', turn);
-            }, 10000);
-            setTimeout(async () => {
-                await this.gameTimer(room, 'speechTime', turn);
-            }, 10000 + room.readyTime);
-            setTimeout(async () => {
-                let currentTurn = turn;
-                if (turn.turn < room.players.length) {
-                    turn = await this.gamesService.createTurn(room.roomId);
-                }
-                else {
-                    turn = currentTurn;
-                    turnCount++;
-                }
-                await this.gameTimer(room, 'discussionTime', currentTurn, turn);
-            }, 10000 + room.readyTime + room.speechTime);
+            await this.gameTimer(room, 'readyTime', turn);
+            await this.gameTimer(room, 'speechTime', turn);
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            let nextTurn = turn;
+            if (turn.turn < room.players.length) {
+                nextTurn = await this.gamesService.createTurn(room.roomId);
+            }
+            await this.gameTimer(room, 'discussionTime', turn, nextTurn);
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            turn = nextTurn;
+            turnCount++;
         }
     }
+    timer(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
     async gameTimer(room, eventName, turn, nextTurn) {
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new ws_exception_filter_1.SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
@@ -1327,36 +1296,33 @@ let GamesGateway = class GamesGateway {
                 keyword: turn.keyword,
                 hint: turn.hint,
             };
-            await this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
         }
-        await this.server.to(`${roomId}`).emit('time-start', {
+        this.server.to(`${roomId}`).emit('time-start', {
             data: {
                 currentTurn: turn.turn,
                 timer,
                 event,
             },
         });
-        await setTimeout(async () => {
-            if (event === 'discussionTimer') {
-                if (turn === nextTurn) {
-                    nextTurn.turn = 0;
-                }
-                return await this.server.to(`${roomId}`).emit('time-end', {
-                    data: {
-                        nextTurn: nextTurn.turn,
-                        timer,
-                        event,
-                    },
-                });
+        await this.timer(timer);
+        let key = 'currentTurn';
+        if (event === 'discussionTimer') {
+            const turnResult = await this.gamesService.recordSpeechPlayerScore(roomId, turn.turn, turn.speechPlayer, turn.speechPlayerNickname);
+            this.server
+                .to(`${roomId}`)
+                .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
+            key = 'nextTurn';
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
             }
-            return await this.server.to(`${roomId}`).emit('time-end', {
-                data: {
-                    currentTurn: turn.turn,
-                    timer,
-                    event,
-                },
-            });
-        }, timer);
+        }
+        const data = {
+            timer,
+            event,
+        };
+        data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
+        return this.server.to(`${roomId}`).emit('time-end', { data });
     }
     async sendChatRequest(socket, { data }) {
         const event = 'send-chat';
@@ -1366,15 +1332,15 @@ let GamesGateway = class GamesGateway {
         }
         const currentTurn = requestUser.player.room.turns.at(-1);
         let type = 'chat';
-        if (requestUser.player.room.isGameOn) {
+        if (requestUser.player.room.isGameOn &&
+            (currentTurn.currentEvent === 'readyTime' || currentTurn.currentEvent === 'speechTime')) {
             const isAnswer = this.chatService.checkAnswer(data.message, requestUser.player.room);
-            if (requestUser.userInfo === currentTurn.speechPlayer &&
-                currentTurn.currentEvent === 'readyTime') {
+            if (isAnswer && requestUser.userInfo === currentTurn.speechPlayer) {
                 throw new ws_exception_filter_1.SocketException('발표자는 정답을 채팅으로 알릴 수 없습니다.', 400, 'send-chat');
             }
             if (currentTurn.currentEvent === 'speechTime') {
                 if (isAnswer) {
-                    const result = await this.chatService.recordScore(requestUser.player.user, requestUser.player.roomInfo);
+                    const result = await this.gamesService.recordPlayerScore(requestUser.player.user, requestUser.player.roomInfo);
                     type = 'answer';
                     this.server.to(`${requestUser.player.roomInfo}`).emit('score', {
                         data: { userId: requestUser.userInfo, score: result.score },
@@ -1390,12 +1356,14 @@ let GamesGateway = class GamesGateway {
             .to(`${requestUser.player.roomInfo}`)
             .emit('receive-chat', { data: { message: data.message, eventUserInfo, type } });
     }
+    async handleTurnEvaluation(socket, { data }) {
+        const event = 'turn-evaluate';
+        const requestUser = await this.socketAuthentication(socket.id, event);
+        const roomId = requestUser.player.roomInfo;
+        this.gamesService.saveEvaluationScore(roomId, data);
+    }
     async handleIce(socket, { data }) {
         const event = 'webrtc-ice';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { candidateReceiveSocketId, ice } = data;
         socket.broadcast
             .to(candidateReceiveSocketId)
@@ -1403,10 +1371,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleOffer(socket, { data }) {
         const event = 'webrtc-offer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, offerReceiveSocketId } = data;
         socket.broadcast
             .to(offerReceiveSocketId)
@@ -1414,10 +1378,6 @@ let GamesGateway = class GamesGateway {
     }
     async handleAnswer(socket, { data }) {
         const event = 'webrtc-answer';
-        const requestUser = await this.socketAuthentication(socket.id, event);
-        if (!requestUser.player) {
-            throw new ws_exception_filter_1.SocketException('잘못된 접근입니다.', 400, event);
-        }
         const { sessionDescription, answerReceiveSocketId } = data;
         socket.broadcast
             .to(answerReceiveSocketId)
@@ -1582,11 +1542,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "sendChatRequest", null);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('webrtc-ice'),
+    (0, websockets_1.SubscribeMessage)('turn-evaluate'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_s = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _s : Object, Object]),
+    __metadata("design:returntype", Promise)
+], GamesGateway.prototype, "handleTurnEvaluation", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('webrtc-ice'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_t = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _t : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleIce", null);
 __decorate([
@@ -1594,7 +1562,7 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_t = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _t : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_u = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _u : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleOffer", null);
 __decorate([
@@ -1602,14 +1570,14 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_u = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _u : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_v = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _v : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleAnswer", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('webrtc-leave'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_v = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _v : Object]),
+    __metadata("design:paramtypes", [typeof (_w = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _w : Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handler", null);
 __decorate([
@@ -1617,11 +1585,11 @@ __decorate([
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_w = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _w : Object, Object]),
+    __metadata("design:paramtypes", [typeof (_x = typeof socket_io_1.Socket !== "undefined" && socket_io_1.Socket) === "function" ? _x : Object, Object]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
-    (0, common_1.UseFilters)(ws_exception_filter_1.SocketExceptionFilter),
+    (0, common_1.UseFilters)(new ws_exception_filter_1.SocketExceptionFilter()),
     (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' } }),
     __metadata("design:paramtypes", [typeof (_a = typeof room_service_1.RoomService !== "undefined" && room_service_1.RoomService) === "function" ? _a : Object, typeof (_b = typeof players_service_1.PlayersService !== "undefined" && players_service_1.PlayersService) === "function" ? _b : Object, typeof (_c = typeof chat_service_1.ChatService !== "undefined" && chat_service_1.ChatService) === "function" ? _c : Object, typeof (_d = typeof games_service_1.GamesService !== "undefined" && games_service_1.GamesService) === "function" ? _d : Object])
 ], GamesGateway);
@@ -1629,21 +1597,21 @@ exports.GamesGateway = GamesGateway;
 
 
 /***/ }),
-/* 32 */
+/* 29 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/websockets");
 
 /***/ }),
-/* 33 */
+/* 30 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("socket.io");
 
 /***/ }),
-/* 34 */
+/* 31 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1666,9 +1634,10 @@ exports.RoomService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(13);
-const room_entity_1 = __webpack_require__(35);
-const ws_exception_filter_1 = __webpack_require__(39);
-const player_entity_1 = __webpack_require__(36);
+const room_entity_1 = __webpack_require__(32);
+const ws_exception_filter_1 = __webpack_require__(36);
+const player_entity_1 = __webpack_require__(33);
+const score_map_1 = __webpack_require__(40);
 let RoomService = class RoomService {
     constructor(roomRepository, playerRepository) {
         this.roomRepository = roomRepository;
@@ -1713,7 +1682,9 @@ let RoomService = class RoomService {
         }
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
         const roomInsert = await this.roomRepository.insert(newRoom);
-        return roomInsert.identifiers[0].roomId;
+        const roomId = roomInsert.identifiers[0].roomId;
+        score_map_1.scoreMap[roomId] = {};
+        return roomId;
     }
     async enterRoom(requestUser, requestRoom) {
         const room = await this.getOneRoomByRoomId(requestRoom.roomId);
@@ -1803,7 +1774,7 @@ exports.RoomService = RoomService;
 
 
 /***/ }),
-/* 35 */
+/* 32 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1821,8 +1792,8 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Room = void 0;
 const typeorm_1 = __webpack_require__(13);
-const player_entity_1 = __webpack_require__(36);
-const turn_entity_1 = __webpack_require__(38);
+const player_entity_1 = __webpack_require__(33);
+const turn_entity_1 = __webpack_require__(35);
 let Room = class Room {
 };
 __decorate([
@@ -1888,7 +1859,7 @@ exports.Room = Room;
 
 
 /***/ }),
-/* 36 */
+/* 33 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1907,8 +1878,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Player = void 0;
 const user_entity_1 = __webpack_require__(15);
 const typeorm_1 = __webpack_require__(13);
-const room_entity_1 = __webpack_require__(35);
-const socketIdMap_entity_1 = __webpack_require__(37);
+const room_entity_1 = __webpack_require__(32);
+const socketIdMap_entity_1 = __webpack_require__(34);
 let Player = class Player {
 };
 __decorate([
@@ -1963,7 +1934,7 @@ exports.Player = Player;
 
 
 /***/ }),
-/* 37 */
+/* 34 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -1982,7 +1953,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SocketIdMap = void 0;
 const user_entity_1 = __webpack_require__(15);
 const typeorm_1 = __webpack_require__(13);
-const player_entity_1 = __webpack_require__(36);
+const player_entity_1 = __webpack_require__(33);
 let SocketIdMap = class SocketIdMap {
 };
 __decorate([
@@ -2013,7 +1984,7 @@ exports.SocketIdMap = SocketIdMap;
 
 
 /***/ }),
-/* 38 */
+/* 35 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2031,7 +2002,7 @@ var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Turn = void 0;
 const typeorm_1 = __webpack_require__(13);
-const room_entity_1 = __webpack_require__(35);
+const room_entity_1 = __webpack_require__(32);
 let Turn = class Turn {
 };
 __decorate([
@@ -2064,6 +2035,10 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
+], Turn.prototype, "speechPlayerNickname", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
 ], Turn.prototype, "keyword", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
@@ -2084,7 +2059,7 @@ exports.Turn = Turn;
 
 
 /***/ }),
-/* 39 */
+/* 36 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2098,8 +2073,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SocketExceptionFilter = exports.SocketException = void 0;
 const common_1 = __webpack_require__(7);
-const websockets_1 = __webpack_require__(32);
-const errors_1 = __webpack_require__(40);
+const websockets_1 = __webpack_require__(29);
+const errors_1 = __webpack_require__(37);
+const shared_utils_1 = __webpack_require__(38);
+const constants_1 = __webpack_require__(39);
 class SocketException extends errors_1.WsException {
     constructor(message, status, eventName) {
         super({ message, status, eventName });
@@ -2111,31 +2088,74 @@ class SocketException extends errors_1.WsException {
 exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
-        super.catch(exception, host);
-        const ctx = host.switchToWs();
-        const socket = ctx.getClient();
+        const client = host.switchToWs().getClient();
+        this.handleError(client, exception);
+        const logger = new common_1.Logger('WsExceptionsHandler');
+        logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception instanceof Error ? exception.stack : null);
+    }
+    handleError(client, exception) {
+        if (!(exception instanceof SocketException)) {
+            return this.handleUnknownError(exception, client);
+        }
+        const event = exception.eventName;
+        const status = exception.status;
+        const errorMessage = exception.message;
         const error = {
-            errorMessage: exception.message,
-            status: exception.status,
-            event: exception.eventName,
+            errorMessage,
+            status,
+            event,
         };
-        socket.emit('error', {
-            error,
+        client.emit('error', { error });
+    }
+    handleUnknownError(exception, client) {
+        console.log('handleUnknownError');
+        const status = 500;
+        client.emit('error', {
+            status,
+            message: constants_1.MESSAGES.UNKNOWN_EXCEPTION_MESSAGE,
         });
+    }
+    isExceptionObject(err) {
+        return (0, shared_utils_1.isObject)(err) && !!err.message;
     }
 };
 SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)(SocketException)
+    (0, common_1.Catch)()
 ], SocketExceptionFilter);
 exports.SocketExceptionFilter = SocketExceptionFilter;
 
 
 /***/ }),
-/* 40 */
+/* 37 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/websockets/errors");
+
+/***/ }),
+/* 38 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/common/utils/shared.utils");
+
+/***/ }),
+/* 39 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("@nestjs/core/constants");
+
+/***/ }),
+/* 40 */
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.scoreMap = void 0;
+exports.scoreMap = {};
+
 
 /***/ }),
 /* 41 */
@@ -2155,21 +2175,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PlayersService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(13);
-const ws_exception_filter_1 = __webpack_require__(39);
-const token_map_entity_1 = __webpack_require__(19);
-const socketIdMap_entity_1 = __webpack_require__(37);
-const player_entity_1 = __webpack_require__(36);
+const ws_exception_filter_1 = __webpack_require__(36);
+const token_map_entity_1 = __webpack_require__(20);
+const socketIdMap_entity_1 = __webpack_require__(34);
+const player_entity_1 = __webpack_require__(33);
+const todayResult_entity_1 = __webpack_require__(16);
+const today_date_constructor_1 = __webpack_require__(42);
 let PlayersService = class PlayersService {
-    constructor(tokenMapRepository, socketIdMapRepository, playerRepository) {
+    constructor(tokenMapRepository, socketIdMapRepository, playerRepository, todayResultRepository) {
         this.tokenMapRepository = tokenMapRepository;
         this.socketIdMapRepository = socketIdMapRepository;
         this.playerRepository = playerRepository;
+        this.todayResultRepository = todayResultRepository;
     }
     async getUserBySocketId(socketId) {
         const user = await this.socketIdMapRepository.findOne({
@@ -2220,6 +2243,20 @@ let PlayersService = class PlayersService {
         const user = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.save(user);
     }
+    async createTodayResult(userInfo) {
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const todayResult = await this.todayResultRepository.findOne({
+            where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
+            cache: 5 * 60 * 1000,
+        });
+        if (!todayResult) {
+            await this.todayResultRepository.save({ userInfo, todayScore: 0 });
+            await this.todayResultRepository.findOne({
+                where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
+                cache: 5 * 60 * 1000,
+            });
+        }
+    }
     async setPlayerReady(player) {
         let user;
         if (!player.isReady) {
@@ -2236,13 +2273,31 @@ PlayersService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
     __param(1, (0, typeorm_1.InjectRepository)(socketIdMap_entity_1.SocketIdMap)),
     __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
+    __param(3, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object])
 ], PlayersService);
 exports.PlayersService = PlayersService;
 
 
 /***/ }),
 /* 42 */
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getTodayDate = void 0;
+function getTodayDate() {
+    const date = new Date();
+    const dateString = date.toDateString();
+    const newDate = new Date(`${dateString} 0:00:00`);
+    return newDate;
+}
+exports.getTodayDate = getTodayDate;
+
+
+/***/ }),
+/* 43 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2261,7 +2316,7 @@ exports.eventUserInfoConstructor = eventUserInfoConstructor;
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2283,12 +2338,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ChatService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
-const ws_exception_filter_1 = __webpack_require__(39);
 const typeorm_2 = __webpack_require__(13);
-const gameResult_entity_1 = __webpack_require__(16);
-const room_entity_1 = __webpack_require__(35);
-const turn_entity_1 = __webpack_require__(38);
-const turnResult_entity_1 = __webpack_require__(17);
+const gameResult_entity_1 = __webpack_require__(18);
+const room_entity_1 = __webpack_require__(32);
+const turn_entity_1 = __webpack_require__(35);
+const turnResult_entity_1 = __webpack_require__(19);
 let ChatService = class ChatService {
     constructor(roomRepository, turnRepository, turnResultRepository, gameResultRepository) {
         this.roomRepository = roomRepository;
@@ -2303,41 +2357,6 @@ let ChatService = class ChatService {
         }
         return true;
     }
-    async recordScore(user, roomId) {
-        const room = await this.roomRepository.findOneBy({ roomId });
-        const currentTurn = room.turns.at(-1);
-        console.log('요청 유저 닉네임', user.nickname);
-        console.log('현재 턴 발표자 닉네임', currentTurn.speechPlayer);
-        if (user.userId === currentTurn.speechPlayer) {
-            throw new ws_exception_filter_1.SocketException('발표자는 정답을 맞출 수 없습니다.', 400, 'send-chat');
-        }
-        const turnResults = await this.turnResultRepository.find({
-            where: { roomId, turn: currentTurn.turn },
-        });
-        for (let result of turnResults) {
-            if (user.nickname === result.nickname) {
-                throw new ws_exception_filter_1.SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
-            }
-        }
-        const myRank = turnResults.length;
-        const score = 100 - myRank * 20;
-        const gameResult = await this.gameResultRepository.findOne({
-            where: {
-                userInfo: user.userId,
-                roomId: room.roomId,
-            },
-        });
-        const turnResult = {
-            gameResultInfo: gameResult.gameResultId,
-            roomId: room.roomId,
-            turn: currentTurn.turn,
-            nickname: user.nickname,
-            score,
-            keyword: currentTurn.keyword,
-            isSpeech: false,
-        };
-        return await this.turnResultRepository.save(turnResult);
-    }
 };
 ChatService = __decorate([
     (0, common_1.Injectable)(),
@@ -2351,7 +2370,7 @@ exports.ChatService = ChatService;
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2383,7 +2402,7 @@ exports.updateRoomInfoConstructor = updateRoomInfoConstructor;
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2400,56 +2419,138 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.GamesService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
+const ws_exception_filter_1 = __webpack_require__(36);
 const typeorm_2 = __webpack_require__(13);
-const gameResult_entity_1 = __webpack_require__(16);
-const player_entity_1 = __webpack_require__(36);
-const room_entity_1 = __webpack_require__(35);
-const turn_entity_1 = __webpack_require__(38);
-const turnResult_entity_1 = __webpack_require__(17);
-const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
+const gameResult_entity_1 = __webpack_require__(18);
+const player_entity_1 = __webpack_require__(33);
+const room_entity_1 = __webpack_require__(32);
+const todayResult_entity_1 = __webpack_require__(16);
+const turn_entity_1 = __webpack_require__(35);
+const turnResult_entity_1 = __webpack_require__(19);
+const score_map_1 = __webpack_require__(40);
+const today_date_constructor_1 = __webpack_require__(42);
+const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 let GamesService = class GamesService {
-    constructor(roomRepository, playerRepository, turnRepository, turnResultRepository, gameResultRepository) {
+    constructor(roomRepository, playerRepository, turnRepository, turnResultRepository, gameResultRepository, todayResultRepository) {
         this.roomRepository = roomRepository;
         this.playerRepository = playerRepository;
         this.turnRepository = turnRepository;
         this.turnResultRepository = turnResultRepository;
         this.gameResultRepository = gameResultRepository;
+        this.todayResultRepository = todayResultRepository;
+    }
+    async createTurnResult(turnResult) {
+        return await this.turnResultRepository.save(turnResult);
     }
     async createGameResultPerPlayer(roomId) {
         const playersUserId = await this.playerRepository.find({
             where: { roomInfo: roomId },
             select: { userInfo: true },
         });
+        const today = (0, today_date_constructor_1.getTodayDate)();
         let data = [];
         for (let userId of playersUserId) {
+            const todayResult = await this.todayResultRepository.findOne({
+                where: { userInfo: userId.userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
+            });
             data.push({
                 roomId,
                 userInfo: userId.userInfo,
+                todayResultInfo: todayResult.todayResultId,
             });
         }
         await this.gameResultRepository.save(data);
     }
     async createTurn(roomId) {
-        const room = await this.roomRepository.findOne({ where: { roomId } });
+        const room = await this.roomRepository.findOne({
+            where: { roomId },
+            order: { players: { createdAt: 'ASC' } },
+        });
         let index = room.turns.length;
         const newTurnData = {
             roomInfo: room.roomId,
             turn: index + 1,
             currentEvent: 'start',
             speechPlayer: room.players[index].userInfo,
+            speechPlayerNickname: room.players[index].user.nickname,
             keyword: keywords[index],
             hint: null,
         };
-        return await this.turnRepository.save(newTurnData);
+        const turn = await this.turnRepository.save(newTurnData);
+        score_map_1.scoreMap[roomId][turn.turn] = [];
+        return turn;
     }
     async updateTurn(turn, timer) {
         turn.currentEvent = timer;
         return await this.turnRepository.save(turn);
+    }
+    async recordPlayerScore(user, roomId) {
+        const room = await this.roomRepository.findOneBy({ roomId });
+        const currentTurn = room.turns.at(-1);
+        const turnResults = await this.turnResultRepository.find({
+            where: { roomId, turn: currentTurn.turn },
+        });
+        for (let result of turnResults) {
+            if (user.nickname === result.nickname) {
+                throw new ws_exception_filter_1.SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
+            }
+        }
+        const myRank = turnResults.length;
+        const score = 100 - myRank * 20;
+        const gameResult = await this.gameResultRepository.findOne({
+            where: {
+                userInfo: user.userId,
+                roomId: room.roomId,
+            },
+        });
+        const turnResult = {
+            gameResultInfo: gameResult.gameResultId,
+            roomId: room.roomId,
+            turn: currentTurn.turn,
+            userId: user.userId,
+            nickname: user.nickname,
+            score,
+            keyword: currentTurn.keyword,
+            isSpeech: false,
+        };
+        return await this.createTurnResult(turnResult);
+    }
+    async saveEvaluationScore(roomId, data) {
+        const { score, turn } = data;
+        score_map_1.scoreMap[roomId][turn].push(score);
+        console.log('중간점수 합계 : ');
+    }
+    async recordSpeechPlayerScore(roomId, turn, userId, nickname) {
+        const room = await this.roomRepository.findOne({
+            where: { roomId },
+            select: { players: { userInfo: true }, turns: { keyword: true } },
+        });
+        const gameResult = await this.gameResultRepository.findOne({
+            where: { userInfo: userId, roomId },
+            select: { gameResultId: true },
+        });
+        const unevaluatedNum = room.players.length - 1 - score_map_1.scoreMap[roomId][turn].length;
+        let sum = 0;
+        for (let score of score_map_1.scoreMap[roomId][turn]) {
+            sum += score;
+        }
+        const score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+        const turnResult = {
+            gameResultInfo: gameResult.gameResultId,
+            roomId,
+            turn,
+            userId,
+            nickname,
+            score,
+            keyword: room.turns[turn - 1].keyword,
+            isSpeech: true,
+        };
+        return await this.createTurnResult(turnResult);
     }
 };
 GamesService = __decorate([
@@ -2459,13 +2560,14 @@ GamesService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
     __param(3, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
     __param(4, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object])
+    __param(5, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object, typeof (_f = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _f : Object])
 ], GamesService);
 exports.GamesService = GamesService;
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2482,7 +2584,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LoggerMiddleware = void 0;
 const common_1 = __webpack_require__(7);
-const logger_service_1 = __webpack_require__(47);
+const logger_service_1 = __webpack_require__(48);
 let LoggerMiddleware = class LoggerMiddleware {
     constructor() { }
     use(req, res, next) {
@@ -2509,16 +2611,16 @@ exports.LoggerMiddleware = LoggerMiddleware;
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LoggerService = void 0;
-const winston = __webpack_require__(48);
-const moment = __webpack_require__(49);
-const nest_winston_1 = __webpack_require__(50);
+const winston = __webpack_require__(49);
+const moment = __webpack_require__(50);
+const nest_winston_1 = __webpack_require__(51);
 const { errors, combine, timestamp, printf } = winston.format;
 class LoggerService {
     constructor(service) {
@@ -2573,28 +2675,257 @@ exports.LoggerService = LoggerService;
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("winston");
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("moment");
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("nest-winston");
 
 /***/ }),
-/* 51 */
+/* 52 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c, _d, _e;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AppController = void 0;
+const common_1 = __webpack_require__(7);
+const typeorm_1 = __webpack_require__(9);
+const typeorm_2 = __webpack_require__(13);
+const resultToData_interceptor_1 = __webpack_require__(53);
+const gameResult_entity_1 = __webpack_require__(18);
+const todayResult_entity_1 = __webpack_require__(16);
+const turnResult_entity_1 = __webpack_require__(19);
+const token_map_entity_1 = __webpack_require__(20);
+const user_entity_1 = __webpack_require__(15);
+let AppController = class AppController {
+    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, turnResultRepository) {
+        this.usersRepository = usersRepository;
+        this.tokenMapRepository = tokenMapRepository;
+        this.todayResultRepository = todayResultRepository;
+        this.gameResultRepository = gameResultRepository;
+        this.turnResultRepository = turnResultRepository;
+    }
+    greetings() {
+        return `welcome to gachimind project nest server!`;
+    }
+    async createTestUser() {
+        const users = [];
+        for (let num = 1; num <= 6; num++) {
+            users.push({
+                email: `test${num}@email.com`,
+                nickname: `테스트닉네임${num}`,
+                profileImg: 'https://ichef.bbci.co.uk/news/640/cpsprodpb/E172/production/_126241775_getty_cats.png',
+            });
+        }
+        return await this.usersRepository.save(users);
+    }
+    async createTestToken() {
+        const users = [];
+        for (let num = 1; num <= 6; num++) {
+            users.push({
+                userInfo: num,
+                token: `token${num}`,
+            });
+        }
+        return await this.tokenMapRepository.save(users);
+    }
+    async createTodayResult() {
+        const results = [];
+        for (let num = 1; num <= 6; num++) {
+            results.push({
+                userInfo: num,
+                todayScore: num * 1000,
+            });
+        }
+        return await this.todayResultRepository.save(results);
+    }
+    async createGameResult() {
+        const results = [];
+        for (let num = 1; num <= 6; num++) {
+            for (let userInfo = 1; userInfo <= 6; userInfo++) {
+                results.push({
+                    roomId: 1000 + num,
+                    userInfo,
+                    todayResultInfo: userInfo,
+                });
+            }
+        }
+        return await this.gameResultRepository.save(results);
+    }
+    async createTurnResult() {
+        const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
+        const results = [];
+        for (let userId = 1; userId <= 6; userId++) {
+            const gameResults = await this.gameResultRepository.find({
+                where: { userInfo: userId },
+                select: { gameResultId: true, roomId: true },
+            });
+            const user = await this.usersRepository.findOneBy({ userId });
+            for (let gameResult of gameResults) {
+                let turn = 1;
+                while (turn <= 6) {
+                    results.push({
+                        gameResultInfo: gameResult.gameResultId,
+                        roomId: gameResult.roomId,
+                        userId,
+                        turn,
+                        nickname: user.nickname,
+                        score: 20 * (userId - 1),
+                        keyword: keywords[turn - 1],
+                        isSpeech: turn === userId ? true : false,
+                    });
+                    turn++;
+                }
+            }
+        }
+        return await this.turnResultRepository.save(results);
+    }
+};
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "greetings", null);
+__decorate([
+    (0, common_1.Get)('seed/user'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "createTestUser", null);
+__decorate([
+    (0, common_1.Get)('seed/token'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "createTestToken", null);
+__decorate([
+    (0, common_1.Get)('seed/result/today'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "createTodayResult", null);
+__decorate([
+    (0, common_1.Get)('seed/result/game'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "createGameResult", null);
+__decorate([
+    (0, common_1.Get)('seed/result/turn'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "createTurnResult", null);
+AppController = __decorate([
+    (0, common_1.UseInterceptors)(resultToData_interceptor_1.ResultToDataInterceptor),
+    (0, common_1.Controller)(),
+    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
+    __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
+    __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object, typeof (_d = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _d : Object, typeof (_e = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _e : Object])
+], AppController);
+exports.AppController = AppController;
+
+
+/***/ }),
+/* 53 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ResultToDataInterceptor = void 0;
+const common_1 = __webpack_require__(7);
+const rxjs_1 = __webpack_require__(54);
+let ResultToDataInterceptor = class ResultToDataInterceptor {
+    intercept(context, next) {
+        return next.handle().pipe((0, rxjs_1.map)((data) => ({ data })));
+    }
+};
+ResultToDataInterceptor = __decorate([
+    (0, common_1.Injectable)()
+], ResultToDataInterceptor);
+exports.ResultToDataInterceptor = ResultToDataInterceptor;
+
+
+/***/ }),
+/* 54 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("rxjs");
+
+/***/ }),
+/* 55 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KeywordModule = void 0;
+const common_1 = __webpack_require__(7);
+const typeorm_1 = __webpack_require__(9);
+const keyword_entities_1 = __webpack_require__(56);
+const keyword_service_1 = __webpack_require__(57);
+const keyword_controller_1 = __webpack_require__(60);
+let KeywordModule = class KeywordModule {
+};
+KeywordModule = __decorate([
+    (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([keyword_entities_1.Keyword])],
+        controllers: [keyword_controller_1.KeywordController],
+        providers: [keyword_service_1.KeywordService],
+        exports: [typeorm_1.TypeOrmModule],
+    })
+], KeywordModule);
+exports.KeywordModule = KeywordModule;
+
+
+/***/ }),
+/* 56 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2609,11 +2940,144 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AppController = void 0;
+exports.Keyword = void 0;
+const typeorm_1 = __webpack_require__(13);
+let Keyword = class Keyword {
+};
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], Keyword.prototype, "keywordId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Keyword.prototype, "keywordKor", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Keyword.prototype, "keywordEng", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Keyword.prototype, "hint", void 0);
+Keyword = __decorate([
+    (0, typeorm_1.Entity)()
+], Keyword);
+exports.Keyword = Keyword;
+
+
+/***/ }),
+/* 57 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KeywordService = void 0;
 const common_1 = __webpack_require__(7);
-let AppController = class AppController {
-    greetings() {
-        return `welcome to gachimind project nest server!`;
+const typeorm_1 = __webpack_require__(9);
+const typeorm_2 = __webpack_require__(13);
+const keyword_entities_1 = __webpack_require__(56);
+const puppeteer = __webpack_require__(58);
+const cheerio = __webpack_require__(59);
+let KeywordService = class KeywordService {
+    constructor(keywordRepository) {
+        this.keywordRepository = keywordRepository;
+    }
+    async getData() {
+        const browser = await puppeteer.launch({ headless: false });
+        const page = await browser.newPage();
+        const urlList = [];
+        const pageNumberToNumber = 200;
+        for (let i = 1; i <= pageNumberToNumber; i++) {
+            urlList.push(`https://terms.naver.com/list.naver?cid=42344&categoryId=42344&page=${i}`);
+        }
+        for (let i = 0; i < urlList.length; i++) {
+            const tempPage = await browser.newPage();
+            const URL = urlList[i];
+            await page.goto(`${URL}`, {
+                waitUntil: 'networkidle2',
+            });
+            await tempPage.waitForNetworkIdle;
+            const content = await page.content();
+            const $ = cheerio.load(content);
+            const target = '//*[@id="content"]/div[4]';
+            await page.waitForXPath(target);
+            const lists = $('#content > div.list_wrap > ul > ');
+            const data = lists.each((index, list) => {
+                const word = $(list).find('div > div.subject > strong> a:nth-child(1)').html();
+                const keywordKor = word.replace(/[^ㄱ-ㅎ|가-힣|'']/g, '');
+                const wordExpEng = word.replace(/[^a-z|A-Z|0-9|'']/g, '');
+                const saveData = this.keywordRepository.save({
+                    keywordKor: keywordKor,
+                    keywordEng: wordExpEng,
+                });
+            });
+        }
+        await browser.close();
+    }
+};
+KeywordService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(keyword_entities_1.Keyword)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+], KeywordService);
+exports.KeywordService = KeywordService;
+
+
+/***/ }),
+/* 58 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("puppeteer");
+
+/***/ }),
+/* 59 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("cheerio");
+
+/***/ }),
+/* 60 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KeywordController = void 0;
+const common_1 = __webpack_require__(7);
+const keyword_service_1 = __webpack_require__(57);
+let KeywordController = class KeywordController {
+    constructor(keywordService) {
+        this.keywordService = keywordService;
+    }
+    KeywordController() {
+        return this.keywordService.getData();
     }
 };
 __decorate([
@@ -2621,15 +3085,16 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], AppController.prototype, "greetings", null);
-AppController = __decorate([
-    (0, common_1.Controller)()
-], AppController);
-exports.AppController = AppController;
+], KeywordController.prototype, "KeywordController", null);
+KeywordController = __decorate([
+    (0, common_1.Controller)('keyword'),
+    __metadata("design:paramtypes", [typeof (_a = typeof keyword_service_1.KeywordService !== "undefined" && keyword_service_1.KeywordService) === "function" ? _a : Object])
+], KeywordController);
+exports.KeywordController = KeywordController;
 
 
 /***/ }),
-/* 52 */
+/* 61 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2643,14 +3108,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AdminModule = void 0;
 const common_1 = __webpack_require__(7);
-const cron_service_1 = __webpack_require__(53);
-const notion_service_1 = __webpack_require__(99);
-const schedule_1 = __webpack_require__(54);
+const cron_service_1 = __webpack_require__(62);
+const notion_service_1 = __webpack_require__(108);
+const schedule_1 = __webpack_require__(63);
+const player_entity_1 = __webpack_require__(33);
+const room_entity_1 = __webpack_require__(32);
+const typeorm_1 = __webpack_require__(9);
 let AdminModule = class AdminModule {
 };
 AdminModule = __decorate([
     (0, common_1.Module)({
-        imports: [schedule_1.ScheduleModule.forRoot()],
+        imports: [schedule_1.ScheduleModule.forRoot(), typeorm_1.TypeOrmModule.forFeature([player_entity_1.Player, room_entity_1.Room])],
         providers: [cron_service_1.CronService, notion_service_1.NotionService],
     })
 ], AdminModule);
@@ -2658,7 +3126,7 @@ exports.AdminModule = AdminModule;
 
 
 /***/ }),
-/* 53 */
+/* 62 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2676,15 +3144,16 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CronService = void 0;
 const common_1 = __webpack_require__(7);
-const schedule_1 = __webpack_require__(54);
-const notion_service_1 = __webpack_require__(99);
+const schedule_1 = __webpack_require__(63);
+const notion_service_1 = __webpack_require__(108);
 let CronService = class CronService {
     constructor(notionService) {
         this.notionService = notionService;
     }
     async actionPerMin() {
         await this.notionService.createAccumulatedStat();
-        await this.notionService.updateAccumulatedStat();
+    }
+    async actionPerHour() {
     }
 };
 __decorate([
@@ -2693,6 +3162,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CronService.prototype, "actionPerMin", null);
+__decorate([
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_HOUR),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CronService.prototype, "actionPerHour", null);
 CronService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof notion_service_1.NotionService !== "undefined" && notion_service_1.NotionService) === "function" ? _a : Object])
@@ -2701,7 +3176,7 @@ exports.CronService = CronService;
 
 
 /***/ }),
-/* 54 */
+/* 63 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2710,11 +3185,11 @@ function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 exports.__esModule = true;
-__export(__webpack_require__(55));
+__export(__webpack_require__(64));
 
 
 /***/ }),
-/* 55 */
+/* 64 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2734,26 +3209,26 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(56), exports);
-__exportStar(__webpack_require__(58), exports);
 __exportStar(__webpack_require__(65), exports);
-__exportStar(__webpack_require__(97), exports);
+__exportStar(__webpack_require__(67), exports);
+__exportStar(__webpack_require__(74), exports);
+__exportStar(__webpack_require__(106), exports);
 
 
 /***/ }),
-/* 56 */
+/* 65 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CronExpression = void 0;
-var cron_expression_enum_1 = __webpack_require__(57);
+var cron_expression_enum_1 = __webpack_require__(66);
 Object.defineProperty(exports, "CronExpression", ({ enumerable: true, get: function () { return cron_expression_enum_1.CronExpression; } }));
 
 
 /***/ }),
-/* 57 */
+/* 66 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2849,7 +3324,7 @@ var CronExpression;
 
 
 /***/ }),
-/* 58 */
+/* 67 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2869,13 +3344,13 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__webpack_require__(59), exports);
-__exportStar(__webpack_require__(62), exports);
-__exportStar(__webpack_require__(64), exports);
+__exportStar(__webpack_require__(68), exports);
+__exportStar(__webpack_require__(71), exports);
+__exportStar(__webpack_require__(73), exports);
 
 
 /***/ }),
-/* 59 */
+/* 68 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2883,8 +3358,8 @@ __exportStar(__webpack_require__(64), exports);
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Cron = void 0;
 const common_1 = __webpack_require__(7);
-const scheduler_type_enum_1 = __webpack_require__(60);
-const schedule_constants_1 = __webpack_require__(61);
+const scheduler_type_enum_1 = __webpack_require__(69);
+const schedule_constants_1 = __webpack_require__(70);
 /**
  * Creates a scheduled job.
  * @param cronTime The time to fire off your job. This can be in the form of cron syntax or a JS ```Date``` object.
@@ -2898,7 +3373,7 @@ exports.Cron = Cron;
 
 
 /***/ }),
-/* 60 */
+/* 69 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2914,7 +3389,7 @@ var SchedulerType;
 
 
 /***/ }),
-/* 61 */
+/* 70 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -2929,7 +3404,7 @@ exports.SCHEDULE_TIMEOUT_OPTIONS = 'SCHEDULE_TIMEOUT_OPTIONS';
 
 
 /***/ }),
-/* 62 */
+/* 71 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2937,9 +3412,9 @@ exports.SCHEDULE_TIMEOUT_OPTIONS = 'SCHEDULE_TIMEOUT_OPTIONS';
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Interval = void 0;
 const common_1 = __webpack_require__(7);
-const util_1 = __webpack_require__(63);
-const scheduler_type_enum_1 = __webpack_require__(60);
-const schedule_constants_1 = __webpack_require__(61);
+const util_1 = __webpack_require__(72);
+const scheduler_type_enum_1 = __webpack_require__(69);
+const schedule_constants_1 = __webpack_require__(70);
 /**
  * Schedules an interval (`setInterval`).
  */
@@ -2953,14 +3428,14 @@ exports.Interval = Interval;
 
 
 /***/ }),
-/* 63 */
+/* 72 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("util");
 
 /***/ }),
-/* 64 */
+/* 73 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -2968,9 +3443,9 @@ module.exports = require("util");
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Timeout = void 0;
 const common_1 = __webpack_require__(7);
-const util_1 = __webpack_require__(63);
-const scheduler_type_enum_1 = __webpack_require__(60);
-const schedule_constants_1 = __webpack_require__(61);
+const util_1 = __webpack_require__(72);
+const scheduler_type_enum_1 = __webpack_require__(69);
+const schedule_constants_1 = __webpack_require__(70);
 /**
  * Schedules an timeout (`setTimeout`).
  */
@@ -2984,7 +3459,7 @@ exports.Timeout = Timeout;
 
 
 /***/ }),
-/* 65 */
+/* 74 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3000,10 +3475,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ScheduleModule = void 0;
 const common_1 = __webpack_require__(7);
 const core_1 = __webpack_require__(4);
-const schedule_metadata_accessor_1 = __webpack_require__(66);
-const schedule_explorer_1 = __webpack_require__(67);
-const scheduler_orchestrator_1 = __webpack_require__(68);
-const scheduler_registry_1 = __webpack_require__(97);
+const schedule_metadata_accessor_1 = __webpack_require__(75);
+const schedule_explorer_1 = __webpack_require__(76);
+const scheduler_orchestrator_1 = __webpack_require__(77);
+const scheduler_registry_1 = __webpack_require__(106);
 let ScheduleModule = ScheduleModule_1 = class ScheduleModule {
     static forRoot() {
         return {
@@ -3024,7 +3499,7 @@ exports.ScheduleModule = ScheduleModule;
 
 
 /***/ }),
-/* 66 */
+/* 75 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3042,7 +3517,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SchedulerMetadataAccessor = void 0;
 const common_1 = __webpack_require__(7);
 const core_1 = __webpack_require__(4);
-const schedule_constants_1 = __webpack_require__(61);
+const schedule_constants_1 = __webpack_require__(70);
 let SchedulerMetadataAccessor = class SchedulerMetadataAccessor {
     constructor(reflector) {
         this.reflector = reflector;
@@ -3071,7 +3546,7 @@ exports.SchedulerMetadataAccessor = SchedulerMetadataAccessor;
 
 
 /***/ }),
-/* 67 */
+/* 76 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3098,9 +3573,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ScheduleExplorer = void 0;
 const common_1 = __webpack_require__(7);
 const core_1 = __webpack_require__(4);
-const scheduler_type_enum_1 = __webpack_require__(60);
-const schedule_metadata_accessor_1 = __webpack_require__(66);
-const scheduler_orchestrator_1 = __webpack_require__(68);
+const scheduler_type_enum_1 = __webpack_require__(69);
+const schedule_metadata_accessor_1 = __webpack_require__(75);
+const scheduler_orchestrator_1 = __webpack_require__(77);
 let ScheduleExplorer = class ScheduleExplorer {
     constructor(schedulerOrchestrator, discoveryService, metadataAccessor, metadataScanner) {
         this.schedulerOrchestrator = schedulerOrchestrator;
@@ -3190,7 +3665,7 @@ exports.ScheduleExplorer = ScheduleExplorer;
 
 
 /***/ }),
-/* 68 */
+/* 77 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3207,9 +3682,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SchedulerOrchestrator = void 0;
 const common_1 = __webpack_require__(7);
-const cron_1 = __webpack_require__(69);
-const uuid_1 = __webpack_require__(96);
-const scheduler_registry_1 = __webpack_require__(97);
+const cron_1 = __webpack_require__(78);
+const uuid_1 = __webpack_require__(105);
+const scheduler_registry_1 = __webpack_require__(106);
 let SchedulerOrchestrator = class SchedulerOrchestrator {
     constructor(schedulerRegistry) {
         this.schedulerRegistry = schedulerRegistry;
@@ -3292,12 +3767,12 @@ exports.SchedulerOrchestrator = SchedulerOrchestrator;
 
 
 /***/ }),
-/* 69 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (root, factory) {
 	if (true) {
-		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(72)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+		!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(81)], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
 		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
@@ -3305,8 +3780,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 })(this, function (luxon, childProcess) {
 	var exports = {};
 	var spawn = childProcess && childProcess.spawn;
-	const CronTime = __webpack_require__(70)(luxon);
-	const CronJob = __webpack_require__(71)(CronTime, spawn);
+	const CronTime = __webpack_require__(79)(luxon);
+	const CronJob = __webpack_require__(80)(CronTime, spawn);
 
 	/**
 	 * Extend Luxon DateTime
@@ -3352,7 +3827,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 
 /***/ }),
-/* 70 */
+/* 79 */
 /***/ ((module) => {
 
 const CONSTRAINTS = [
@@ -3871,7 +4346,7 @@ module.exports = CronTime;
 
 
 /***/ }),
-/* 71 */
+/* 80 */
 /***/ ((module) => {
 
 function CronJob(CronTime, spawn) {
@@ -4091,7 +4566,7 @@ module.exports = CronJob;
 
 
 /***/ }),
-/* 72 */
+/* 81 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -4109,16 +4584,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "VERSION": () => (/* binding */ VERSION),
 /* harmony export */   "Zone": () => (/* reexport safe */ _zone_js__WEBPACK_IMPORTED_MODULE_4__["default"])
 /* harmony export */ });
-/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(73);
-/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(78);
-/* harmony import */ var _interval_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(95);
-/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(93);
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(81);
-/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(87);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(80);
-/* harmony import */ var _zones_invalidZone_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(88);
-/* harmony import */ var _zones_localZone_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(89);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(85);
+/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(82);
+/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(87);
+/* harmony import */ var _interval_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(104);
+/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(102);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(90);
+/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(96);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(89);
+/* harmony import */ var _zones_invalidZone_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(97);
+/* harmony import */ var _zones_localZone_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(98);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(94);
 
 
 
@@ -4136,7 +4611,7 @@ const VERSION = "1.28.1";
 
 
 /***/ }),
-/* 73 */
+/* 82 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -4145,22 +4620,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ DateTime),
 /* harmony export */   "friendlyDateTime": () => (/* binding */ friendlyDateTime)
 /* harmony export */ });
-/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(78);
-/* harmony import */ var _interval_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(95);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(85);
-/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(93);
-/* harmony import */ var _impl_formatter_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(84);
-/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(87);
-/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(79);
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(76);
-/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(86);
-/* harmony import */ var _impl_diff_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(94);
-/* harmony import */ var _impl_regexParser_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(90);
-/* harmony import */ var _impl_tokenParser_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(91);
-/* harmony import */ var _impl_conversions_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(75);
-/* harmony import */ var _impl_formats_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(83);
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(77);
-/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(74);
+/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(87);
+/* harmony import */ var _interval_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(104);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(94);
+/* harmony import */ var _info_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(102);
+/* harmony import */ var _impl_formatter_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(93);
+/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(96);
+/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(88);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(85);
+/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(95);
+/* harmony import */ var _impl_diff_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(103);
+/* harmony import */ var _impl_regexParser_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(99);
+/* harmony import */ var _impl_tokenParser_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(100);
+/* harmony import */ var _impl_conversions_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(84);
+/* harmony import */ var _impl_formats_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(92);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(86);
+/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(83);
 
 
 
@@ -6306,7 +6781,7 @@ function friendlyDateTime(dateTimeish) {
 
 
 /***/ }),
-/* 74 */
+/* 83 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6331,7 +6806,7 @@ class Invalid {
 
 
 /***/ }),
-/* 75 */
+/* 84 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6346,8 +6821,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "ordinalToGregorian": () => (/* binding */ ordinalToGregorian),
 /* harmony export */   "weekToGregorian": () => (/* binding */ weekToGregorian)
 /* harmony export */ });
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(76);
-/* harmony import */ var _invalid_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(74);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(85);
+/* harmony import */ var _invalid_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(83);
 
 
 
@@ -6500,7 +6975,7 @@ function hasInvalidTimeData(obj) {
 
 
 /***/ }),
-/* 76 */
+/* 85 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6538,7 +7013,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "untruncateYear": () => (/* binding */ untruncateYear),
 /* harmony export */   "weeksInWeekYear": () => (/* binding */ weeksInWeekYear)
 /* harmony export */ });
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(77);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(86);
 /*
   This is just a junk drawer, containing anything used across multiple classes.
   Because Luxon is small(ish), this should stay small and we won't worry about splitting
@@ -6834,7 +7309,7 @@ const ianaRegex = /[A-Za-z_+-]{1,256}(:?\/[A-Za-z_+-]{1,256}(\/[A-Za-z_+-]{1,256
 
 
 /***/ }),
-/* 77 */
+/* 86 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6912,7 +7387,7 @@ class ZoneIsAbstractError extends LuxonError {
 
 
 /***/ }),
-/* 78 */
+/* 87 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -6921,13 +7396,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ Duration),
 /* harmony export */   "friendlyDuration": () => (/* binding */ friendlyDuration)
 /* harmony export */ });
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(77);
-/* harmony import */ var _impl_formatter_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(84);
-/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(74);
-/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(79);
-/* harmony import */ var _impl_regexParser_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(90);
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(85);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(86);
+/* harmony import */ var _impl_formatter_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(93);
+/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(83);
+/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(88);
+/* harmony import */ var _impl_regexParser_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(99);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(94);
 
 
 
@@ -7804,7 +8279,7 @@ function friendlyDuration(durationish) {
 
 
 /***/ }),
-/* 79 */
+/* 88 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -7812,12 +8287,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Locale)
 /* harmony export */ });
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
-/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(82);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(85);
-/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(73);
-/* harmony import */ var _formatter_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(84);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(80);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
+/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(91);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(94);
+/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(82);
+/* harmony import */ var _formatter_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(93);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(89);
 
 
 
@@ -8303,7 +8778,7 @@ class Locale {
 
 
 /***/ }),
-/* 80 */
+/* 89 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -8311,8 +8786,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ IANAZone)
 /* harmony export */ });
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(81);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(90);
 
 
 
@@ -8507,7 +8982,7 @@ class IANAZone extends _zone_js__WEBPACK_IMPORTED_MODULE_1__["default"] {
 
 
 /***/ }),
-/* 81 */
+/* 90 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -8515,7 +8990,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Zone)
 /* harmony export */ });
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(77);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(86);
 /* eslint no-unused-vars: "off" */
 
 
@@ -8607,7 +9082,7 @@ class Zone {
 
 
 /***/ }),
-/* 82 */
+/* 91 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -8633,8 +9108,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "weekdaysNarrow": () => (/* binding */ weekdaysNarrow),
 /* harmony export */   "weekdaysShort": () => (/* binding */ weekdaysShort)
 /* harmony export */ });
-/* harmony import */ var _formats_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(83);
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
+/* harmony import */ var _formats_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(92);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
 
 
 
@@ -8871,7 +9346,7 @@ function formatString(knownFormat) {
 
 
 /***/ }),
-/* 83 */
+/* 92 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9094,7 +9569,7 @@ const DATETIME_HUGE_WITH_SECONDS = {
 
 
 /***/ }),
-/* 84 */
+/* 93 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9102,9 +9577,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Formatter)
 /* harmony export */ });
-/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(82);
-/* harmony import */ var _formats_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(83);
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(76);
+/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(91);
+/* harmony import */ var _formats_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(92);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(85);
 
 
 
@@ -9494,7 +9969,7 @@ class Formatter {
 
 
 /***/ }),
-/* 85 */
+/* 94 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9502,10 +9977,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Settings)
 /* harmony export */ });
-/* harmony import */ var _zones_localZone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(89);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(80);
-/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(79);
-/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(86);
+/* harmony import */ var _zones_localZone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(98);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(89);
+/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(88);
+/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(95);
 
 
 
@@ -9646,7 +10121,7 @@ class Settings {
 
 
 /***/ }),
-/* 86 */
+/* 95 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9654,11 +10129,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "normalizeZone": () => (/* binding */ normalizeZone)
 /* harmony export */ });
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(81);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(80);
-/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(87);
-/* harmony import */ var _zones_invalidZone_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(88);
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(90);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(89);
+/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(96);
+/* harmony import */ var _zones_invalidZone_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(97);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
 /**
  * @private
  */
@@ -9698,7 +10173,7 @@ function normalizeZone(input, defaultZone) {
 
 
 /***/ }),
-/* 87 */
+/* 96 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9706,8 +10181,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ FixedOffsetZone)
 /* harmony export */ });
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(76);
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(81);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(85);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(90);
 
 
 
@@ -9805,7 +10280,7 @@ class FixedOffsetZone extends _zone_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
 
 /***/ }),
-/* 88 */
+/* 97 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9813,7 +10288,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ InvalidZone)
 /* harmony export */ });
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(81);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(90);
 
 
 /**
@@ -9870,7 +10345,7 @@ class InvalidZone extends _zone_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
 
 /***/ }),
-/* 89 */
+/* 98 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9878,8 +10353,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ LocalZone)
 /* harmony export */ });
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(76);
-/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(81);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(85);
+/* harmony import */ var _zone_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(90);
 
 
 
@@ -9946,7 +10421,7 @@ class LocalZone extends _zone_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
 
 
 /***/ }),
-/* 90 */
+/* 99 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -9959,10 +10434,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "parseRFC2822Date": () => (/* binding */ parseRFC2822Date),
 /* harmony export */   "parseSQL": () => (/* binding */ parseSQL)
 /* harmony export */ });
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(76);
-/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(82);
-/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(87);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(80);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
+/* harmony import */ var _english_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(91);
+/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(96);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(89);
 
 
 
@@ -10294,7 +10769,7 @@ function parseSQL(s) {
 
 
 /***/ }),
-/* 91 */
+/* 100 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -10303,13 +10778,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "explainFromTokens": () => (/* binding */ explainFromTokens),
 /* harmony export */   "parseFromTokens": () => (/* binding */ parseFromTokens)
 /* harmony export */ });
-/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(76);
-/* harmony import */ var _formatter_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(84);
-/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(87);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(80);
-/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(73);
-/* harmony import */ var _digits_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(92);
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(77);
+/* harmony import */ var _util_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(85);
+/* harmony import */ var _formatter_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(93);
+/* harmony import */ var _zones_fixedOffsetZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(96);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(89);
+/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(82);
+/* harmony import */ var _digits_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(101);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(86);
 
 
 
@@ -10737,7 +11212,7 @@ function parseFromTokens(locale, input, format) {
 
 
 /***/ }),
-/* 92 */
+/* 101 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -10825,7 +11300,7 @@ function digitRegex({ numberingSystem }, append = "") {
 
 
 /***/ }),
-/* 93 */
+/* 102 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -10833,12 +11308,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Info)
 /* harmony export */ });
-/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(73);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(85);
-/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(79);
-/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(80);
-/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(86);
-/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(76);
+/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(82);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(94);
+/* harmony import */ var _impl_locale_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(88);
+/* harmony import */ var _zones_IANAZone_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(89);
+/* harmony import */ var _impl_zoneUtil_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(95);
+/* harmony import */ var _impl_util_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(85);
 
 
 
@@ -11035,7 +11510,7 @@ class Info {
 
 
 /***/ }),
-/* 94 */
+/* 103 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -11043,7 +11518,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(78);
+/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(87);
 
 
 function dayDiff(earlier, later) {
@@ -11127,7 +11602,7 @@ function highOrderDiffs(cursor, later, units) {
 
 
 /***/ }),
-/* 95 */
+/* 104 */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -11135,11 +11610,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ Interval)
 /* harmony export */ });
-/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(73);
-/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(78);
-/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(85);
-/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(77);
-/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(74);
+/* harmony import */ var _datetime_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(82);
+/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(87);
+/* harmony import */ var _settings_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(94);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(86);
+/* harmony import */ var _impl_invalid_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(83);
 
 
 
@@ -11745,14 +12220,14 @@ class Interval {
 
 
 /***/ }),
-/* 96 */
+/* 105 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("uuid");
 
 /***/ }),
-/* 97 */
+/* 106 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -11766,7 +12241,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SchedulerRegistry = void 0;
 const common_1 = __webpack_require__(7);
-const schedule_messages_1 = __webpack_require__(98);
+const schedule_messages_1 = __webpack_require__(107);
 let SchedulerRegistry = class SchedulerRegistry {
     constructor() {
         this.cronJobs = new Map();
@@ -11864,7 +12339,7 @@ exports.SchedulerRegistry = SchedulerRegistry;
 
 
 /***/ }),
-/* 98 */
+/* 107 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -11880,7 +12355,7 @@ exports.DUPLICATE_SCHEDULER = DUPLICATE_SCHEDULER;
 
 
 /***/ }),
-/* 99 */
+/* 108 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -11894,78 +12369,86 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotionService = void 0;
 const common_1 = __webpack_require__(7);
-const client_1 = __webpack_require__(100);
+const client_1 = __webpack_require__(109);
+const typeorm_1 = __webpack_require__(13);
+const typeorm_2 = __webpack_require__(9);
+const player_entity_1 = __webpack_require__(33);
+const room_entity_1 = __webpack_require__(32);
 let NotionService = class NotionService {
-    constructor() {
+    constructor(roomRepository, playerRepository) {
+        this.roomRepository = roomRepository;
+        this.playerRepository = playerRepository;
         this.notion = new client_1.Client({ auth: 'secret_Hwk7RlWNfSnZDxfiulsHx7oexMPLwaDXdhKt1DwibwS' });
-        this.hourlyMaxUserCnt = 0;
-        this.hourlyMaxGameCnt = 0;
     }
     async createAccumulatedStat() {
+        const userCnt = (await this.playerRepository.find()).length;
+        console.log(userCnt);
+        const gameCnt = (await this.roomRepository.find()).length;
+        console.log(gameCnt);
         await this.notion.pages.create({
             parent: { database_id: '8dbda62147ca4990a401f23f9758879b' },
             properties: {
-                최대접속자수: {
+                '접속자 수(최대)': {
+                    type: 'title',
                     title: [
                         {
+                            type: 'text',
                             text: {
-                                content: 'Hello World!',
+                                content: `${userCnt}`,
                             },
                         },
                     ],
                 },
-            },
-        });
-        console.log('Success! Entry added.');
-    }
-    async updateAccumulatedStat() {
-        await this.notion.blocks.update({
-            block_id: '93d362c6c9ec46f0a2724166d08cd6d2',
-            callout: {
-                icon: {
-                    emoji: '🎮',
+                '게임 진행 수': {
+                    type: 'rich_text',
+                    rich_text: [
+                        {
+                            type: 'text',
+                            text: {
+                                content: `${gameCnt}`,
+                            },
+                        },
+                    ],
                 },
-                rich_text: [
-                    {
-                        type: 'text',
-                        text: {
-                            content: `누적 진행 게임 수: 개\n`,
-                        },
+                일시: {
+                    type: 'date',
+                    date: {
+                        start: new Date().toISOString(),
                     },
-                    {
-                        type: 'text',
-                        text: {
-                            content: `누적 참여 유저 수: 명`,
-                        },
-                    },
-                ],
+                },
             },
         });
     }
 };
 NotionService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    __param(0, (0, typeorm_2.InjectRepository)(room_entity_1.Room)),
+    __param(1, (0, typeorm_2.InjectRepository)(player_entity_1.Player)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.Repository !== "undefined" && typeorm_1.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_1.Repository !== "undefined" && typeorm_1.Repository) === "function" ? _b : Object])
 ], NotionService);
 exports.NotionService = NotionService;
 
 
 /***/ }),
-/* 100 */
+/* 109 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isFullComment = exports.isFullUser = exports.isFullPage = exports.isFullDatabase = exports.isFullBlock = exports.iteratePaginatedAPI = exports.collectPaginatedAPI = exports.isNotionClientError = exports.RequestTimeoutError = exports.UnknownHTTPResponseError = exports.APIResponseError = exports.ClientErrorCode = exports.APIErrorCode = exports.LogLevel = exports.Client = void 0;
-var Client_1 = __webpack_require__(101);
+var Client_1 = __webpack_require__(110);
 Object.defineProperty(exports, "Client", ({ enumerable: true, get: function () { return Client_1.default; } }));
-var logging_1 = __webpack_require__(102);
+var logging_1 = __webpack_require__(111);
 Object.defineProperty(exports, "LogLevel", ({ enumerable: true, get: function () { return logging_1.LogLevel; } }));
-var errors_1 = __webpack_require__(104);
+var errors_1 = __webpack_require__(113);
 Object.defineProperty(exports, "APIErrorCode", ({ enumerable: true, get: function () { return errors_1.APIErrorCode; } }));
 Object.defineProperty(exports, "ClientErrorCode", ({ enumerable: true, get: function () { return errors_1.ClientErrorCode; } }));
 Object.defineProperty(exports, "APIResponseError", ({ enumerable: true, get: function () { return errors_1.APIResponseError; } }));
@@ -11973,7 +12456,7 @@ Object.defineProperty(exports, "UnknownHTTPResponseError", ({ enumerable: true, 
 Object.defineProperty(exports, "RequestTimeoutError", ({ enumerable: true, get: function () { return errors_1.RequestTimeoutError; } }));
 // Error helpers
 Object.defineProperty(exports, "isNotionClientError", ({ enumerable: true, get: function () { return errors_1.isNotionClientError; } }));
-var helpers_1 = __webpack_require__(108);
+var helpers_1 = __webpack_require__(117);
 Object.defineProperty(exports, "collectPaginatedAPI", ({ enumerable: true, get: function () { return helpers_1.collectPaginatedAPI; } }));
 Object.defineProperty(exports, "iteratePaginatedAPI", ({ enumerable: true, get: function () { return helpers_1.iteratePaginatedAPI; } }));
 Object.defineProperty(exports, "isFullBlock", ({ enumerable: true, get: function () { return helpers_1.isFullBlock; } }));
@@ -11984,7 +12467,7 @@ Object.defineProperty(exports, "isFullComment", ({ enumerable: true, get: functi
 //# sourceMappingURL=index.js.map
 
 /***/ }),
-/* 101 */
+/* 110 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -12002,12 +12485,12 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _Client_auth, _Client_logLevel, _Client_logger, _Client_prefixUrl, _Client_timeoutMs, _Client_notionVersion, _Client_fetch, _Client_agent, _Client_userAgent;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const logging_1 = __webpack_require__(102);
-const errors_1 = __webpack_require__(104);
-const utils_1 = __webpack_require__(103);
-const api_endpoints_1 = __webpack_require__(105);
-const node_fetch_1 = __webpack_require__(106);
-const package_json_1 = __webpack_require__(107);
+const logging_1 = __webpack_require__(111);
+const errors_1 = __webpack_require__(113);
+const utils_1 = __webpack_require__(112);
+const api_endpoints_1 = __webpack_require__(114);
+const node_fetch_1 = __webpack_require__(115);
+const package_json_1 = __webpack_require__(116);
 class Client {
     constructor(options) {
         var _a, _b, _c, _d, _e, _f;
@@ -12393,14 +12876,14 @@ Client.defaultNotionVersion = "2022-06-28";
 //# sourceMappingURL=Client.js.map
 
 /***/ }),
-/* 102 */
+/* 111 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.logLevelSeverity = exports.makeConsoleLogger = exports.LogLevel = void 0;
-const utils_1 = __webpack_require__(103);
+const utils_1 = __webpack_require__(112);
 var LogLevel;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "debug";
@@ -12435,7 +12918,7 @@ exports.logLevelSeverity = logLevelSeverity;
 //# sourceMappingURL=logging.js.map
 
 /***/ }),
-/* 103 */
+/* 112 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12465,14 +12948,14 @@ exports.isObject = isObject;
 //# sourceMappingURL=utils.js.map
 
 /***/ }),
-/* 104 */
+/* 113 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buildRequestError = exports.APIResponseError = exports.UnknownHTTPResponseError = exports.isHTTPResponseError = exports.RequestTimeoutError = exports.isNotionClientError = exports.ClientErrorCode = exports.APIErrorCode = void 0;
-const utils_1 = __webpack_require__(103);
+const utils_1 = __webpack_require__(112);
 /**
  * Error codes returned in responses from the API.
  */
@@ -12674,7 +13157,7 @@ function isAPIErrorCode(code) {
 //# sourceMappingURL=errors.js.map
 
 /***/ }),
-/* 105 */
+/* 114 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12872,21 +13355,21 @@ exports.listComments = {
 //# sourceMappingURL=api-endpoints.js.map
 
 /***/ }),
-/* 106 */
+/* 115 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node-fetch");
 
 /***/ }),
-/* 107 */
+/* 116 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"name":"@notionhq/client","version":"2.2.3","description":"A simple and easy to use client for the Notion API","engines":{"node":">=12"},"homepage":"https://developers.notion.com/docs/getting-started","bugs":{"url":"https://github.com/makenotion/notion-sdk-js/issues"},"repository":{"type":"git","url":"https://github.com/makenotion/notion-sdk-js/"},"keywords":["notion","notionapi","rest","notion-api"],"main":"./build/src","types":"./build/src/index.d.ts","scripts":{"prepare":"npm run build","prepublishOnly":"npm run checkLoggedIn && npm run lint && npm run test","build":"tsc","prettier":"prettier --write .","lint":"prettier --check . && eslint . --ext .ts && cspell \'**/*\' ","test":"jest ./test","check-links":"git ls-files | grep md$ | xargs -n 1 markdown-link-check","prebuild":"npm run clean","clean":"rm -rf ./build","checkLoggedIn":"./scripts/verifyLoggedIn.sh"},"author":"","license":"MIT","files":["build/package.json","build/src/**"],"dependencies":{"@types/node-fetch":"^2.5.10","node-fetch":"^2.6.1"},"devDependencies":{"@types/jest":"^28.1.4","@typescript-eslint/eslint-plugin":"^5.39.0","@typescript-eslint/parser":"^5.39.0","cspell":"^5.4.1","eslint":"^7.24.0","jest":"^28.1.2","markdown-link-check":"^3.8.7","prettier":"^2.3.0","ts-jest":"^28.0.5","typescript":"^4.8.4"}}');
 
 /***/ }),
-/* 108 */
+/* 117 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12988,7 +13471,7 @@ exports.isFullComment = isFullComment;
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),
-/* 109 */
+/* 118 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -13021,21 +13504,14 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 
 
 /***/ }),
-/* 110 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("express-session");
-
-/***/ }),
-/* 111 */
+/* 119 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("passport");
 
 /***/ }),
-/* 112 */
+/* 120 */
 /***/ ((module) => {
 
 "use strict";
@@ -13115,7 +13591,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("3e2e48930febe82ce4f4")
+/******/ 		__webpack_require__.h = () => ("c56f30efcd76dbceb85f")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

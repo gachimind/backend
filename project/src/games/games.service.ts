@@ -1,15 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { userInfo } from 'os';
-import { Repository } from 'typeorm';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { User } from 'src/users/entities/user.entity';
+import { MoreThan, Repository } from 'typeorm';
+import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
+import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';
 import { Player } from './entities/player.entity';
 import { Room } from './entities/room.entity';
+import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
+import { scoreMap } from './util/score.map';
+import { getTodayDate } from './util/today.date.constructor';
 
-const keywords = ['MVC패턴', 'OOP', 'STACKE', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
+const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 
 @Injectable()
 export class GamesService {
@@ -24,7 +30,13 @@ export class GamesService {
         private readonly turnResultRepository: Repository<TurnResult>,
         @InjectRepository(GameResult)
         private readonly gameResultRepository: Repository<GameResult>,
+        @InjectRepository(TodayResult)
+        private readonly todayResultRepository: Repository<TodayResult>,
     ) {}
+
+    async createTurnResult(turnResult: TurnResultDataInsertDto) {
+        return await this.turnResultRepository.save(turnResult);
+    }
 
     async createGameResultPerPlayer(roomId) {
         const playersUserId = await this.playerRepository.find({
@@ -32,11 +44,17 @@ export class GamesService {
             select: { userInfo: true },
         });
 
+        const today = getTodayDate();
         let data = [];
         for (let userId of playersUserId) {
+            const todayResult: TodayResult = await this.todayResultRepository.findOne({
+                where: { userInfo: userId.userInfo, createdAt: MoreThan(today) },
+            });
+
             data.push({
                 roomId,
                 userInfo: userId.userInfo,
+                todayResultInfo: todayResult.todayResultId,
             });
         }
 
@@ -44,7 +62,10 @@ export class GamesService {
     }
 
     async createTurn(roomId: number) {
-        const room = await this.roomRepository.findOne({ where: { roomId } });
+        const room: Room = await this.roomRepository.findOne({
+            where: { roomId },
+            order: { players: { createdAt: 'ASC' } },
+        });
         let index = room.turns.length;
 
         const newTurnData: TurnDataInsertDto = {
@@ -52,14 +73,93 @@ export class GamesService {
             turn: index + 1,
             currentEvent: 'start',
             speechPlayer: room.players[index].userInfo,
+            speechPlayerNickname: room.players[index].user.nickname,
             keyword: keywords[index],
             hint: null,
         };
-        return await this.turnRepository.save(newTurnData);
+
+        const turn = await this.turnRepository.save(newTurnData);
+        scoreMap[roomId][turn.turn] = [];
+
+        return turn;
     }
 
     async updateTurn(turn: Turn, timer: string): Promise<Turn> {
         turn.currentEvent = timer;
         return await this.turnRepository.save(turn);
+    }
+
+    async recordPlayerScore(user: User, roomId: number): Promise<TurnResult> {
+        const room: Room = await this.roomRepository.findOneBy({ roomId });
+        const currentTurn = room.turns.at(-1);
+
+        const turnResults: TurnResult[] = await this.turnResultRepository.find({
+            where: { roomId, turn: currentTurn.turn },
+        });
+        for (let result of turnResults) {
+            if (user.nickname === result.nickname) {
+                throw new SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
+            }
+        }
+        const myRank = turnResults.length;
+        const score = 100 - myRank * 20;
+        const gameResult: GameResult = await this.gameResultRepository.findOne({
+            where: {
+                userInfo: user.userId,
+                roomId: room.roomId,
+            },
+        });
+        const turnResult: TurnResultDataInsertDto = {
+            gameResultInfo: gameResult.gameResultId,
+            roomId: room.roomId,
+            turn: currentTurn.turn,
+            userId: user.userId,
+            nickname: user.nickname,
+            score,
+            keyword: currentTurn.keyword,
+            isSpeech: false,
+        };
+        return await this.createTurnResult(turnResult);
+    }
+
+    async saveEvaluationScore(roomId: number, data: TurnEvaluateRequestDto) {
+        const { score, turn } = data;
+        // TODO : redis 붙이고 cache로 이동
+        scoreMap[roomId][turn].push(score);
+        console.log('중간점수 합계 : ');
+    }
+
+    async recordSpeechPlayerScore(roomId: number, turn: number, userId: number, nickname: string) {
+        const room = await this.roomRepository.findOne({
+            where: { roomId },
+            select: { players: { userInfo: true }, turns: { keyword: true } },
+        });
+
+        const gameResult: GameResult = await this.gameResultRepository.findOne({
+            where: { userInfo: userId, roomId },
+            select: { gameResultId: true },
+        });
+
+        // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
+        const unevaluatedNum = room.players.length - 1 - scoreMap[roomId][turn].length;
+
+        let sum: number = 0;
+        for (let score of scoreMap[roomId][turn]) {
+            sum += score;
+        }
+
+        const score: number = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+
+        const turnResult: TurnResultDataInsertDto = {
+            gameResultInfo: gameResult.gameResultId,
+            roomId,
+            turn,
+            userId,
+            nickname,
+            score,
+            keyword: room.turns[turn - 1].keyword,
+            isSpeech: true,
+        };
+        return await this.createTurnResult(turnResult);
     }
 }

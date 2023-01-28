@@ -1,4 +1,3 @@
-import { GameResult } from '../../games/entities/gameResult.entity';
 import {
     Column,
     CreateDateColumn,
@@ -8,6 +7,8 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
+import { TodayResult } from '../../games/entities/todayResult.entity';
+import { GameResult } from '../../games/entities/gameResult.entity';
 
 @Entity()
 export class User {
@@ -35,6 +36,9 @@ export class User {
     @DeleteDateColumn()
     deletedAt: Date | null;
 
-    @OneToMany(() => GameResult, (gameResult) => gameResult.user, { eager: true })
+    @OneToMany(() => GameResult, (gameResult) => gameResult.user)
     gameResults: GameResult[];
+
+    @OneToMany(() => TodayResult, (todayResult) => todayResult.user, { eager: true })
+    todayResults: TodayResult[];
 }

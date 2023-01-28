@@ -1,57 +1,55 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@notionhq/client';
-//import { createAccumulatedStatContext, createCurrentStatContext } from './notion-context-factory';
-
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Player } from '../games/entities/player.entity';
+import { Room } from '../games/entities/room.entity';
 @Injectable()
 export class NotionService {
     notion = new Client({ auth: 'secret_Hwk7RlWNfSnZDxfiulsHx7oexMPLwaDXdhKt1DwibwS' });
-    constructor() {}
-
-    hourlyMaxUserCnt = 0;
-    hourlyMaxGameCnt = 0;
+    constructor(
+        @InjectRepository(Room)
+        private readonly roomRepository: Repository<Room>,
+        @InjectRepository(Player)
+        private readonly playerRepository: Repository<Player>,
+    ) {}
 
     async createAccumulatedStat() {
+        const userCnt = (await this.playerRepository.find()).length;
+        console.log(userCnt);
+        const gameCnt = (await this.roomRepository.find()).length;
+        console.log(gameCnt);
         await this.notion.pages.create({
             parent: { database_id: '8dbda62147ca4990a401f23f9758879b' },
             properties: {
-                최대접속자수: {
-                    //이름 값
+                '접속자 수(최대)': {
+                    type: 'title',
                     title: [
-                        //속성 값
                         {
+                            type: 'text',
                             text: {
-                                //text 형식
-                                content: 'Hello World!', //text에 들어갈 값
+                                content: `${userCnt}`,
                             },
                         },
                     ],
                 },
-            },
-        });
-        console.log('Success! Entry added.');
-    }
-    //https://www.notion.so/Admin-Page-9f3cf322da9141bc9505e158126939d8#
-    async updateAccumulatedStat() {
-        await this.notion.blocks.update({
-            block_id: '93d362c6c9ec46f0a2724166d08cd6d2',
-            callout: {
-                icon: {
-                    emoji: '🎮',
+                '게임 진행 수': {
+                    type: 'rich_text',
+                    rich_text: [
+                        {
+                            type: 'text',
+                            text: {
+                                content: `${gameCnt}`,
+                            },
+                        },
+                    ],
                 },
-                rich_text: [
-                    {
-                        type: 'text',
-                        text: {
-                            content: `누적 진행 게임 수: 개\n`,
-                        },
+                일시: {
+                    type: 'date',
+                    date: {
+                        start: new Date().toISOString(),
                     },
-                    {
-                        type: 'text',
-                        text: {
-                            content: `누적 참여 유저 수: 명`,
-                        },
-                    },
-                ],
+                },
             },
         });
     }

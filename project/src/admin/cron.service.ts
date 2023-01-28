@@ -9,6 +9,13 @@ export class CronService {
     @Cron(CronExpression.EVERY_MINUTE)
     async actionPerMin() {
         await this.notionService.createAccumulatedStat();
-        await this.notionService.updateAccumulatedStat();
+        //await this.notionService.updateAccumulatedStat();
+        //await this.notionService.updateCurrentStat();
+    }
+
+    @Cron(CronExpression.EVERY_HOUR)
+    async actionPerHour() {
+        //await this.notionService.updateGameResultStat();
+        //await this.notionService.setHourlyStat();
     }
 }

@@ -11,10 +11,13 @@ import { TokenMap } from './users/entities/token-map.entity';
 import { Room } from './games/entities/room.entity';
 import { Player } from './games/entities/player.entity';
 import { SocketIdMap } from './games/entities/socketIdMap.entity';
+import { KeywordModule } from './keyword/keyword.module';
+import { Keyword } from './keyword/entities/keyword.entities';
 import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
 import { AdminModule } from './admin/admin.module';
+import { TodayResult } from './games/entities/todayResult.entity';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -33,16 +36,30 @@ import { AdminModule } from './admin/admin.module';
             username: process.env.MYSQL_USERNAME,
             password: process.env.MYSQL_PASSWORD,
             database: process.env.MYSQL_DATABASE,
-            entities: [User, TokenMap, Room, Player, SocketIdMap, Turn, TurnResult, GameResult],
+            entities: [
+                User,
+                TokenMap,
+                Room,
+                Player,
+                SocketIdMap,
+                Keyword,
+                Turn,
+                TurnResult,
+                GameResult,
+                TodayResult,
+            ],
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
             synchronize: false,
             logging: false,
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
+            timezone: 'Z',
+            cache: true,
         }),
         UsersModule,
         GamesModule,
+        KeywordModule,
         PassportModule.register({ session: true }),
         AdminModule,
     ],

@@ -8,6 +8,8 @@ import { Turn } from './src/games/entities/turn.entity';
 import { TurnResult } from './src/games/entities/turnResult.entity';
 import { GameResult } from './src/games/entities/gameResult.entity';
 import 'dotenv/config';
+import { Keyword } from './src/keyword/entities/keyword.entities';
+import { TodayResult } from './src/games/entities/todayResult.entity';
 
 const dataSource = new DataSource({
     type: 'mysql',
@@ -15,11 +17,24 @@ const dataSource = new DataSource({
     username: process.env.MYSQL_USERNAME,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
-    entities: [User, TokenMap, SocketIdMap, Room, Player, Turn, TurnResult, GameResult],
+    entities: [
+        User,
+        TokenMap,
+        SocketIdMap,
+        Room,
+        Player,
+        Keyword,
+        Turn,
+        TurnResult,
+        GameResult,
+        TodayResult,
+    ],
     //migrations: [__dirname + '/src/migrations/*.ts'],
     // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
     synchronize: true,
     logging: true,
+    timezone: 'Z',
+    cache: true,
 });
 
 export default dataSource;

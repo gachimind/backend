@@ -9,6 +9,7 @@ import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
+import { scoreMap } from './util/score.map';
 
 @Injectable()
 export class RoomService {
@@ -72,7 +73,10 @@ export class RoomService {
         };
 
         const roomInsert = await this.roomRepository.insert(newRoom);
-        return roomInsert.identifiers[0].roomId;
+        const roomId = roomInsert.identifiers[0].roomId;
+        scoreMap[roomId] = {};
+
+        return roomId;
     }
 
     async enterRoom(

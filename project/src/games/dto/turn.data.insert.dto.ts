@@ -14,6 +14,9 @@ export class TurnDataInsertDto {
     speechPlayer: number;
 
     @IsString()
+    speechPlayerNickname: string;
+
+    @IsString()
     keyword: string;
 
     @IsString()
