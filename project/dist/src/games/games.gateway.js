@@ -196,7 +196,8 @@ let GamesGateway = class GamesGateway {
         data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
         this.server.to(`${roomId}`).emit('time-end', { data });
         if (event === 'discussionTimer' && !nextTurn.turn) {
-            const updateRoom = await this.gamesService.handleGameEndEvent(room);
+            const roomInfo = await this.gamesService.handleGameEndEvent(room);
+            const updateRoom = (0, update_room_info_constructor_1.updateRoomInfoConstructor)(roomInfo);
             this.server.to(`${updateRoom.roomId}`).emit('update-room', {
                 data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
             });

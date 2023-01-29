@@ -340,7 +340,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.server.to(`${roomId}`).emit('time-end', { data });
 
         if (event === 'discussionTimer' && !nextTurn.turn) {
-            const updateRoom = await this.gamesService.handleGameEndEvent(room);
+            const roomInfo = await this.gamesService.handleGameEndEvent(room);
+
+            const updateRoom = updateRoomInfoConstructor(roomInfo);
             this.server.to(`${updateRoom.roomId}`).emit('update-room', {
                 data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
             });
