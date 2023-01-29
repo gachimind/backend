@@ -98,12 +98,13 @@ let UsersService = class UsersService {
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         const { userId, nickname, profileImg } = getUserInfoByToken.user;
         const todayScore = await this.getTodayScoreByUserId(userId);
+        const todayRank = await this.getAllUserScore(userId);
         return {
             userId,
             nickname,
             profileImg,
             isFirstLogin: false,
-            today: { todayScore, todayRank: 0 },
+            today: { todayScore, todayRank },
             total: { totalScore: 0 },
         };
     }
@@ -118,16 +119,39 @@ let UsersService = class UsersService {
         let todayScore = 0;
         if (findTodayScore)
             todayScore = findTodayScore.todayScore;
-        const findTodayScoreAll = await this.todayResultRepository.find({
+        return todayScore;
+    }
+    async getAllUserScore(userInfo) {
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const getAllUserScore = await this.todayResultRepository.find({
+            where: {
+                createdAt: (0, typeorm_2.MoreThan)(today),
+            },
             select: {
                 userInfo: true,
                 todayScore: true,
             },
         });
-        for (const index in findTodayScoreAll) {
-            const p = userInfo;
+        const sortScore = getAllUserScore.sort(function (a, b) {
+            return b.todayScore - a.todayScore;
+        });
+        const todayRank = sortScore.findIndex((i) => i.userInfo == userInfo) + 1;
+        return todayRank;
+    }
+    async getUserTotalScore(userInfo) {
+        const getUserTotalScore = await this.TurnResultRepository.find({
+            where: { userId: userInfo },
+            select: { score: true },
+        });
+        const scoreArray = [];
+        for (const result of getUserTotalScore) {
+            if (result.score) {
+                scoreArray.push(result.score);
+            }
         }
-        return todayScore;
+        const totalScore = scoreArray.reduce((a, b) => a + b);
+        console.log(scoreArray);
+        return;
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({
@@ -201,7 +225,7 @@ exports.runtime =
 /******/ function(__webpack_require__) { // webpackRuntimeModules
 /******/ /* webpack/runtime/getFullHash */
 /******/ (() => {
-/******/ 	__webpack_require__.h = () => ("f7604f3dd8aa3a0abbf3")
+/******/ 	__webpack_require__.h = () => ("45ca542d520963a52546")
 /******/ })();
 /******/ 
 /******/ }

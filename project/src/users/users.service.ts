@@ -109,17 +109,20 @@ export class UsersService {
         const { userId, nickname, profileImg } = getUserInfoByToken.user;
 
         const todayScore: number = await this.getTodayScoreByUserId(userId);
+        const todayRank: number = await this.getAllUserScore(userId);
+        const totalScore: number = await this.getUserTotalScore(userId);
 
         return {
             userId,
             nickname,
             profileImg,
             isFirstLogin: false,
-            today: { todayScore, todayRank: 0 },
-            total: { totalScore: 0 },
+            today: { todayScore, todayRank },
+            total: { totalScore },
         };
     }
 
+    // 유저 오늘 스코어
     async getTodayScoreByUserId(userInfo: number): Promise<number> {
         // 오늘 스코어 찾아오기
         const today: Date = getTodayDate();
@@ -129,12 +132,19 @@ export class UsersService {
                 createdAt: MoreThan(today),
             },
         });
-
         let todayScore = 0;
         if (findTodayScore) todayScore = findTodayScore.todayScore;
 
-        // 오늘 전체 유저 스코어 찾아오기
-        const findTodayScoreAll = await this.todayResultRepository.find({
+        return todayScore;
+    }
+
+    // 유저 랭킹
+    async getAllUserScore(userInfo: number): Promise<number> {
+        const today: Date = getTodayDate();
+        const getAllUserScore = await this.todayResultRepository.find({
+            where: {
+                createdAt: MoreThan(today),
+            },
             select: {
                 userInfo: true,
                 todayScore: true,
@@ -142,20 +152,31 @@ export class UsersService {
         });
 
         // 스코어 내림차순 정렬
-        // const sortScore = findTodayScoreAll.sort(function (a, b) {
-        //     return b.todayScore - a.todayScore;
-        // });
+        const sortScore = getAllUserScore.sort(function (a, b) {
+            return b.todayScore - a.todayScore;
+        });
 
-        // function findUserRank(element) {
-        //     if (element.userId === findTodayScore.userInfo) return userInfo;
-        // }
+        // 인덱스 번호 찾기 (랭킹)
+        const todayRank = sortScore.findIndex((i) => i.userInfo == userInfo) + 1;
 
-        // 인덱스 번호 찾기
-        // const findUserIndex = sortScore.indexOf(findUserRank);
+        return todayRank;
+    }
 
-        // console.log(findUserIndex);
+    // 유저 토탈 스코어
+    async getUserTotalScore(userInfo: number): Promise<number> {
+        const getUserTotalScore = await this.TurnResultRepository.find({
+            where: { userId: userInfo },
+            select: { score: true },
+        });
 
-        return todayScore;
+        const scoreArray = [];
+        for (const result of getUserTotalScore) {
+            if (result.score) {
+                scoreArray.push(result.score);
+            }
+        }
+        const totalScore = scoreArray.reduce((a, b) => a + b);
+        return totalScore;
     }
 
     // 회원 키워드 조회 API
