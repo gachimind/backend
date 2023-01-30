@@ -23,6 +23,7 @@ const turn_entity_1 = require("./entities/turn.entity");
 const turnResult_entity_1 = require("./entities/turnResult.entity");
 const players_service_1 = require("./players.service");
 const room_service_1 = require("./room.service");
+const game_timer_map_1 = require("./util/game-timer.map");
 const score_map_1 = require("./util/score.map");
 const today_date_constructor_1 = require("./util/today.date.constructor");
 const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
@@ -35,12 +36,48 @@ let GamesService = class GamesService {
         this.gameResultRepository = gameResultRepository;
         this.todayResultRepository = todayResultRepository;
     }
+    async getTurnsByRoomId(roomInfo) {
+        return await this.turnRepository.findBy({ roomInfo });
+    }
+    async getAllTurnsByRoomId(roomInfo) {
+        return await this.turnRepository.find({
+            where: { roomInfo },
+            order: { turn: 'ASC' },
+        });
+    }
+    async createTurn(roomId) {
+        const room = await this.roomService.getOneRoomByRoomId(roomId);
+        let playerIndex = 0;
+        for (let turn of room.turns) {
+            if (turn.speechPlayer != room.players[playerIndex].userInfo) {
+                return;
+            }
+            playerIndex++;
+        }
+        let index = room.turns.length;
+        const newTurnData = {
+            roomInfo: room.roomId,
+            turn: index + 1,
+            currentEvent: 'start',
+            speechPlayer: room.players[playerIndex].userInfo,
+            speechPlayerNickname: room.players[playerIndex].user.nickname,
+            keyword: keywords[index],
+            hint: null,
+        };
+        const turn = await this.turnRepository.save(newTurnData);
+        score_map_1.scoreMap[roomId][room.players[playerIndex].userInfo] = [];
+        return turn;
+    }
+    async updateTurn(turn, timer) {
+        turn.currentEvent = timer;
+        return await this.turnRepository.save(turn);
+    }
     async deleteTurnByRoomId(roomInfo) {
         await this.turnRepository.delete({ roomInfo });
     }
     async deleteTurnByTurnId(turn) {
         await this.turnRepository.delete({ turnId: turn.turnId });
-        score_map_1.scoreMap[turn.roomInfo][turn.turn] = null;
+        score_map_1.scoreMap[turn.roomInfo][turn.speechPlayer] = null;
     }
     async createTurnResult(turnResult) {
         return await this.turnResultRepository.save(turnResult);
@@ -79,26 +116,6 @@ let GamesService = class GamesService {
         }
         await this.gameResultRepository.save(data);
     }
-    async createTurn(roomId) {
-        const room = await this.roomService.getOneRoomByRoomId(roomId);
-        let index = room.turns.length;
-        const newTurnData = {
-            roomInfo: room.roomId,
-            turn: index + 1,
-            currentEvent: 'start',
-            speechPlayer: room.players[index].userInfo,
-            speechPlayerNickname: room.players[index].user.nickname,
-            keyword: keywords[index],
-            hint: null,
-        };
-        const turn = await this.turnRepository.save(newTurnData);
-        score_map_1.scoreMap[roomId][turn.turn] = [];
-        return turn;
-    }
-    async updateTurn(turn, timer) {
-        turn.currentEvent = timer;
-        return await this.turnRepository.save(turn);
-    }
     async recordPlayerScore(user, roomId) {
         const room = await this.roomService.getOneRoomByRoomId(roomId);
         const currentTurn = room.turns.at(-1);
@@ -132,20 +149,35 @@ let GamesService = class GamesService {
     }
     async saveEvaluationScore(roomId, data) {
         const { score, turn } = data;
-        score_map_1.scoreMap[roomId][turn].push(score);
+        const turnData = await this.turnRepository.findOne({
+            where: { roomInfo: roomId, turn: turn },
+        });
+        score_map_1.scoreMap[roomId][turnData.speechPlayer].push(score);
     }
-    async recordSpeechPlayerScore(roomId, turn, userId, nickname) {
+    async recordSpeechPlayerScore(roomId, turn, keyword, userId, nickname) {
         const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
+        console.log('recordSpeechPlayerScore :', room.players);
         const gameResult = await this.gameResultRepository.findOne({
             where: { userInfo: userId, roomId },
             select: { gameResultId: true },
         });
-        const unevaluatedNum = room.players.length - 1 - score_map_1.scoreMap[roomId][turn].length;
+        console.log('scoreMap : ', score_map_1.scoreMap[roomId][turn]);
         let sum = 0;
-        for (let score of score_map_1.scoreMap[roomId][turn]) {
-            sum += score;
+        let unevaluatedNum = 0;
+        if (room.players.length > 1 && score_map_1.scoreMap[roomId][turn] != null) {
+            console.log('scoreMap 계산');
+            for (let score of score_map_1.scoreMap[roomId][turn]) {
+                sum += score;
+            }
+            unevaluatedNum = room.players.length - 1 - score_map_1.scoreMap[roomId][turn].length;
         }
-        const score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+        console.log('after if block');
+        let score = sum * 20;
+        if (room.players.length - 1) {
+            console.log('total score 계산');
+            score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+            console.log('total score :', score);
+        }
         const turnResult = {
             gameResultInfo: gameResult.gameResultId,
             roomId,
@@ -153,12 +185,14 @@ let GamesService = class GamesService {
             userId,
             nickname,
             score,
-            keyword: room.turns[turn - 1].keyword,
+            keyword,
             isSpeech: true,
         };
+        console.log('write turnResult :', turnResult);
         return await this.createTurnResult(turnResult);
     }
     async handleGameEndEvent(room) {
+        delete game_timer_map_1.gameTimerMap[room.roomId];
         const playerUserIds = await this.gameResultRepository.find({
             where: { roomId: room.roomId },
             select: { gameResultId: true, userInfo: true, todayResultInfo: true },

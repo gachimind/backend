@@ -18,6 +18,10 @@ export declare class GamesService {
     private readonly gameResultRepository;
     private readonly todayResultRepository;
     constructor(roomService: RoomService, playersService: PlayersService, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
+    getTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
+    getAllTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
+    createTurn(roomId: number): Promise<TurnDataInsertDto & Turn>;
+    updateTurn(turn: Turn, timer: string): Promise<Turn>;
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
     deleteTurnByTurnId(turn: Turn): Promise<void>;
     createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
@@ -29,10 +33,8 @@ export declare class GamesService {
     softDeleteGameResult(gameResultId: number): Promise<import("typeorm").UpdateResult>;
     updateTodayResultByIncrement(todayResultId: number, gameScore: number): Promise<import("typeorm").UpdateResult>;
     createGameResultPerPlayer(roomId: any): Promise<void>;
-    createTurn(roomId: number): Promise<TurnDataInsertDto & Turn>;
-    updateTurn(turn: Turn, timer: string): Promise<Turn>;
     recordPlayerScore(user: User, roomId: number): Promise<TurnResult>;
     saveEvaluationScore(roomId: number, data: TurnEvaluateRequestDto): Promise<void>;
-    recordSpeechPlayerScore(roomId: number, turn: number, userId: number, nickname: string): Promise<TurnResultDataInsertDto & TurnResult>;
+    recordSpeechPlayerScore(roomId: number, turn: number, keyword: string, userId: number, nickname: string): Promise<TurnResultDataInsertDto & TurnResult>;
     handleGameEndEvent(room: Room): Promise<Room>;
 }

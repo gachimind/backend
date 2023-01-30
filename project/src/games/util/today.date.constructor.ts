@@ -4,3 +4,10 @@ export function getTodayDate() {
     const newDate = new Date(`${dateString} 0:00:00`);
     return newDate;
 }
+
+export function getDate() {
+    const date = new Date();
+    const dateString = date.toISOString();
+    dateString.split('T')[0];
+    return new Date(`${dateString.split('T')[0]}`);
+}

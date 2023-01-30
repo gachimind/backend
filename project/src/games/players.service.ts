@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { Like, MoreThan, Repository } from 'typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { TokenMap } from 'src/users/entities/token-map.entity';
@@ -9,7 +9,7 @@ import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Socket } from 'socket.io';
 import { TodayResult } from './entities/todayResult.entity';
-import { getTodayDate } from './util/today.date.constructor';
+import { getDate, getTodayDate } from './util/today.date.constructor';
 
 @Injectable()
 export class PlayersService {
@@ -96,19 +96,15 @@ export class PlayersService {
 
     async createTodayResult(userInfo: number) {
         // userId & 오늘 날짜로 todayResult 테이블을 조회해서, 데이터가 있으면 만들지 않고, 없으면 새로 생성하기
-        const today: Date = getTodayDate();
+        const today: Date = getDate();
         // todayResult를 회원이 로그인 하고 30분동안 캐슁
         const todayResult: TodayResult = await this.todayResultRepository.findOne({
             where: { userInfo, createdAt: MoreThan(today) },
-            cache: 5 * 60 * 1000,
+            select: { todayResultId: true, userInfo: true, todayScore: true, createdAt: true },
         });
 
         if (!todayResult) {
             await this.todayResultRepository.save({ userInfo, todayScore: 0 });
-            await this.todayResultRepository.findOne({
-                where: { userInfo, createdAt: MoreThan(today) },
-                cache: 5 * 60 * 1000,
-            });
         }
     }
 

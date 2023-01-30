@@ -23,6 +23,9 @@ export class TurnResult {
     @Column()
     roomId: number;
 
+    @Column({ type: 'int' })
+    turnId: number;
+
     @Column({ type: 'tinyint' })
     turn: number;
 

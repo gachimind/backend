@@ -8,6 +8,9 @@ export class TurnResultDataInsertDto {
     roomId: number;
 
     @IsNumber()
+    turnId: number;
+
+    @IsNumber()
     turn: number;
 
     @IsNumber()

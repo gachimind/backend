@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTodayDate = void 0;
+exports.getDate = exports.getTodayDate = void 0;
 function getTodayDate() {
     const date = new Date();
     const dateString = date.toDateString();
@@ -8,4 +8,11 @@ function getTodayDate() {
     return newDate;
 }
 exports.getTodayDate = getTodayDate;
+function getDate() {
+    const date = new Date();
+    const dateString = date.toISOString();
+    dateString.split('T')[0];
+    return new Date(`${dateString.split('T')[0]}`);
+}
+exports.getDate = getDate;
 //# sourceMappingURL=today.date.constructor.js.map

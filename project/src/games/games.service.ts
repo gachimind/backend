@@ -7,13 +7,14 @@ import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';
-import { Player } from './entities/player.entity';
 import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { PlayersService } from './players.service';
 import { RoomService } from './room.service';
+import { gameTimerMap } from './util/game-timer.map';
+import { gameResultIdMap } from './util/game.result.id.map';
 import { scoreMap } from './util/score.map';
 import { getTodayDate } from './util/today.date.constructor';
 
@@ -34,13 +35,58 @@ export class GamesService {
         private readonly todayResultRepository: Repository<TodayResult>,
     ) {}
 
+    async getTurnsByRoomId(roomInfo: number): Promise<Turn[]> {
+        return await this.turnRepository.findBy({ roomInfo });
+    }
+
+    async getAllTurnsByRoomId(roomInfo: number): Promise<Turn[]> {
+        return await this.turnRepository.find({
+            where: { roomInfo },
+            order: { turn: 'ASC' },
+        });
+    }
+
+    async createTurn(roomId: number) {
+        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
+        console.log(room.turns.length);
+        const turnIndex = room.turns.length + 1;
+        let playerIndex = 0;
+        for (let turn of room.turns) {
+            if (turn.speechPlayer != room.players[playerIndex].userInfo) {
+                return;
+            }
+            playerIndex++;
+        }
+
+        // TODO : keyword random으로 가져오기
+        const newTurnData: TurnDataInsertDto = {
+            roomInfo: room.roomId,
+            turn: turnIndex,
+            currentEvent: 'start',
+            speechPlayer: room.players[playerIndex].userInfo,
+            speechPlayerNickname: room.players[playerIndex].user.nickname,
+            keyword: keywords[turnIndex],
+            hint: null,
+        };
+
+        const turn = await this.turnRepository.save(newTurnData);
+        scoreMap[roomId][room.players[playerIndex].userInfo] = [];
+
+        return turn;
+    }
+
+    async updateTurn(turn: Turn, timer: string): Promise<Turn> {
+        turn.currentEvent = timer;
+        return await this.turnRepository.save(turn);
+    }
+
     async deleteTurnByRoomId(roomInfo: number): Promise<void> {
         await this.turnRepository.delete({ roomInfo });
     }
 
     async deleteTurnByTurnId(turn: Turn): Promise<void> {
         await this.turnRepository.delete({ turnId: turn.turnId });
-        scoreMap[turn.roomInfo][turn.turn] = null;
+        scoreMap[turn.roomInfo][turn.speechPlayer] = null;
     }
 
     async createTurnResult(turnResult: TurnResultDataInsertDto) {
@@ -93,54 +139,42 @@ export class GamesService {
         await this.gameResultRepository.save(data);
     }
 
-    async createTurn(roomId: number) {
-        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
-        let index = room.turns.length;
+    async mapGameResultIdWithUserId(roomId: number) {
+        const gameResults: GameResult[] = await this.gameResultRepository.findBy({ roomId });
 
-        const newTurnData: TurnDataInsertDto = {
-            roomInfo: room.roomId,
-            turn: index + 1,
-            currentEvent: 'start',
-            speechPlayer: room.players[index].userInfo,
-            speechPlayerNickname: room.players[index].user.nickname,
-            keyword: keywords[index],
-            hint: null,
-        };
-
-        const turn = await this.turnRepository.save(newTurnData);
-        scoreMap[roomId][turn.turn] = [];
-
-        return turn;
-    }
-
-    async updateTurn(turn: Turn, timer: string): Promise<Turn> {
-        turn.currentEvent = timer;
-        return await this.turnRepository.save(turn);
-    }
-
-    async recordPlayerScore(user: User, roomId: number): Promise<TurnResult> {
-        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
-        const currentTurn = room.turns.at(-1);
-
-        const turnResults: TurnResult[] = await this.turnResultRepository.find({
-            where: { roomId, turn: currentTurn.turn },
-        });
-        for (let result of turnResults) {
-            if (user.nickname === result.nickname) {
-                throw new SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
-            }
+        // 유저 아이디별 gameResult mapping
+        for (let result of gameResults) {
+            gameResultIdMap[roomId][result.userInfo] = result.gameResultId;
         }
-        const myRank = turnResults.length;
-        const score = 100 - myRank * 20;
-        const gameResult: GameResult = await this.gameResultRepository.findOne({
-            where: {
-                userInfo: user.userId,
-                roomId: room.roomId,
-            },
+    }
+
+    async recordPlayerScore(user: User, room: Room): Promise<TurnResult> {
+        const turns = room.turns.sort((a, b) => {
+            return a.turn - b.turn;
         });
+
+        let currentTurn: Turn;
+        if ((turns.at(-1).currentEvent = 'speechTime')) {
+            currentTurn = turns.at(-1);
+        }
+
+        // turnResult를 gameResultId로 검색해서 있으면 예외 처리
+        if (
+            await this.turnResultRepository.findOneBy({
+                gameResultInfo: gameResultIdMap[room.roomId][user.userId],
+            })
+        ) {
+            throw new SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
+        }
+
+        const turnResults = await this.turnResultRepository.findBy({ turnId: currentTurn.turnId });
+        const myRank: number = turnResults.length;
+        const score = 100 - myRank * 20;
+
         const turnResult: TurnResultDataInsertDto = {
-            gameResultInfo: gameResult.gameResultId,
+            gameResultInfo: gameResultIdMap[room.roomId][user.userId],
             roomId: room.roomId,
+            turnId: currentTurn.turnId,
             turn: currentTurn.turn,
             userId: user.userId,
             nickname: user.nickname,
@@ -153,42 +187,53 @@ export class GamesService {
 
     async saveEvaluationScore(roomId: number, data: TurnEvaluateRequestDto) {
         const { score, turn } = data;
+        const turnData: Turn = await this.turnRepository.findOne({
+            where: { roomInfo: roomId, turn: turn },
+        });
         // TODO : redis 붙이고 cache로 이동
-        scoreMap[roomId][turn].push(score);
+        scoreMap[roomId][turnData.speechPlayer].push(score);
     }
 
-    async recordSpeechPlayerScore(roomId: number, turn: number, userId: number, nickname: string) {
+    async recordSpeechPlayerScore(roomId: number, turn: Turn) {
         const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
 
-        const gameResult: GameResult = await this.gameResultRepository.findOne({
-            where: { userInfo: userId, roomId },
-            select: { gameResultId: true },
-        });
-
         // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
-        const unevaluatedNum = room.players.length - 1 - scoreMap[roomId][turn].length;
-
         let sum: number = 0;
-        for (let score of scoreMap[roomId][turn]) {
-            sum += score;
+        let unevaluatedNum: number = 0;
+        if (room.players.length > 1 && scoreMap[roomId][turn] != null) {
+            console.log('scoreMap 계산');
+            for (let score of scoreMap[roomId][turn]) {
+                sum += score;
+            }
+            unevaluatedNum = room.players.length - 1 - scoreMap[roomId][turn].length;
         }
 
-        const score: number = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+        let score = sum * 20;
+        if (room.players.length - 1) {
+            console.log('total score 계산');
+            score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
+        }
 
+        const gameResultInfo = gameResultIdMap[roomId][turn.speechPlayer];
         const turnResult: TurnResultDataInsertDto = {
-            gameResultInfo: gameResult.gameResultId,
+            gameResultInfo,
             roomId,
-            turn,
-            userId,
-            nickname,
+            turnId: turn.turnId,
+            turn: turn.turn,
+            userId: turn.speechPlayer,
+            nickname: turn.speechPlayerNickname,
             score,
-            keyword: room.turns[turn - 1].keyword,
+            keyword: turn.keyword,
             isSpeech: true,
         };
+        console.log('write turnResult :', turnResult);
+
         return await this.createTurnResult(turnResult);
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
+        // gameTimerMap에 기록된 방 타이머 삭제
+        delete gameTimerMap[room.roomId];
         // 게임에 참여한 모든 플레이어의 gameResult 업데이트
         // 1. roomId로 gameResult 조회
         const playerUserIds = await this.gameResultRepository.find({

@@ -42,10 +42,6 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleLeaveRoomEvent(socket: Socket, next: NextFunction): Promise<void>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
-    operateGame(room: Room): Promise<() => Promise<void>>;
-    emitGameInfo(turn: Turn, roomId: number): void;
-    createTimer(time: number, roomId: number): Promise<any>;
-    gameTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
         data: {
             message: string;
@@ -68,10 +64,20 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
-    RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket): Promise<void>;
+    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void>;
+    RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoom(roomId: number): Promise<UpdateRoomDto>;
-    announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap, event: string): Promise<void>;
-    updateRoomInfoToRoom(requestUser: SocketIdMap | null, room: Room, event: string): void;
+    announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap | null, event: string): Promise<void>;
+    updateRoomInfoToRoom(room: Room, requestUser: SocketIdMap | null, event: string): void;
     updateRoomListToMain(): Promise<void>;
+    controlGameTurns(room: Room, next: NextFunction): Promise<void>;
+    controlTurnTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn): Promise<void>;
+    handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction): Promise<void>;
+    handleEndGameByPlayerLeaveEvent(room: Room, next: NextFunction): Promise<void>;
+    createTimer(time: number, roomId: number): Promise<any>;
+    emitGameInfo(turn: Turn, roomId: number): void;
+    emitTimeStartEvent(roomId: number, currentTurn: number, timer: string, event: string): void;
+    emitSpeechPlayerScoreEvent(roomId: number, turn: Turn): Promise<void>;
+    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn, nextTurn?: Turn): void;
 }

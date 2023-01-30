@@ -70,14 +70,27 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id);
 
-        // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
+        // player였다면, leave-room 로직 수행
         if (requestUser.player) {
+            // request user가 게임 중 자신이 발표자일 때 돌고 있는 timer 종료
+            const turn: Turn = requestUser.player.room.turns.at(-1);
+            if (
+                turn &&
+                turn.speechPlayer === requestUser.userInfo &&
+                (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')
+            ) {
+                await this.handleSpeechPlayerLeaveRoomRequest(turn, socket, Next);
+            }
+
             // leave-room 처리
             socket.leave(`${requestUser.player.roomInfo}`);
+
             // 유저가 나간 뒤 방 정보 갱신
-            const updateRoom: { room: Room; state: string } = await this.updateRoom(
-                requestUser.player.roomInfo,
-            );
+            const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+
+            // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
+            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room, Next);
+
             // 업데이트 된 방 정보 announce
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
@@ -137,10 +150,25 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
         if (requestUser.player) {
+            // request user가 게임 중 자신이 발표자일 때 돌고 있는 timer 종료
+            const turn: Turn = requestUser.player.room.turns.at(-1);
+            if (
+                turn &&
+                turn.speechPlayer === requestUser.userInfo &&
+                (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')
+            ) {
+                await this.handleSpeechPlayerLeaveRoomRequest(turn, socket, Next);
+            }
+
             // leave-room 처리
             socket.leave(`${requestUser.player.roomInfo}`);
+
             // 유저가 나간 뒤 방 정보 갱신
             const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+
+            // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
+            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room, Next);
+
             // 업데이트 된 방 정보 announce
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
@@ -215,42 +243,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             throw new SocketException('잘못된 요청입니다.', 400, event);
         }
 
-        // request user가 게임 중 자신이 발표자일 때 돌고 있는 timer 종료
-        const turn: Turn = requestUser.player.room.turns.at(-1);
-        if (
-            turn &&
-            turn.speechPlayer === requestUser.userInfo &&
-            (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')
-        ) {
-            try {
-                gameTimerMap[turn.roomInfo].ac.abort();
-            } catch (err) {
-                next();
-            }
-
-            socket.to(`${requestUser.player.roomInfo}`).emit('error', {
-                error: {
-                    errorMessage: '발표자가 나갔어요!',
-                    status: 400,
-                    event: 'leave-game',
-                },
-            });
-
-            // 탈주범의 turn 데이터 삭제
-            await this.gamesService.deleteTurnByTurnId(turn);
-        }
-
-        // request user의 player 정보 삭제
-        await this.RemovePlayerFormRoom(requestUser, socket);
-
-        // 유저가 나간 뒤 방 정보 갱신
-        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
-
-        // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
-        if (updateRoom.room.isGameOn) await this.operateGame(updateRoom.room);
-
-        // 업데이트 된 방 정보 announce
-        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+        await this.handleLeaveRoomRequest(socket, requestUser);
     }
 
     @SubscribeMessage('ready')
@@ -270,7 +263,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             requestUser.player.roomInfo,
         );
         // 방 안에 update room info announce
-        await this.updateRoomInfoToRoom(requestUser, room, event);
+        await this.updateRoomInfoToRoom(room, requestUser, event);
     }
 
     @SubscribeMessage('start')
@@ -290,141 +283,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // player별 gameResult 만들기
         await this.gamesService.createGameResultPerPlayer(room.roomId);
+        await this.gamesService.mapGameResultIdWithUserId(room.roomId);
 
         // startCount 시작
-        await this.gameTimer(room, 'startCount');
-        await this.operateGame(room);
-    }
-
-    async operateGame(room: Room) {
-        // 발표자가 나가고 남은 인원이 2명보다 작거나,
-        if (room.players.length < 2 || room.players.length === room.turns.length) {
-            const roomInfo: Room = await this.gamesService.handleGameEndEvent(room);
-            this.updateRoomInfoToRoom(null, roomInfo, 'game-end');
-            return this.updateRoomListToMain;
-        }
-
-        let turn: Turn = await this.gamesService.createTurn(room.roomId);
-        let turnCount = room.turns.length - 1;
-
-        // player 수만큼 turn 반복
-        while (turnCount < room.players.length) {
-            // readyTimer 시작
-            await this.gameTimer(room, 'readyTime', turn);
-            // speechTimer 시작
-            await this.gameTimer(room, 'speechTime', turn);
-
-            // player 정보를 확인하기 위해 room 정보 갱신
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
-            if (!room) {
-                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-            }
-            // 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
-            let nextTurn = turn;
-            if (turn.turn < room.players.length) {
-                nextTurn = await this.gamesService.createTurn(room.roomId);
-            }
-            // discussionTimer시작
-            await this.gameTimer(room, 'discussionTime', turn, nextTurn);
-
-            // 턴 종료 후 게임 데이터 업데이트
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
-            if (!room) {
-                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-            }
-            turn = nextTurn;
-            turnCount++;
-        }
-    }
-
-    emitGameInfo(turn: Turn, roomId: number) {
-        const turnInfo = {
-            currentTurn: turn.turn,
-            speechPlayer: turn.speechPlayer,
-            keyword: turn.keyword,
-            hint: turn.hint,
-        };
-        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
-    }
-
-    async createTimer(time: number, roomId: number) {
-        const ac = new AbortController();
-        gameTimerMap[roomId] = {
-            ac,
-        };
-        gameTimerMap[roomId].ac;
-        gameTimerMap[roomId].timer = await setTimeout(time, 'timer-end', {
-            signal: gameTimerMap[roomId].ac.signal,
-        });
-        return gameTimerMap[roomId].timer;
-    }
-
-    async gameTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn) {
-        room = await this.roomService.getOneRoomByRoomId(room.roomId);
-        if (!room) {
-            throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-        }
-        const roomId = room.roomId;
-        const timer = eventName === 'startCount' ? 10000 : room[eventName];
-        const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-
-        // update turn currentTime
-        if (event != 'startCount') turn = await this.gamesService.updateTurn(turn, eventName);
-
-        // game-info event 처리
-        if (event === 'readyTimer') {
-            this.emitGameInfo(turn, roomId);
-        }
-
-        let currentTurn = 1;
-        if (turn) currentTurn = turn.turn;
-        // time-start event 처리
-        this.server.to(`${roomId}`).emit('time-start', {
-            data: {
-                currentTurn,
-                timer,
-                event,
-            },
-        });
-
-        // time-start 후 turnState별 대기시간
-        await this.createTimer(timer, roomId);
-
-        // time-end event 처리
-        let key = 'currentTurn';
-        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
-        if (event === 'discussionTimer') {
-            // 해당 턴 발표자의 turnResult 생성 & 합산 점수 emit
-            const turnResult = await this.gamesService.recordSpeechPlayerScore(
-                roomId,
-                turn.turn,
-                turn.speechPlayer,
-                turn.speechPlayerNickname,
-            );
-
-            this.server
-                .to(`${roomId}`)
-                .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
-
-            // 현재 턴이 마지막 턴일때 처리
-            key = 'nextTurn';
-            if (turn === nextTurn) {
-                nextTurn.turn = 0;
-            }
-        }
-        const data = {
-            [key]: key === 'currentTurn' ? currentTurn : nextTurn.turn,
-            timer,
-            event,
-        };
-
-        this.server.to(`${roomId}`).emit('time-end', { data });
-
-        if (event === 'discussionTimer' && !nextTurn.turn) {
-            const roomInfo: Room = await this.gamesService.handleGameEndEvent(room);
-            this.updateRoomInfoToRoom(null, roomInfo, 'game-end');
-            this.updateRoomListToMain;
-        }
+        await this.controlTurnTimer(room, 'startCount');
+        await this.controlGameTurns(room, Next);
     }
 
     @SubscribeMessage('send-chat')
@@ -463,7 +326,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 if (isAnswer) {
                     const result: TurnResult = await this.gamesService.recordPlayerScore(
                         requestUser.player.user,
-                        requestUser.player.roomInfo,
+                        requestUser.player.room,
                     );
                     type = 'answer';
                     this.server.to(`${requestUser.player.roomInfo}`).emit('score', {
@@ -559,12 +422,54 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // ###################### ALTER PLAYER ##############################
+    // [logic] game state / player state에 따른 player leave-room request handler
+    async handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap) {
+        // request user의 player 정보 삭제
+        await this.RemovePlayerFromRoom(requestUser.player.roomInfo, requestUser, socket);
 
-    async RemovePlayerFormRoom(requestUser: SocketIdMap, socket: Socket) {
+        // player leave 처리 후 방 정보
+        const room: Room = await this.roomService.getOneRoomByRoomId(requestUser.player.roomInfo);
+
+        // 게임 중이었다면
+        if (room.isGameOn) {
+            const allTurns: Turn[] = await this.gamesService.getAllTurnsByRoomId(room.roomId);
+            // 턴 정보가 존재하고, readyTime 또는 speechTime일때
+            if (
+                allTurns.length &&
+                (allTurns.at(-1).currentEvent === 'readyTime' ||
+                    allTurns.at(-1).currentEvent === 'speechTime')
+            ) {
+                // request user가 speechPlayer일때 -> 타이머/턴정보 삭제 후 게임 로직 재시작
+                if (allTurns.at(-1).speechPlayer === requestUser.userInfo) {
+                    await this.handleSpeechPlayerLeaveRoomRequest(allTurns.at(-1), socket, Next);
+
+                    // speechPlayer가 나간 후 게임 종료 상황 처리
+                    if (room.players.length === allTurns.length || room.players.length < 2) {
+                        return await this.handleEndGameByPlayerLeaveEvent(room, Next);
+                    }
+
+                    // 남은 플레이어들이 게임을 계속 이어가는 상황 처리
+                    await this.controlGameTurns(room, Next);
+                }
+                // request user가 나간 후 게임 종료 상황 -> 타이머/턴정보 삭제 후 게임 종료
+                if (room.players.length === allTurns.length || room.players.length < 2) {
+                    return await this.handleEndGameByPlayerLeaveEvent(room, Next);
+                }
+            }
+        }
+
+        // 유저가 나간 뒤 방의 정보 갱신
+        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
+
+        // 업데이트 된 방 정보 announce
+        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+    }
+
+    async RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket) {
         // request user를 leave처리
-        socket.leave(`${requestUser.player.roomInfo}`);
-        // request user를 player 테이블에서 삭제
-        await this.playersService.removePlayerByUserId(requestUser.userInfo);
+        socket.leave(`${roomId}`);
+        // request user를 player 테이블에서 삭제(leave-room 이벤트에만 해당)
+        if (requestUser) await this.playersService.removePlayerByUserId(requestUser.userInfo);
     }
 
     async updateHostPlayer(updateRoom: Room) {
@@ -601,21 +506,26 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // ###################### update Room announcement #######################
 
-    // [logic] enter/leave/log-out/disconnect 이벤트 발생시 room announcement 처리
+    // [logic] 방 정보가 업데이트 되는 여러 이벤트 발생시 room announcement 처리
     async announceUpdateRoomInfo(
         roomUpdate: UpdateRoomDto,
-        requestUser: SocketIdMap,
+        requestUser: SocketIdMap | null,
         event: string,
     ) {
+        if (event === 'game-end') {
+            console.log('game-end announcement');
+        }
         // updateRoom announce 처리
         if (roomUpdate.state === 'updated') {
-            await this.updateRoomInfoToRoom(requestUser, roomUpdate.room, event);
+            console.log('update state');
+
+            this.updateRoomInfoToRoom(roomUpdate.room, requestUser, event);
         }
         await this.updateRoomListToMain();
     }
 
     // 업데이트된 방의 정보를 해당 방의 player에게 announce
-    updateRoomInfoToRoom(requestUser: SocketIdMap | null, room: Room, event: string) {
+    updateRoomInfoToRoom(room: Room, requestUser: SocketIdMap | null, event: string) {
         const eventUserInfo: EventUserInfoDto | null = eventUserInfoConstructor(requestUser);
         const updateRoom: RoomInfoToRoomDto = updateRoomInfoConstructor(room);
         this.server.to(`${updateRoom.roomId}`).emit('update-room', {
@@ -633,5 +543,178 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             });
         })();
         this.server.except(roomIdList).emit('room-list', { data: roomList });
+    }
+
+    // ############################## Game ###################################
+    // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤)
+    async controlGameTurns(room: Room, next: NextFunction) {
+        let turn: Turn = await this.gamesService.createTurn(room.roomId);
+        let turnCount = room.turns.length - 1;
+
+        // player 수만큼 turn 반복
+        while (turnCount < room.players.length) {
+            // readyTimer 시작
+            await this.controlTurnTimer(room, 'readyTime', turn);
+            // speechTimer 시작
+            await this.controlTurnTimer(room, 'speechTime', turn);
+
+            // player 정보를 확인하기 위해 room 정보 갱신
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            // 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
+            let nextTurn = turn;
+            if (turn.turn < room.players.length) {
+                nextTurn = await this.gamesService.createTurn(room.roomId);
+            }
+            // discussionTimer시작
+            await this.controlTurnTimer(room, 'discussionTime', turn, nextTurn);
+
+            // 턴 종료 후 게임 데이터 업데이트
+            room = await this.roomService.getOneRoomByRoomId(room.roomId);
+            if (!room) {
+                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+            }
+            turn = nextTurn;
+            turnCount++;
+        }
+    }
+
+    // [Logic] turn controller (턴 시작 ~ 턴 종료 컨트롤, turn event별 처리)
+    async controlTurnTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn) {
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
+        const roomId = room.roomId;
+        const timer = eventName === 'startCount' ? 10000 : room[eventName];
+        const event = eventName === 'startCount' ? eventName : `${eventName}r`;
+
+        // update turn currentTime
+        if (event != 'startCount') turn = await this.gamesService.updateTurn(turn, eventName);
+
+        // game-info event 처리
+        if (event === 'readyTimer') {
+            this.emitGameInfo(turn, roomId);
+        }
+
+        let currentTurn = 1;
+        if (turn) currentTurn = turn.turn;
+        // time-start event 처리
+        this.emitTimeStartEvent(roomId, currentTurn, timer, event);
+
+        // time-start 후 event 별 timer 생성
+        await this.createTimer(timer, roomId);
+
+        // time-end event 처리
+        this.emitTimeEndEvent(roomId, timer, event, turn, nextTurn);
+
+        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
+        if (event === 'discussionTimer') {
+            // 해당 턴 speechPlayer의 합산 점수 emit
+            await this.emitSpeechPlayerScoreEvent(roomId, turn);
+            // 현재 턴이 마지막 턴이라면, 게임 종료 처리
+            if (!nextTurn.turn) {
+                room = await this.gamesService.handleGameEndEvent(room);
+                this.announceUpdateRoomInfo({ room, state: 'update' }, null, 'game-end');
+            }
+        }
+    }
+
+    // [logic] 발표자가 퇴장한 경우,
+    async handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction) {
+        try {
+            gameTimerMap[turn.roomInfo].ac.abort();
+        } catch (err) {
+            next();
+        }
+        // 방안에 남은 player에게 에러 메세지 emit
+        socket.to(`${turn.roomInfo}`).emit('error', {
+            error: {
+                errorMessage: '발표자가 나갔어요!',
+                status: 400,
+                event: 'leave-game',
+            },
+        });
+        // 탈주범의 turn 데이터 & timer 정보 삭제
+        await this.gamesService.deleteTurnByTurnId(turn);
+    }
+
+    // [logic] 게임 중 플레이어가 퇴장하여 게임을 종료해야 하는 경우
+    async handleEndGameByPlayerLeaveEvent(room: Room, next: NextFunction) {
+        try {
+            gameTimerMap[room.roomId].ac.abort();
+        } catch (err) {
+            next();
+        }
+        room = await this.gamesService.handleGameEndEvent(room);
+        return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
+    }
+
+    // set timer
+    async createTimer(time: number, roomId: number) {
+        const ac = new AbortController();
+        gameTimerMap[roomId] = {
+            ac,
+        };
+        gameTimerMap[roomId].ac;
+        gameTimerMap[roomId].timer = await setTimeout(time, 'timer-end', {
+            signal: gameTimerMap[roomId].ac.signal,
+        });
+        return gameTimerMap[roomId].timer;
+    }
+
+    // emit events
+    emitGameInfo(turn: Turn, roomId: number) {
+        const turnInfo = {
+            currentTurn: turn.turn,
+            speechPlayer: turn.speechPlayer,
+            keyword: turn.keyword,
+            hint: turn.hint,
+        };
+        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+    }
+
+    emitTimeStartEvent(roomId: number, currentTurn: number, timer: string, event: string) {
+        this.server.to(`${roomId}`).emit('time-start', {
+            data: {
+                currentTurn,
+                timer,
+                event,
+            },
+        });
+    }
+
+    async emitSpeechPlayerScoreEvent(roomId: number, turn: Turn) {
+        // 해당 턴 발표자의 turnResult 생성
+        const turnResult = await this.gamesService.recordSpeechPlayerScore(roomId, turn);
+        // 해당턴 발표자의 합산 점수 emit
+        this.server
+            .to(`${roomId}`)
+            .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
+    }
+
+    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn, nextTurn?: Turn) {
+        let key = 'currentTurn';
+        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
+        if (event === 'discussionTimer') {
+            // 현재 턴이 마지막 턴일때 처리
+            key = 'nextTurn';
+            if (turn === nextTurn) {
+                nextTurn.turn = 0;
+            }
+        }
+
+        // startCount event의 경우, turn정보를 가지지 않으므로, currentTurn을 생성
+        let currentTurn = 1;
+        if (turn) currentTurn = turn.turn;
+        const data = {
+            [key]: key === 'currentTurn' ? currentTurn : nextTurn.turn,
+            timer,
+            event,
+        };
+
+        this.server.to(`${roomId}`).emit('time-end', { data });
     }
 }

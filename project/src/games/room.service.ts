@@ -11,6 +11,7 @@ import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dt
 import { Player } from './entities/player.entity';
 import { scoreMap } from './util/score.map';
 import { GamesService } from './games.service';
+import { gameResultIdMap } from './util/game.result.id.map';
 
 @Injectable()
 export class RoomService {
@@ -83,6 +84,7 @@ export class RoomService {
         const roomInsert = await this.roomRepository.insert(newRoom);
         const roomId = roomInsert.identifiers[0].roomId;
         scoreMap[roomId] = {};
+        gameResultIdMap[roomId] = {};
 
         return roomId;
     }
