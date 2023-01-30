@@ -1,17 +1,18 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RoomService } from './room.service';
+import { PlayersService } from './players.service';
+import { ChatService } from './chat.service';
+import { GamesService } from './games.service';
+import { SocketIdMap } from './entities/socketIdMap.entity';
+import { Room } from './entities/room.entity';
+import { Turn } from './entities/turn.entity';
 import { CreateRoomRequestDto } from './dto/create-room.request.dto';
 import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
-import { PlayersService } from './players.service';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
-import { SocketIdMap } from './entities/socketIdMap.entity';
-import { ChatService } from './chat.service';
-import { Room } from './entities/room.entity';
 import { UpdateRoomDto } from './dto/update-room.dto';
-import { GamesService } from './games.service';
-import { Turn } from './entities/turn.entity';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
+import { NextFunction } from 'express';
 export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomService;
     private readonly playersService;
@@ -38,11 +39,13 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             roomId: any;
         };
     }): Promise<void>;
-    handleLeaveRoomEvent(socket: Socket): Promise<void>;
+    handleLeaveRoomEvent(socket: Socket, next: NextFunction): Promise<void>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
-    timer(time: number): Promise<unknown>;
-    gameTimer(room: Room, eventName: string, turn: Turn, nextTurn?: Turn): Promise<void>;
+    operateGame(room: Room): Promise<() => Promise<void>>;
+    emitGameInfo(turn: Turn, roomId: number): void;
+    createTimer(time: number, roomId: number): Promise<any>;
+    gameTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
         data: {
             message: string;

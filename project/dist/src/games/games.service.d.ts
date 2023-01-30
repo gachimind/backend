@@ -19,6 +19,7 @@ export declare class GamesService {
     private readonly todayResultRepository;
     constructor(roomService: RoomService, playersService: PlayersService, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
+    deleteTurnByTurnId(turn: Turn): Promise<void>;
     createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
     sumTurnScorePerPlayerByUserId(roomId: number, userId: number): Promise<number>;
     updateGameResult(gameResultId: number, gameScore: number): Promise<{

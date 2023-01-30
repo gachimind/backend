@@ -13,16 +13,18 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GamesGateway = void 0;
+const common_1 = require("@nestjs/common");
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
-const room_service_1 = require("./room.service");
+const promises_1 = require("timers/promises");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
+const room_service_1 = require("./room.service");
 const players_service_1 = require("./players.service");
-const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
 const chat_service_1 = require("./chat.service");
-const common_1 = require("@nestjs/common");
-const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 const games_service_1 = require("./games.service");
+const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
+const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
+const game_timer_map_1 = require("./util/game-timer.map");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
@@ -44,6 +46,7 @@ let GamesGateway = class GamesGateway {
             return console.log('disconnected socket', socket.id);
         await this.playersService.removeSocketBySocketId(socket.id);
         if (requestUser.player) {
+            socket.leave(`${requestUser.player.roomInfo}`);
             const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
@@ -59,17 +62,19 @@ let GamesGateway = class GamesGateway {
             throw new ws_exception_filter_1.SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
         }
         const prevLogInInfo = await this.playersService.getUserByUserID(requestUser.userId);
-        console.log(prevLogInInfo);
         if (prevLogInInfo) {
+            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId);
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
-            prevSockets[0].emit('error', {
-                error: {
-                    errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
-                    status: 409,
-                    event: 'log-in',
-                },
-            });
-            prevSockets[0].disconnect(true);
+            if (prevSockets.length > 0) {
+                prevSockets[0].emit('error', {
+                    error: {
+                        errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
+                        status: 409,
+                        event: 'log-in',
+                    },
+                });
+                prevSockets[0].disconnect(true);
+            }
         }
         await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id);
         await this.playersService.createTodayResult(requestUser.userId);
@@ -81,6 +86,7 @@ let GamesGateway = class GamesGateway {
         const requestUser = await this.socketAuthentication(socket.id, event);
         await this.playersService.removeSocketBySocketId(socket.id);
         if (requestUser.player) {
+            socket.leave(`${requestUser.player.roomInfo}`);
             const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         }
@@ -95,7 +101,6 @@ let GamesGateway = class GamesGateway {
         }
         const roomId = await this.roomService.createRoom(data);
         socket.emit('create-room', { data: { roomId } });
-        await this.updateRoomListToMain();
     }
     async handleEnterRoomRequest(socket, { data: requestRoom }) {
         const event = 'enter-room';
@@ -113,14 +118,35 @@ let GamesGateway = class GamesGateway {
         await this.roomService.validateRoomPassword(password, roomId);
         socket.emit('valid-room-password');
     }
-    async handleLeaveRoomEvent(socket) {
+    async handleLeaveRoomEvent(socket, next) {
         const event = 'leave-room';
         const requestUser = await this.socketAuthentication(socket.id, event);
         if (!requestUser.player) {
             throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, event);
         }
+        const turn = requestUser.player.room.turns.at(-1);
+        if (turn &&
+            turn.speechPlayer === requestUser.userInfo &&
+            (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')) {
+            try {
+                game_timer_map_1.gameTimerMap[turn.roomInfo].ac.abort();
+            }
+            catch (err) {
+                next();
+            }
+            socket.to(`${requestUser.player.roomInfo}`).emit('error', {
+                error: {
+                    errorMessage: '발표자가 나갔어요!',
+                    status: 400,
+                    event: 'leave-game',
+                },
+            });
+            await this.gamesService.deleteTurnByTurnId(turn);
+        }
         await this.RemovePlayerFormRoom(requestUser, socket);
         const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
+        if (updateRoom.room.isGameOn)
+            await this.operateGame(updateRoom.room);
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
     async handleReadyEvent(socket) {
@@ -143,9 +169,17 @@ let GamesGateway = class GamesGateway {
         room = await this.roomService.updateIsGameOn(room.roomId);
         await this.updateRoomListToMain();
         await this.gamesService.createGameResultPerPlayer(room.roomId);
-        let turnCount = 0;
+        await this.gameTimer(room, 'startCount');
+        await this.operateGame(room);
+    }
+    async operateGame(room) {
+        if (room.players.length < 2 || room.players.length === room.turns.length) {
+            const roomInfo = await this.gamesService.handleGameEndEvent(room);
+            this.updateRoomInfoToRoom(null, roomInfo, 'game-end');
+            return this.updateRoomListToMain;
+        }
         let turn = await this.gamesService.createTurn(room.roomId);
-        await this.gameTimer(room, 'startCount', turn);
+        let turnCount = room.turns.length - 1;
         while (turnCount < room.players.length) {
             await this.gameTimer(room, 'readyTime', turn);
             await this.gameTimer(room, 'speechTime', turn);
@@ -166,8 +200,25 @@ let GamesGateway = class GamesGateway {
             turnCount++;
         }
     }
-    timer(time) {
-        return new Promise((resolve) => setTimeout(resolve, time));
+    emitGameInfo(turn, roomId) {
+        const turnInfo = {
+            currentTurn: turn.turn,
+            speechPlayer: turn.speechPlayer,
+            keyword: turn.keyword,
+            hint: turn.hint,
+        };
+        this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+    }
+    async createTimer(time, roomId) {
+        const ac = new AbortController();
+        game_timer_map_1.gameTimerMap[roomId] = {
+            ac,
+        };
+        game_timer_map_1.gameTimerMap[roomId].ac;
+        game_timer_map_1.gameTimerMap[roomId].timer = await (0, promises_1.setTimeout)(time, 'timer-end', {
+            signal: game_timer_map_1.gameTimerMap[roomId].ac.signal,
+        });
+        return game_timer_map_1.gameTimerMap[roomId].timer;
     }
     async gameTimer(room, eventName, turn, nextTurn) {
         room = await this.roomService.getOneRoomByRoomId(room.roomId);
@@ -177,24 +228,22 @@ let GamesGateway = class GamesGateway {
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
-        turn = await this.gamesService.updateTurn(turn, eventName);
+        if (event != 'startCount')
+            turn = await this.gamesService.updateTurn(turn, eventName);
         if (event === 'readyTimer') {
-            const turnInfo = {
-                currentTurn: turn.turn,
-                speechPlayer: turn.speechPlayer,
-                keyword: turn.keyword,
-                hint: turn.hint,
-            };
-            this.server.to(`${roomId}`).emit('game-info', { data: turnInfo });
+            this.emitGameInfo(turn, roomId);
         }
+        let currentTurn = 1;
+        if (turn)
+            currentTurn = turn.turn;
         this.server.to(`${roomId}`).emit('time-start', {
             data: {
-                currentTurn: turn.turn,
+                currentTurn,
                 timer,
                 event,
             },
         });
-        await this.timer(timer);
+        await this.createTimer(timer, roomId);
         let key = 'currentTurn';
         if (event === 'discussionTimer') {
             const turnResult = await this.gamesService.recordSpeechPlayerScore(roomId, turn.turn, turn.speechPlayer, turn.speechPlayerNickname);
@@ -207,10 +256,10 @@ let GamesGateway = class GamesGateway {
             }
         }
         const data = {
+            [key]: key === 'currentTurn' ? currentTurn : nextTurn.turn,
             timer,
             event,
         };
-        data[key] = key === 'currentTurn' ? turn.turn : nextTurn.turn;
         this.server.to(`${roomId}`).emit('time-end', { data });
         if (event === 'discussionTimer' && !nextTurn.turn) {
             const roomInfo = await this.gamesService.handleGameEndEvent(room);
@@ -410,7 +459,7 @@ __decorate([
     (0, websockets_1.SubscribeMessage)('leave-room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [socket_io_1.Socket]),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Function]),
     __metadata("design:returntype", Promise)
 ], GamesGateway.prototype, "handleLeaveRoomEvent", null);
 __decorate([

@@ -24,29 +24,30 @@ exports.SocketException = SocketException;
 let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.BaseWsExceptionFilter {
     catch(exception, host) {
         const client = host.switchToWs().getClient();
-        this.handleError(client, exception);
         const logger = new common_1.Logger('WsExceptionsHandler');
         logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception instanceof Error ? exception.stack : null);
-    }
-    handleError(client, exception) {
-        if (!(exception instanceof SocketException)) {
-            return this.handleUnknownError(exception, client);
+        if (exception instanceof SocketException) {
+            if (exception.eventName === 'game') {
+                const roomId = [...client.rooms][1];
+                return client.to(roomId).emit('error', {
+                    error: {
+                        errorMessage: exception.eventName,
+                        status: exception.status,
+                        event: exception.message,
+                    },
+                });
+            }
+            return client.emit('error', {
+                error: {
+                    errorMessage: exception.eventName,
+                    status: exception.status,
+                    event: exception.message,
+                },
+            });
         }
-        const event = exception.eventName;
-        const status = exception.status;
-        const errorMessage = exception.message;
-        const error = {
-            errorMessage,
-            status,
-            event,
-        };
-        client.emit('error', { error });
-    }
-    handleUnknownError(exception, client) {
         console.log('handleUnknownError');
-        const status = 500;
         client.emit('error', {
-            status,
+            status: 500,
             message: constants_1.MESSAGES.UNKNOWN_EXCEPTION_MESSAGE,
         });
     }
@@ -55,7 +56,7 @@ let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.Bas
     }
 };
 SocketExceptionFilter = __decorate([
-    (0, common_1.Catch)()
+    (0, common_1.Catch)(SocketException, Error)
 ], SocketExceptionFilter);
 exports.SocketExceptionFilter = SocketExceptionFilter;
 //# sourceMappingURL=ws-exception.filter.js.map

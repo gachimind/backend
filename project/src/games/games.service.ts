@@ -38,6 +38,11 @@ export class GamesService {
         await this.turnRepository.delete({ roomInfo });
     }
 
+    async deleteTurnByTurnId(turn: Turn): Promise<void> {
+        await this.turnRepository.delete({ turnId: turn.turnId });
+        scoreMap[turn.roomInfo][turn.turn] = null;
+    }
+
     async createTurnResult(turnResult: TurnResultDataInsertDto) {
         return await this.turnResultRepository.save(turnResult);
     }

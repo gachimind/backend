@@ -33,6 +33,7 @@ export class SocketExceptionFilter extends BaseWsExceptionFilter {
     }
 
     handleError<TClient extends { emit: Function }>(client: TClient, exception: any): void {
+        if (exception.name === 'AbortError') return null;
         if (!(exception instanceof SocketException)) {
             return this.handleUnknownError(exception, client);
         }

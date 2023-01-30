@@ -38,6 +38,10 @@ let GamesService = class GamesService {
     async deleteTurnByRoomId(roomInfo) {
         await this.turnRepository.delete({ roomInfo });
     }
+    async deleteTurnByTurnId(turn) {
+        await this.turnRepository.delete({ turnId: turn.turnId });
+        score_map_1.scoreMap[turn.roomInfo][turn.turn] = null;
+    }
     async createTurnResult(turnResult) {
         return await this.turnResultRepository.save(turnResult);
     }
