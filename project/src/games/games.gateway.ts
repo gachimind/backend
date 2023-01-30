@@ -1,3 +1,4 @@
+import { UseFilters } from '@nestjs/common';
 import {
     ConnectedSocket,
     OnGatewayConnection,
@@ -9,30 +10,31 @@ import {
     OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { RoomService } from './room.service';
-import { CreateRoomRequestDto } from './dto/create-room.request.dto';
-import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
-import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
+import { setTimeout } from 'timers/promises';
 import {
     SocketException,
     SocketExceptionFilter,
 } from 'src/common/exceptionFilters/ws-exception.filter';
+import { RoomService } from './room.service';
 import { PlayersService } from './players.service';
-import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
-import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
-import { SocketIdMap } from './entities/socketIdMap.entity';
-import { eventUserInfoConstructor } from './util/event.user.info.constructor';
-import { EventUserInfoDto } from './dto/evnet-user.info.dto';
 import { ChatService } from './chat.service';
-import { UseFilters } from '@nestjs/common';
-import { Room } from './entities/room.entity';
-import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
-import { UpdateRoomDto } from './dto/update-room.dto';
 import { GamesService } from './games.service';
+
+import { SocketIdMap } from './entities/socketIdMap.entity';
+import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { User } from 'src/users/entities/user.entity';
+import { CreateRoomRequestDto } from './dto/create-room.request.dto';
+import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
+import { RoomInfoToMainDto } from './dto/roomInfoToMain.dto';
+import { RoomInfoToRoomDto } from './dto/roomInfoToRoom.dto';
+import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
+import { UpdateRoomDto } from './dto/update-room.dto';
+import { EventUserInfoDto } from './dto/evnet-user.info.dto';
+import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
+import { eventUserInfoConstructor } from './util/event.user.info.constructor';
+import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -237,7 +239,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.updateRoomInfoToRoom(requestUser, room, event);
     }
 
-    // TODO : time 함수 하나로 만들기!!
     @SubscribeMessage('start')
     async handleStartEvent(@ConnectedSocket() socket: Socket) {
         const event = 'start';
