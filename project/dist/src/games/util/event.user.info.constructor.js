@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.eventUserInfoConstructor = void 0;
 function eventUserInfoConstructor(requestUser) {
+    if (!requestUser) {
+        return null;
+    }
     return {
         socketId: requestUser.socketId,
         userId: requestUser.userInfo,

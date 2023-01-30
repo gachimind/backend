@@ -24,6 +24,12 @@ export class PlayersService {
         private readonly todayResultRepository: Repository<TodayResult>,
     ) {}
 
+    async getUserIdByToken(token: string) {
+        // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
+        const tokenMap: TokenMap = await this.tokenMapRepository.findOneBy({ token });
+        return tokenMap.user;
+    }
+
     async getUserBySocketId(socketId: string): Promise<SocketIdMap> {
         const user: SocketIdMap = await this.socketIdMapRepository.findOne({
             where: { socketId },
@@ -77,30 +83,14 @@ export class PlayersService {
         return await this.playerRepository.delete(userId);
     }
 
-    async socketIdMapToLoginUser(token: string, socketId: string) {
-        // 토큰을 이용해 userId를 찾기 // db에 없으면 fail
-        const requestUser: TokenMap = await this.tokenMapRepository.findOneBy({ token });
-
-        const userId: number = requestUser.userInfo;
-
-        if (!userId) {
-            throw new SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
-        }
-
+    async socketIdMapToLoginUser(userInfo: number, socketId: string) {
         // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
         if (await this.getUserBySocketId(socketId)) {
             throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
 
-        // socketIdMap에서 userId로 등록된 정보가 있는지 조회 -> 있다면 로그인 정보를 갱신하고, 기존 socket정보는 삭제
-        const prevLoinInfo = await this.getUserByUserID(userId);
-        if (prevLoinInfo) {
-            await this.removeSocketBySocketId(prevLoinInfo.socketId);
-            // TODO : socketIdMap에서 삭제된 소켓의 정보를 찾아서 disconnect -> how?
-        }
-
         // 위의 검사를 통과했다면, socketIdMap에 매핑
-        const user: LoginUserToSocketIdMapDto = { socketId, userInfo: userId };
+        const user: LoginUserToSocketIdMapDto = { socketId, userInfo };
         return await this.socketIdMapRepository.save(user);
     }
 

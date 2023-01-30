@@ -32,6 +32,7 @@ import { GamesService } from './games.service';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -88,12 +89,32 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!token) {
             throw new SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
-        // 토큰을 가지고 유저 정보를 얻어서 SocketIdMap에 추가
-        const requestUser: SocketIdMap = await this.playersService.socketIdMapToLoginUser(
-            token,
-            socket.id,
+        // 토큰을 가지고 유저 정보를 얻어오기
+        const requestUser: User = await this.playersService.getUserIdByToken(token);
+        if (!requestUser) {
+            throw new SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
+        }
+        // userId를 가지고 기존에 동일 유저가 다른 socket으로 로그인했는지 확인 후 있다면 disconnect 처리
+        const prevLogInInfo: SocketIdMap = await this.playersService.getUserByUserID(
+            requestUser.userId,
         );
-        await this.playersService.createTodayResult(requestUser.userInfo);
+        console.log(prevLogInInfo);
+
+        if (prevLogInInfo) {
+            const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
+            prevSockets[0].emit('error', {
+                error: {
+                    errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
+                    status: 401,
+                    event: 'log-in',
+                },
+            });
+            prevSockets[0].disconnect(true);
+        }
+        // 로그인을 요청한 유저의 socketId와 userId 정보로 socketIdMap에 맵핑
+        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id);
+
+        await this.playersService.createTodayResult(requestUser.userId);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
@@ -340,12 +361,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.server.to(`${roomId}`).emit('time-end', { data });
 
         if (event === 'discussionTimer' && !nextTurn.turn) {
-            const roomInfo = await this.gamesService.handleGameEndEvent(room);
-
-            const updateRoom = updateRoomInfoConstructor(roomInfo);
-            this.server.to(`${updateRoom.roomId}`).emit('update-room', {
-                data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
-            });
+            const roomInfo: Room = await this.gamesService.handleGameEndEvent(room);
+            this.updateRoomInfoToRoom(null, roomInfo, 'game-end');
             this.updateRoomListToMain;
         }
     }
@@ -538,8 +555,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // 업데이트된 방의 정보를 해당 방의 player에게 announce
-    async updateRoomInfoToRoom(requestUser: SocketIdMap, room: Room, event: string) {
-        const eventUserInfo: EventUserInfoDto = eventUserInfoConstructor(requestUser);
+    updateRoomInfoToRoom(requestUser: SocketIdMap | null, room: Room, event: string) {
+        const eventUserInfo: EventUserInfoDto | null = eventUserInfoConstructor(requestUser);
         const updateRoom: RoomInfoToRoomDto = updateRoomInfoConstructor(room);
         this.server.to(`${updateRoom.roomId}`).emit('update-room', {
             data: { room: updateRoom, eventUserInfo, event },
