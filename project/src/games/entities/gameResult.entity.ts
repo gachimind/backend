@@ -6,6 +6,7 @@ import {
     UpdateDateColumn,
     OneToMany,
     JoinColumn,
+    DeleteDateColumn,
 } from 'typeorm';
 import { TurnResult } from './turnResult.entity';
 import { User } from '../../users/entities/user.entity';
@@ -44,6 +45,9 @@ export class GameResult {
 
     @UpdateDateColumn({ select: false })
     updatedAt: Date;
+
+    @DeleteDateColumn({ select: false })
+    deletedAt: Date;
 
     @OneToMany(() => TurnResult, (turnResult) => turnResult.gameResult)
     turnResults: TurnResult[];
