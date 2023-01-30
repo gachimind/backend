@@ -24,13 +24,13 @@ export class UsersController {
         private configService: ConfigService,
     ) {}
     // 카카로 로그인 API
-    //@UseGuards(AuthGuard('kakao'))
+    @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao')
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    //@UseGuards(AuthGuard('kakao'))
+    @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao/redirect')
     @Redirect('redirectUrl', 302)
     async kakaoLoginRedirect(
@@ -52,7 +52,7 @@ export class UsersController {
     }
 
     // 로그아웃 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/logout')
     async logout(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -62,7 +62,7 @@ export class UsersController {
     }
 
     // 회원 정보 상세 조회 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/me')
     async getUserDetailsByToken(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -71,7 +71,7 @@ export class UsersController {
     }
 
     // 회원 키워드 조회 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/me/keyword')
     async userKeyword(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
