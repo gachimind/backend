@@ -206,4 +206,13 @@ export class UsersService {
         console.log(data);
         return data;
     }
+
+    // 닉네임 중복확인 API
+    async overlapCheck(nickname: string) {
+        const overlapCheck = await this.usersRepository.findBy({ nickname });
+
+        if (overlapCheck) throw new HttpException('이미 사용 중인 닉네임입니다.', 412);
+
+        return { message: '사용 가능한 닉네임입니다.' };
+    }
 }

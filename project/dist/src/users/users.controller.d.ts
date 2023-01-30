@@ -41,4 +41,7 @@ export declare class UsersController {
             totalQuizKeyword: any[];
         };
     }>;
+    overlapCheck(nickname: string): Promise<{
+        message: string;
+    }>;
 }

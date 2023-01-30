@@ -174,6 +174,12 @@ let UsersService = class UsersService {
         console.log(data);
         return data;
     }
+    async overlapCheck(nickname) {
+        const overlapCheck = await this.usersRepository.findBy({ nickname });
+        if (overlapCheck)
+            throw new common_1.HttpException('이미 사용 중인 닉네임입니다.', 412);
+        return { message: '사용 가능한 닉네임입니다.' };
+    }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),

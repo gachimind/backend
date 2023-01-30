@@ -44,4 +44,7 @@ export declare class UsersService {
         totalSpeechKeyword: any[];
         totalQuizKeyword: any[];
     }>;
+    overlapCheck(nickname: string): Promise<{
+        message: string;
+    }>;
 }

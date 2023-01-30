@@ -49,6 +49,10 @@ let UsersController = class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
+    async overlapCheck(nickname) {
+        const overlapCheck = await this.usersService.overlapCheck(nickname);
+        return overlapCheck;
+    }
 };
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
@@ -89,6 +93,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "userKeyword", null);
+__decorate([
+    (0, common_1.Get)('/:nickname'),
+    __param(0, (0, common_1.Param)('nickname')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "overlapCheck", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,

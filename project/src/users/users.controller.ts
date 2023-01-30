@@ -76,4 +76,11 @@ export class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
+
+    // 닉네임 중복확인 API
+    @Get('/:nickname')
+    async overlapCheck(@Param('nickname') nickname: string) {
+        const overlapCheck = await this.usersService.overlapCheck(nickname);
+        return overlapCheck;
+    }
 }
