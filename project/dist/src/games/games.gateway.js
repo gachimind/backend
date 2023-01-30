@@ -65,7 +65,7 @@ let GamesGateway = class GamesGateway {
             prevSockets[0].emit('error', {
                 error: {
                     errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
-                    status: 401,
+                    status: 409,
                     event: 'log-in',
                 },
             });
