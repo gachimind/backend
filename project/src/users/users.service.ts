@@ -142,41 +142,32 @@ export class UsersService {
     async getAllUserScore(userInfo: number): Promise<number> {
         const today: Date = getTodayDate();
         const getAllUserScore = await this.todayResultRepository.find({
-            where: {
-                createdAt: MoreThan(today),
-            },
+            where: { createdAt: MoreThan(today) },
             select: {
                 userInfo: true,
                 todayScore: true,
             },
-        });
-
-        // 스코어 내림차순 정렬
-        const sortScore = getAllUserScore.sort(function (a, b) {
-            return b.todayScore - a.todayScore;
+            order: {
+                todayScore: 'ASC',
+            },
         });
 
         // 인덱스 번호 찾기 (랭킹)
-        const todayRank = sortScore.findIndex((i) => i.userInfo == userInfo) + 1;
+        const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
 
         return todayRank;
     }
 
     // 유저 토탈 스코어
     async getUserTotalScore(userInfo: number): Promise<number> {
-        const getUserTotalScore = await this.TurnResultRepository.find({
-            where: { userId: userInfo },
-            select: { score: true },
-        });
+        const { sum } = await this.todayResultRepository
+            .createQueryBuilder('todayResult')
+            .select('SUM(todayResult.todayScore)', 'sum')
+            .where('todayResult.userInfo = :userInfo', { userInfo })
+            .cache(60 * 60 * 1000)
+            .getRawOne();
 
-        const scoreArray = [];
-        for (const result of getUserTotalScore) {
-            if (result.score) {
-                scoreArray.push(result.score);
-            }
-        }
-        const totalScore = scoreArray.reduce((a, b) => a + b);
-        return totalScore;
+        return sum;
     }
 
     // 회원 키워드 조회 API
