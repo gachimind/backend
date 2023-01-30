@@ -16,7 +16,9 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const users_service_1 = require("./users.service");
+const passport_1 = require("@nestjs/passport");
 const decorators_1 = require("@nestjs/common/decorators");
+const jwt_guard_1 = require("./auth/jwt.guard");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
         this.usersService = usersService;
@@ -61,12 +63,14 @@ let UsersController = class UsersController {
     }
 };
 __decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     (0, common_1.Get)('login/kakao'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "handleLogin", null);
 __decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.Redirect)('redirectUrl', 302),
     __param(0, (0, common_1.Param)('code')),
@@ -77,6 +81,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -84,6 +89,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "logout", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -91,6 +97,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/keyword'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
