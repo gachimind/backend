@@ -68,7 +68,7 @@ let UsersService = class UsersService {
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-        let tokenMapData = { userInfo: user.userId, token: token };
+        const tokenMapData = { userInfo: user.userId, token: token };
         if (tokenMapId) {
             tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
@@ -175,10 +175,27 @@ let UsersService = class UsersService {
         return data;
     }
     async overlapCheck(nickname) {
-        const overlapCheck = await this.usersRepository.findBy({ nickname });
-        if (overlapCheck)
+        const overlapCheck = await this.usersRepository.find({
+            where: { nickname },
+        });
+        if (overlapCheck) {
             throw new common_1.HttpException('이미 사용 중인 닉네임입니다.', 412);
-        return { message: '사용 가능한 닉네임입니다.' };
+        }
+        return { Message: '사용 가능한 닉네임입니다.' };
+    }
+    async userInfoChange(token, Body) {
+        const userInfoChange = await this.tokenMapRepository.findOne({
+            where: { token },
+        });
+        if (!userInfoChange) {
+            throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
+        }
+        else
+            (userInfoChange) => {
+                const { nickname, profileImg } = Body;
+                this.usersRepository.save({ nickname, profileImg });
+            };
+        return userInfoChange;
     }
 };
 UsersService = __decorate([

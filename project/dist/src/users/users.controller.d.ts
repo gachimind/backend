@@ -42,6 +42,9 @@ export declare class UsersController {
         };
     }>;
     overlapCheck(nickname: string): Promise<{
-        message: string;
+        Message: string;
+    }>;
+    userInfoChange(headers: any, Body: any): Promise<{
+        data: string;
     }>;
 }

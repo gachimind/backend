@@ -15,6 +15,7 @@ import { Response } from 'express';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { Body } from '@nestjs/common/decorators';
 
 @Controller('api/users')
 export class UsersController {
@@ -23,13 +24,13 @@ export class UsersController {
         private configService: ConfigService,
     ) {}
     // 카카로 로그인 API
-    @UseGuards(AuthGuard('kakao'))
+    //@UseGuards(AuthGuard('kakao'))
     @Get('login/kakao')
     handleLogin() {
         return { msg: 'Kakao-Talk Authentication' };
     }
 
-    @UseGuards(AuthGuard('kakao'))
+    //@UseGuards(AuthGuard('kakao'))
     @Get('login/kakao/redirect')
     @Redirect('redirectUrl', 302)
     async kakaoLoginRedirect(
@@ -82,5 +83,14 @@ export class UsersController {
     async overlapCheck(@Param('nickname') nickname: string) {
         const overlapCheck = await this.usersService.overlapCheck(nickname);
         return overlapCheck;
+    }
+
+    // 닉네임/캐릭터 수정 API
+    @Get('/me/update')
+    async userInfoChange(@Headers() headers, @Body() Body) {
+        const token = headers.authorization.replace('Bearer ', '');
+        await this.usersService.userInfoChange(token, Body);
+        const message = '사용자 정보 변경에 성공하셨습니다.';
+        return { data: message };
     }
 }

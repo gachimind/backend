@@ -74,7 +74,7 @@ export class UsersService {
             select: { tokenMapId: true },
         });
 
-        let tokenMapData = { userInfo: user.userId, token: token };
+        const tokenMapData = { userInfo: user.userId, token: token };
         if (tokenMapId) {
             tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
@@ -209,10 +209,30 @@ export class UsersService {
 
     // 닉네임 중복확인 API
     async overlapCheck(nickname: string) {
-        const overlapCheck = await this.usersRepository.findBy({ nickname });
+        const overlapCheck = await this.usersRepository.find({
+            where: { nickname },
+        });
 
-        if (overlapCheck) throw new HttpException('이미 사용 중인 닉네임입니다.', 412);
+        if (overlapCheck) {
+            throw new HttpException('이미 사용 중인 닉네임입니다.', 412);
+        }
+        return { Message: '사용 가능한 닉네임입니다.' };
+    }
 
-        return { message: '사용 가능한 닉네임입니다.' };
+    // 닉네임/캐릭터 수정 API
+    async userInfoChange(token: string, Body) {
+        const userInfoChange = await this.tokenMapRepository.findOne({
+            where: { token },
+        });
+
+        if (!userInfoChange) {
+            throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
+        } else
+            (userInfoChange) => {
+                const { nickname, profileImg } = Body;
+                this.usersRepository.save({ nickname, profileImg });
+            };
+
+        return userInfoChange;
     }
 }

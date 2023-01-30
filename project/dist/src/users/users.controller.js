@@ -16,7 +16,7 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const users_service_1 = require("./users.service");
-const passport_1 = require("@nestjs/passport");
+const decorators_1 = require("@nestjs/common/decorators");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
         this.usersService = usersService;
@@ -53,16 +53,20 @@ let UsersController = class UsersController {
         const overlapCheck = await this.usersService.overlapCheck(nickname);
         return overlapCheck;
     }
+    async userInfoChange(headers, Body) {
+        const token = headers.authorization.replace('Bearer ', '');
+        await this.usersService.userInfoChange(token, Body);
+        const message = '사용자 정보 변경에 성공하셨습니다.';
+        return { data: message };
+    }
 };
 __decorate([
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     (0, common_1.Get)('login/kakao'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "handleLogin", null);
 __decorate([
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     (0, common_1.Get)('login/kakao/redirect'),
     (0, common_1.Redirect)('redirectUrl', 302),
     __param(0, (0, common_1.Param)('code')),
@@ -100,6 +104,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "overlapCheck", null);
+__decorate([
+    (0, common_1.Get)('/me/update'),
+    __param(0, (0, common_1.Headers)()),
+    __param(1, (0, decorators_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "userInfoChange", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
