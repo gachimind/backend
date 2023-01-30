@@ -37,39 +37,42 @@ let UsersService = class UsersService {
     async createUser(details) {
         return await this.usersRepository.save(details);
     }
-    async findUser(kakaoUserId, email, nickname) {
+    async findUserByNickname(nickname) {
+        return await this.usersRepository.findBy({ nickname: (0, typeorm_2.Like)(`${nickname}%`) });
+    }
+    async findUser(kakaoUserId, email) {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
         }
-        if (!user && nickname) {
-            user = await this.usersRepository.findOne({ where: { nickname } });
-        }
         return user;
     }
     async validateUser(userData) {
-        let user = await this.findUser(userData.kakaoUserId, userData.email, userData.nickname);
+        let user = await this.findUser(userData.kakaoUserId, userData.email);
         if (!user) {
+            const sameNickname = await this.findUserByNickname(userData.nickname);
+            if (sameNickname.length) {
+                userData.nickname = userData.nickname + (sameNickname.length + 1);
+            }
+            userData.isFirstLogin = true;
             user = await this.createUser(userData);
-            const isNewUser = true;
-            return { user, isNewUser };
         }
-        return { user, isNewUser: false };
+        return user;
     }
-    async createToken(user, isNewUSer) {
+    async createToken(user) {
         const payload = {};
         const token = this.jwtService.sign({
             payload,
         });
-        if (isNewUSer) {
-            await this.tokenMapRepository.save({
-                userInfo: user.userId,
-                token: token,
-            });
+        const tokenMapId = await this.tokenMapRepository.findOne({
+            where: { userInfo: user.userId },
+            select: { tokenMapId: true },
+        });
+        let tokenMapData = { userInfo: user.userId, token: token };
+        if (tokenMapId) {
+            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
-        else {
-            await this.tokenMapRepository.update({ user }, { token: token });
-        }
+        await this.tokenMapRepository.save(tokenMapData);
         return token;
     }
     async tokenValidate(token) {
@@ -84,16 +87,24 @@ let UsersService = class UsersService {
         return findUser;
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const getUserInfoByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: {
+                user: { userId: true, nickname: true, profileImg: true, isFirstLogin: true },
+            },
+        });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
-        const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg, isFirstLogin } = getUserInfoByToken.user;
+        if (isFirstLogin) {
+            await this.usersRepository.save({ userId, isFirstLogin: false });
+        }
         const todayScore = await this.getTodayScoreByUserId(userId);
         return {
             userId,
             nickname,
             profileImg,
-            isFirstLogin: false,
+            isFirstLogin,
             today: { todayScore, todayRank: 0 },
             total: { totalScore: 0 },
         };

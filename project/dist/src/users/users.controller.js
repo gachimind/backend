@@ -16,7 +16,6 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const users_service_1 = require("./users.service");
-const jwt_guard_1 = require("./auth/jwt.guard");
 const passport_1 = require("@nestjs/passport");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
@@ -30,8 +29,8 @@ let UsersController = class UsersController {
         if (!req.user) {
             throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
         }
-        const { user, isNewUser } = await this.usersService.validateUser(req.user);
-        const token = await this.usersService.createToken(user, isNewUser);
+        const user = await this.usersService.validateUser(req.user);
+        const token = await this.usersService.createToken(user);
         return { url: this.configService.get('REDIRECT') + token };
     }
     async logout(headers) {
@@ -70,7 +69,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -78,7 +76,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "logout", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -86,7 +83,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/keyword'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),

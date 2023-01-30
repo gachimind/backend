@@ -6,6 +6,9 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
     OneToMany,
+    AfterLoad,
+    BeforeInsert,
+    AfterUpdate,
 } from 'typeorm';
 import { TodayResult } from '../../games/entities/todayResult.entity';
 import { GameResult } from '../../games/entities/gameResult.entity';
@@ -26,6 +29,9 @@ export class User {
 
     @Column('text')
     profileImg: string;
+
+    @Column()
+    isFirstLogin: boolean;
 
     @CreateDateColumn({ select: false })
     createdAt: Date;

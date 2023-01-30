@@ -6,6 +6,7 @@ export declare class User {
     email: string | null;
     nickname: string;
     profileImg: string;
+    isFirstLogin: boolean;
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
