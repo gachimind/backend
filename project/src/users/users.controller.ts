@@ -51,7 +51,7 @@ export class UsersController {
     }
 
     // 로그아웃 API
-    @UseGuards(JwtAuthGuard)
+    //@UseGuards(JwtAuthGuard)
     @Get('/logout')
     async logout(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -61,7 +61,7 @@ export class UsersController {
     }
 
     // 회원 정보 상세 조회 API
-    @UseGuards(JwtAuthGuard)
+    //@UseGuards(JwtAuthGuard)
     @Get('/me')
     async getUserDetailsByToken(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -70,7 +70,7 @@ export class UsersController {
     }
 
     // 회원 키워드 조회 API
-    @UseGuards(JwtAuthGuard)
+    //@UseGuards(JwtAuthGuard)
     @Get('/me/keyword')
     async userKeyword(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');

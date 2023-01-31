@@ -68,7 +68,9 @@ let UsersService = class UsersService {
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-        const tokenMapData = { userInfo: user.userId, token: token };
+
+        let tokenMapData = { userInfo: user.userId, token: token };
+
         if (tokenMapId) {
             tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
@@ -87,10 +89,18 @@ let UsersService = class UsersService {
         return findUser;
     }
     async getUserDetailsByToken(token) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOneBy({ token });
+        const getUserInfoByToken = await this.tokenMapRepository.findOne({
+            where: { token },
+            select: {
+                user: { userId: true, nickname: true, profileImg: true, isFirstLogin: true },
+            },
+        });
         if (!getUserInfoByToken)
             throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
-        const { userId, nickname, profileImg } = getUserInfoByToken.user;
+        const { userId, nickname, profileImg, isFirstLogin } = getUserInfoByToken.user;
+        if (isFirstLogin) {
+            await this.usersRepository.save({ userId, isFirstLogin: false });
+        }
         const todayScore = await this.getTodayScoreByUserId(userId);
         const todayRank = await this.getAllUserScore(userId);
         const totalScore = await this.getUserTotalScore(userId);
@@ -98,9 +108,11 @@ let UsersService = class UsersService {
             userId,
             nickname,
             profileImg,
-            isFirstLogin: false,
-            today: { todayScore, todayRank },
-            total: { totalScore },
+
+            isFirstLogin,
+            today: { todayScore, todayRank: 0 },
+            total: { totalScore: 0 },
+
         };
     }
     async getTodayScoreByUserId(userInfo) {

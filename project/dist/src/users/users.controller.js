@@ -70,7 +70,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -78,7 +77,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "logout", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -86,7 +84,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/keyword'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
