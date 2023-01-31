@@ -168,8 +168,7 @@ export class UsersService {
             .cache(60 * 60 * 1000)
             .getRawOne();
 
-        const convert = Number({ sum });
-        return convert;
+        return Number(sum);
     }
 
     // 회원 키워드 조회 API

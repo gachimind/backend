@@ -138,8 +138,7 @@ let UsersService = class UsersService {
             .where('todayResult.userInfo = :userInfo', { userInfo })
             .cache(60 * 60 * 1000)
             .getRawOne();
-        const convert = Number({ sum });
-        return convert;
+        return Number(sum);
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({
