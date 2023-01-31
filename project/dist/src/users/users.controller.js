@@ -113,7 +113,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "overlapCheck", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/update'),
     __param(0, (0, common_1.Headers)()),
     __param(1, (0, decorators_1.Body)()),

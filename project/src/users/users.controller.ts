@@ -88,7 +88,7 @@ export class UsersController {
     }
 
     // 닉네임/캐릭터 수정 API
-    @UseGuards(JwtAuthGuard)
+    //@UseGuards(JwtAuthGuard)
     @Get('/me/update')
     async userInfoChange(@Headers() headers, @Body() body) {
         const token = headers.authorization.replace('Bearer ', '');
