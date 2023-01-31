@@ -76,7 +76,7 @@ export class PlayersService {
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
-        return await this.socketIdMapRepository.delete(socketId);
+        return await this.socketIdMapRepository.softDelete(socketId);
     }
 
     async removePlayerByUserId(userId: number | User): Promise<number | any> {
