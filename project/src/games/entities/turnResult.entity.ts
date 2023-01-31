@@ -26,14 +26,8 @@ export class TurnResult {
     @Column({ type: 'int' })
     turnId: number;
 
-    @Column({ type: 'tinyint' })
-    turn: number;
-
     @Column({ type: 'int' })
     userId: number;
-
-    @Column()
-    nickname: string;
 
     @Column({ type: 'tinyint' })
     score: number;

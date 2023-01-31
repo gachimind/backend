@@ -11,13 +11,7 @@ export class TurnResultDataInsertDto {
     turnId: number;
 
     @IsNumber()
-    turn: number;
-
-    @IsNumber()
     userId: number;
-
-    @IsString()
-    nickname: string;
 
     @IsNumber()
     score: number;
