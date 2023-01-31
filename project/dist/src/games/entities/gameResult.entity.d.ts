@@ -11,5 +11,6 @@ export declare class GameResult {
     todayResult: TodayResult;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date;
     turnResults: TurnResult[];
 }

@@ -59,6 +59,10 @@ __decorate([
     __metadata("design:type", Date)
 ], GameResult.prototype, "updatedAt", void 0);
 __decorate([
+    (0, typeorm_1.DeleteDateColumn)({ select: false }),
+    __metadata("design:type", Date)
+], GameResult.prototype, "deletedAt", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => turnResult_entity_1.TurnResult, (turnResult) => turnResult.gameResult),
     __metadata("design:type", Array)
 ], GameResult.prototype, "turnResults", void 0);

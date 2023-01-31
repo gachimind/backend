@@ -36,6 +36,10 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "profileImg", void 0);
 __decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Boolean)
+], User.prototype, "isFirstLogin", void 0);
+__decorate([
     (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], User.prototype, "createdAt", void 0);

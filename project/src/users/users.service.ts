@@ -1,6 +1,6 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, Like } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.entity';
 import { TokenMap } from './entities/token-map.entity';
@@ -10,9 +10,6 @@ import { TodayResult } from '../games/entities/todayResult.entity';
 import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
-import { ConsoleLogger } from '@nestjs/common/services';
-import { kMaxLength } from 'buffer';
-import { userInfo } from 'os';
 
 @Injectable()
 export class UsersService {
@@ -36,49 +33,53 @@ export class UsersService {
         return await this.usersRepository.save(details);
     }
 
-    async findUser(kakaoUserId: number, email: string, nickname: string): Promise<User> {
+    async findUserByNickname(nickname: string) {
+        return await this.usersRepository.findBy({ nickname: Like(`${nickname}%`) });
+    }
+
+    async findUser(kakaoUserId: number, email: string): Promise<User> {
         let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
 
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
         }
-        if (!user && nickname) {
-            user = await this.usersRepository.findOne({ where: { nickname } });
-        }
         return user;
     }
 
-    async validateUser(userData: CreateUserDto): Promise<{ user: User; isNewUser: boolean }> {
-        let user: User = await this.findUser(
-            userData.kakaoUserId,
-            userData.email,
-            userData.nickname,
-        );
+    async validateUser(userData: CreateUserDto): Promise<User> {
+        let user: User = await this.findUser(userData.kakaoUserId, userData.email);
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {
+            const sameNickname = await this.findUserByNickname(userData.nickname);
+            if (sameNickname.length) {
+                userData.nickname = userData.nickname + (sameNickname.length + 1);
+            }
+            userData.isFirstLogin = true;
             user = await this.createUser(userData);
-            const isNewUser = true;
-            return { user, isNewUser };
         }
 
-        return { user, isNewUser: false };
+        return user;
     }
 
     // AccessToken 생성
-    async createToken(user: User, isNewUSer: boolean): Promise<string> {
+    async createToken(user: User): Promise<string> {
         const payload = {}; // 공갈빵 만들기
         const token: string = this.jwtService.sign({
             payload,
         });
-        if (isNewUSer) {
-            await this.tokenMapRepository.save({
-                userInfo: user.userId,
-                token: token,
-            });
-        } else {
-            await this.tokenMapRepository.update({ user }, { token: token });
+
+        const tokenMapId: TokenMap = await this.tokenMapRepository.findOne({
+            where: { userInfo: user.userId },
+            select: { tokenMapId: true },
+        });
+
+        const tokenMapData = { userInfo: user.userId, token: token };
+        if (tokenMapId) {
+            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
+
+        await this.tokenMapRepository.save(tokenMapData);
 
         return token;
     }
@@ -167,7 +168,8 @@ export class UsersService {
             .cache(60 * 60 * 1000)
             .getRawOne();
 
-        return sum;
+        const convert = Number({ sum });
+        return convert;
     }
 
     // 회원 키워드 조회 API
