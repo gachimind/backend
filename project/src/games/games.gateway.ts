@@ -284,15 +284,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // announce to main
         await this.updateRoomListToMain();
 
+        // TODO : gameMap[roomId] = {} 만들기
+        // gameMap[roomId] = { currentTurn: {turnNumber: , turnId}, remainingTurns : userId[](desc order), gameResultIdMap: {userId : gameResultId} }
+        this.gamesService.createGameMap(room);
         // player별 gameResult 만들기
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
             room.roomId,
         );
         this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
-
-        // TODO : gameMap[roomId] = {} 만들기
-        // gameMap[roomId] = { currentTurn: {turnNumber: , turnId}, remainingTurns : userId[](desc order), gameResultIdMap: {userId : gameResultId} }
-        this.gamesService.createGameMap(room);
 
         // 게임 시작
         await this.controlGameTurns(room, Next);

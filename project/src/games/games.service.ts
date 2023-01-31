@@ -140,14 +140,6 @@ export class GamesService {
         return await this.gameResultRepository.save(data);
     }
 
-    mapGameResultIdWithUserId(roomId: number, gameResults): void {
-        // 유저 아이디별 gameResult mapping
-        for (let result of gameResults) {
-            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
-        }
-        return;
-    }
-
     createGameMap(room: Room): void {
         gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: null },
@@ -159,6 +151,14 @@ export class GamesService {
         const players = room.players;
         for (let i = players.length - 1; i == 0; i--) {
             gameMap[room.roomId].remainingTurns.push(players[i].userInfo);
+        }
+        return;
+    }
+
+    mapGameResultIdWithUserId(roomId: number, gameResults): void {
+        // 유저 아이디별 gameResult mapping
+        for (let result of gameResults) {
+            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
         }
         return;
     }
