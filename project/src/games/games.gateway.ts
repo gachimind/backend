@@ -284,10 +284,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // player별 gameResult 만들기
         await this.gamesService.createGameResultPerPlayer(room.roomId);
         await this.gamesService.mapGameResultIdWithUserId(room.roomId);
+        // TODO : player별 turn 만들기
+        // TOD : gameMap 만들기 - turnIdMap : {userId :turnId}, currentTurn: {turnNumber, turnId}, score[speechPlayer] : number(acc), turnQuizRank : number(acc)
+        // playerRank는 한 사람이 정답 맞출때마다 1씩 올려주기
 
-        // startCount 시작
-        await this.controlTurnTimer(room, 'startCount');
+        // 게임 시작
         await this.controlGameTurns(room, Next);
+
+        // TODO : 게임 종료 함수 별도로 만들기 -> call
     }
 
     @SubscribeMessage('send-chat')
@@ -546,7 +550,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // ############################## Game ###################################
-    // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤)
+    // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤
+    // !!!!!! TODO : game 중 변경이 발생하면 바로바로 gameMap에 같이 반영되도록 수정!!!!!
     async controlGameTurns(room: Room, next: NextFunction) {
         if (room.players.length < 2) {
             this.server
@@ -554,24 +559,33 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
             throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
         }
-        let turn: Turn = await this.gamesService.createTurn(room.roomId);
-        let turnCount = room.turns.length - 1;
+
+        // startCount 트리거
+        await this.controlTurnTimer(room, 'startCount');
 
         // player 수만큼 turn 반복
+        // TODO : while의 조건을 남은 플레이해야 하는 turn 정보로 변경 (gameMap[roomId][remainTurns])
+        let turnCount = room.turns.length - 1;
         while (turnCount < room.players.length) {
+            // TODO : 변경된 방 정보에 따른 에러 핸들리은 모두 turnController에서 수행하도록 변경
+            // TODO : turn 정보는 start event에서 처음에 일괄 생성
+            // gameController에서는 gameMap에서 현재 턴 정보를 가지고 turnRepository에서 turn 정보 가져와서 사용하기
+            let turn: Turn = await this.gamesService.createTurn(room.roomId);
+
             // readyTimer 시작
             await this.controlTurnTimer(room, 'readyTime', turn);
             // speechTimer 시작
             await this.controlTurnTimer(room, 'speechTime', turn);
 
-            // player 정보를 확인하기 위해 room 정보 갱신
+            // TODO : gameMap을 사용하여 게임 정보 업데이트
+            // [DELETE] player 정보를 확인하기 위해 room 정보 갱신
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-            // FIX : 만약 3명이 플레이하다 1번이 토론 중에 나갔다면, turn.turn은 1이고, 남은 미발표자는 2 -> 2번 플레이어는 발표할 수 있지만, 3번 플레이어 턴에는 턴이 생성되지 않음
 
-            // 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
+            // TODO : gameMap에 remainTurn > 0인지 확인 후 레포에서 다음 턴 정보 로드
+            // [DELETE] 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
             let nextTurn = turn;
             if (turn.turn < room.players.length) {
                 nextTurn = await this.gamesService.createTurn(room.roomId);
@@ -584,12 +598,15 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
+            // discussion Timer가 종료되면 다음 턴 정
             turn = nextTurn;
             turnCount++;
         }
     }
 
     // [Logic] turn controller (턴 시작 ~ 턴 종료 컨트롤, turn event별 처리)
+    // TODO : 턴이 시작 전 player 수 충족하는지 검사
+    // TODO : controlTurnTimer에서는 딱 한 턴을 수행하는 타이머를 만들고 실행하는 역할로 한정하고 정리 하기
     async controlTurnTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn) {
         room = await this.roomService.getOneRoomByRoomId(room.roomId);
         if (!room) {
@@ -625,6 +642,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (event === 'discussionTimer') {
             // 해당 턴 speechPlayer의 합산 점수 emit
             await this.emitSpeechPlayerScoreEvent(roomId, turn);
+
+            // TODO : 게임 종료 로직은 여기서 수행하지 않게 분리!!
             // 현재 턴이 마지막 턴이라면, 게임 종료 처리
             if (!nextTurn.turn) {
                 room = await this.gamesService.handleGameEndEvent(room);
@@ -632,6 +651,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             }
         }
     }
+
+    // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
 
     // [logic] 발표자가 퇴장한 경우,
     async handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction) {
