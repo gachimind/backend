@@ -209,7 +209,7 @@ export class UsersService {
 
     // 닉네임 중복확인 API
     async overlapCheck(nickname: string) {
-        const overlapCheck = await this.usersRepository.find({
+        const overlapCheck = await this.usersRepository.findOne({
             where: { nickname },
         });
 
@@ -220,7 +220,7 @@ export class UsersService {
     }
 
     // 닉네임/캐릭터 수정 API
-    async userInfoChange(token: string, Body) {
+    async userInfoChange(token: string, body) {
         const userInfoChange = await this.tokenMapRepository.findOne({
             where: { token },
         });
@@ -229,8 +229,9 @@ export class UsersService {
             throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
         } else
             (userInfoChange) => {
-                const { nickname, profileImg } = Body;
-                this.usersRepository.save({ nickname, profileImg });
+                const { nickname, profileImg } = body;
+                const bodyValue = Object.values({ nickname, profileImg });
+                this.usersRepository.save(bodyValue);
             };
 
         return userInfoChange;

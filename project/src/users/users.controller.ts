@@ -80,6 +80,7 @@ export class UsersController {
     }
 
     // 닉네임 중복확인 API
+    @UseGuards(JwtAuthGuard)
     @Get('/:nickname')
     async overlapCheck(@Param('nickname') nickname: string) {
         const overlapCheck = await this.usersService.overlapCheck(nickname);
@@ -87,6 +88,7 @@ export class UsersController {
     }
 
     // 닉네임/캐릭터 수정 API
+    @UseGuards(JwtAuthGuard)
     @Get('/me/update')
     async userInfoChange(@Headers() headers, @Body() Body) {
         const token = headers.authorization.replace('Bearer ', '');
