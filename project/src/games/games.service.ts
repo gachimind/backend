@@ -46,7 +46,7 @@ export class GamesService {
         });
     }
 
-    async createTurn(roomId: number) {
+    async createTurn(roomId: number): Promise<Turn> {
         const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
         console.log(room.turns.length);
         const turnIndex = room.turns.length + 1;
@@ -119,7 +119,7 @@ export class GamesService {
         );
     }
 
-    async createGameResultPerPlayer(roomId) {
+    async createGameResultPerPlayer(roomId): Promise<GameResult[]> {
         const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
         const today = getTodayDate();
@@ -136,18 +136,18 @@ export class GamesService {
             });
         }
 
-        await this.gameResultRepository.save(data);
+        return await this.gameResultRepository.save(data);
     }
 
-    async mapGameResultIdWithUserId(roomId: number) {
-        const gameResults: GameResult[] = await this.gameResultRepository.findBy({ roomId });
-
+    mapGameResultIdWithUserId(roomId: number, gameResults): void {
         // 유저 아이디별 gameResult mapping
         for (let result of gameResults) {
-            gameResultIdMap[roomId][result.userInfo] = result.gameResultId;
+            gameMap.gameResultIdMap[roomId][result.userInfo] = result.gameResultId;
         }
     }
 
+    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
+    // TODO : gameMap 업데이트
     async recordPlayerScore(user: User, room: Room): Promise<TurnResult> {
         const turns = room.turns.sort((a, b) => {
             return a.turn - b.turn;
@@ -183,15 +183,20 @@ export class GamesService {
         return await this.createTurnResult(turnResult);
     }
 
+    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
+    // TODO : gameMap 업데이트
+    // TODO : scoreMap[roomId][turnData.speechPlayer] -> gameMap[roomId].score[speechPlayer]
     async saveEvaluationScore(roomId: number, data: TurnEvaluateRequestDto) {
         const { score, turn } = data;
         const turnData: Turn = await this.turnRepository.findOne({
             where: { roomInfo: roomId, turn: turn },
         });
         // TODO : redis 붙이고 cache로 이동
-        scoreMap[roomId][turnData.speechPlayer].push(score);
+        gameMap[roomId].score[turn].push(score);
     }
 
+    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
+    // TODO : gameMap 업데이트
     async recordSpeechPlayerScore(roomId: number, turn: Turn) {
         console.log('recordSpeechPlayerScore, param turn : ', turn);
 
@@ -229,6 +234,9 @@ export class GamesService {
         return await this.createTurnResult(turnResult);
     }
 
+    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
+    // TODO : gameMap 초기화
+    // TODO : 게임 종료 로직과 턴 종료 로직을 분리할 것!!
     async handleGameEndEvent(room: Room): Promise<Room> {
         // gameTimerMap에 기록된 방 타이머 삭제
         delete gameTimerMap[room.roomId];

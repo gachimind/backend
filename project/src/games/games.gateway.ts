@@ -36,6 +36,7 @@ import { eventUserInfoConstructor } from './util/event.user.info.constructor';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { gameTimerMap } from './util/game-timer.map';
 import { NextFunction } from 'express';
+import { GameResult } from './entities/gameResult.entity';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -282,16 +283,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.updateRoomListToMain();
 
         // player별 gameResult 만들기
-        await this.gamesService.createGameResultPerPlayer(room.roomId);
-        await this.gamesService.mapGameResultIdWithUserId(room.roomId);
-        // TODO : player별 turn 만들기
-        // TOD : gameMap 만들기 - turnIdMap : {userId :turnId}, currentTurn: {turnNumber, turnId}, score[speechPlayer] : number(acc), turnQuizRank : number(acc)
-        // playerRank는 한 사람이 정답 맞출때마다 1씩 올려주기
+        const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
+            room.roomId,
+        );
+
+        // TOD : gameMap[roomId] = {} 만들기
+        // gameMap[roomID] = { currentTurn: {turnNumber: number(+), turnId}, remainingTurns : userId[](desc order), score[turn] : [], turnQuizRank : number(++)}
+        this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
 
         // 게임 시작
         await this.controlGameTurns(room, Next);
 
-        // TODO : 게임 종료 함수 별도로 만들기 -> call
+        // TODO : 게임 종료 함수 여기에서 call하기
     }
 
     @SubscribeMessage('send-chat')
@@ -593,6 +596,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // discussionTimer시작
             await this.controlTurnTimer(room, 'discussionTime', turn, nextTurn);
 
+            // TODO : 턴 종료 함수 여기에서 call하기 -> turnController에서 삭제!!!
+
             // 턴 종료 후 게임 데이터 업데이트
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {
@@ -643,7 +648,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // 해당 턴 speechPlayer의 합산 점수 emit
             await this.emitSpeechPlayerScoreEvent(roomId, turn);
 
-            // TODO : 게임 종료 로직은 여기서 수행하지 않게 분리!!
+            // TODO : 게임 종료 로직은 여기서 수행하지 않게 분리!! -> 게임 컨트롤러로 이동!!
             // 현재 턴이 마지막 턴이라면, 게임 종료 처리
             if (!nextTurn.turn) {
                 room = await this.gamesService.handleGameEndEvent(room);
