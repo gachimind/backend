@@ -175,9 +175,7 @@ export class GamesService {
             gameResultInfo: gameResultIdMap[room.roomId][user.userId],
             roomId: room.roomId,
             turnId: currentTurn.turnId,
-            turn: currentTurn.turn,
             userId: user.userId,
-            nickname: user.nickname,
             score,
             keyword: currentTurn.keyword,
             isSpeech: false,
@@ -195,6 +193,8 @@ export class GamesService {
     }
 
     async recordSpeechPlayerScore(roomId: number, turn: Turn) {
+        console.log('recordSpeechPlayerScore, param turn : ', turn);
+
         const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
 
         // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
@@ -219,9 +219,7 @@ export class GamesService {
             gameResultInfo,
             roomId,
             turnId: turn.turnId,
-            turn: turn.turn,
             userId: turn.speechPlayer,
-            nickname: turn.speechPlayerNickname,
             score,
             keyword: turn.keyword,
             isSpeech: true,
