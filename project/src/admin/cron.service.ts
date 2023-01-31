@@ -8,14 +8,17 @@ export class CronService {
 
     @Cron(CronExpression.EVERY_MINUTE)
     async actionPerMin() {
-        await this.notionService.createAccumulatedStat();
-        //await this.notionService.updateAccumulatedStat();
-        //await this.notionService.updateCurrentStat();
+        await this.notionService.updateCurrentStat();
+        await this.notionService.updateAccumulatedStat();
     }
 
     @Cron(CronExpression.EVERY_HOUR)
     async actionPerHour() {
-        //await this.notionService.updateGameResultStat();
-        //await this.notionService.setHourlyStat();
+        await this.notionService.createCurrentStat();
+        await this.notionService.createAccumulatedStat();
     }
+    // @Cron(CronExpression.EVERY_DAY_AT_1AM)
+    // async actionPerDay() {
+    //     await this.notionService.createAccumulatedStat();
+    // }
 }
