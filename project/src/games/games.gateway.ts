@@ -432,7 +432,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 게임 중이었다면
         if (room.isGameOn) {
-            const allTurns: Turn[] = await this.gamesService.getAllTurnsByRoomId(room.roomId);
+            const allTurns: Turn[] = room.turns;
             // 턴 정보가 존재하고, readyTime 또는 speechTime일때
             if (
                 allTurns.length &&
@@ -548,6 +548,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // ############################## Game ###################################
     // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤)
     async controlGameTurns(room: Room, next: NextFunction) {
+        if (room.players.length < 2) {
+            this.server
+                .to(`${room.roomId}`)
+                .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
+            throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
+        }
         let turn: Turn = await this.gamesService.createTurn(room.roomId);
         let turnCount = room.turns.length - 1;
 
@@ -563,6 +569,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
+            // FIX : 만약 3명이 플레이하다 1번이 토론 중에 나갔다면, turn.turn은 1이고, 남은 미발표자는 2 -> 2번 플레이어는 발표할 수 있지만, 3번 플레이어 턴에는 턴이 생성되지 않음
+
             // 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
             let nextTurn = turn;
             if (turn.turn < room.players.length) {
@@ -586,6 +594,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         room = await this.roomService.getOneRoomByRoomId(room.roomId);
         if (!room) {
             throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
+        }
+        if (room.players.length < 2) {
+            throw new SocketException();
         }
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
