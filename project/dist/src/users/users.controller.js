@@ -55,9 +55,9 @@ let UsersController = class UsersController {
         const overlapCheck = await this.usersService.overlapCheck(nickname);
         return overlapCheck;
     }
-    async userInfoChange(headers, Body) {
+    async userInfoChange(headers, body) {
         const token = headers.authorization.replace('Bearer ', '');
-        await this.usersService.userInfoChange(token, Body);
+        await this.usersService.userInfoChange(token, body);
         const message = '사용자 정보 변경에 성공하셨습니다.';
         return { data: message };
     }
@@ -105,6 +105,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "userKeyword", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/:nickname'),
     __param(0, (0, common_1.Param)('nickname')),
     __metadata("design:type", Function),
@@ -112,6 +113,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "overlapCheck", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/update'),
     __param(0, (0, common_1.Headers)()),
     __param(1, (0, decorators_1.Body)()),

@@ -47,5 +47,5 @@ export declare class UsersService {
     overlapCheck(nickname: string): Promise<{
         Message: string;
     }>;
-    userInfoChange(token: string, Body: any): Promise<TokenMap>;
+    userInfoChange(token: string, body: any): Promise<TokenMap>;
 }

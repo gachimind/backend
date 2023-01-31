@@ -175,7 +175,7 @@ let UsersService = class UsersService {
         return data;
     }
     async overlapCheck(nickname) {
-        const overlapCheck = await this.usersRepository.find({
+        const overlapCheck = await this.usersRepository.findOne({
             where: { nickname },
         });
         if (overlapCheck) {
@@ -183,7 +183,7 @@ let UsersService = class UsersService {
         }
         return { Message: '사용 가능한 닉네임입니다.' };
     }
-    async userInfoChange(token, Body) {
+    async userInfoChange(token, body) {
         const userInfoChange = await this.tokenMapRepository.findOne({
             where: { token },
         });
@@ -192,8 +192,8 @@ let UsersService = class UsersService {
         }
         else
             (userInfoChange) => {
-                const { nickname, profileImg } = Body;
-                this.usersRepository.save({ nickname, profileImg });
+                const { nickname, profileImg } = body;
+                this.usersRepository.save(body);
             };
         return userInfoChange;
     }

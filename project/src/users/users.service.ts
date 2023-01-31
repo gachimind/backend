@@ -230,8 +230,8 @@ export class UsersService {
         } else
             (userInfoChange) => {
                 const { nickname, profileImg } = body;
-                const bodyValue = Object.values({ nickname, profileImg });
-                this.usersRepository.save(bodyValue);
+                // const bodyValue = Object.values({ nickname, profileImg });
+                this.usersRepository.save(body);
             };
 
         return userInfoChange;

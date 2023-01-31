@@ -90,9 +90,9 @@ export class UsersController {
     // 닉네임/캐릭터 수정 API
     @UseGuards(JwtAuthGuard)
     @Get('/me/update')
-    async userInfoChange(@Headers() headers, @Body() Body) {
+    async userInfoChange(@Headers() headers, @Body() body) {
         const token = headers.authorization.replace('Bearer ', '');
-        await this.usersService.userInfoChange(token, Body);
+        await this.usersService.userInfoChange(token, body);
         const message = '사용자 정보 변경에 성공하셨습니다.';
         return { data: message };
     }
