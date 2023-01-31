@@ -37,6 +37,8 @@ import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { gameTimerMap } from './util/game-timer.map';
 import { NextFunction } from 'express';
 import { GameResult } from './entities/gameResult.entity';
+import { gameMap } from './util/game.map';
+import { turnMap } from './util/turn.map';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -286,10 +288,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
             room.roomId,
         );
-
-        // TOD : gameMap[roomId] = {} 만들기
-        // gameMap[roomID] = { currentTurn: {turnNumber: number(+), turnId}, remainingTurns : userId[](desc order), score[turn] : [], turnQuizRank : number(++)}
         this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
+
+        // TODO : gameMap[roomId] = {} 만들기
+        // gameMap[roomId] = { currentTurn: {turnNumber: , turnId}, remainingTurns : userId[](desc order), gameResultIdMap: {userId : gameResultId} }
+        this.gamesService.createGameMap(room);
 
         // 게임 시작
         await this.controlGameTurns(room, Next);
@@ -567,20 +570,24 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.controlTurnTimer(room, 'startCount');
 
         // player 수만큼 turn 반복
-        // TODO : while의 조건을 남은 플레이해야 하는 turn 정보로 변경 (gameMap[roomId][remainTurns])
+        // TODO : while의 조건을 남은 플레이해야 하는 turn 정보로 변경 (gameMap[roomId][remainingTurns])
         let turnCount = room.turns.length - 1;
         while (turnCount < room.players.length) {
             // TODO : 변경된 방 정보에 따른 에러 핸들리은 모두 turnController에서 수행하도록 변경
-            // TODO : turn 정보는 start event에서 처음에 일괄 생성
+            // TODO : turnMap[roomId] = {} 만들기
+            // turnMap[roomId] = { score[turn] : [], turnQuizRank : number(++)}
             // gameController에서는 gameMap에서 현재 턴 정보를 가지고 turnRepository에서 turn 정보 가져와서 사용하기
             let turn: Turn = await this.gamesService.createTurn(room.roomId);
+            // TODO : 턴 종료 로직에 turnMap clearing추가
+            turnMap[room.roomId] = { score: [], turnQuizRank: 0 };
+            gameMap[room.roomId].currentTurn = { turnId: turn.turnId, turn: turn.turn };
 
             // readyTimer 시작
             await this.controlTurnTimer(room, 'readyTime', turn);
             // speechTimer 시작
             await this.controlTurnTimer(room, 'speechTime', turn);
 
-            // TODO : gameMap을 사용하여 게임 정보 업데이트
+            // TODO : gameMap / turnMap을 사용하여 게임 정보 업데이트
             // [DELETE] player 정보를 확인하기 위해 room 정보 갱신
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {

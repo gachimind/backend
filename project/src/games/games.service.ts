@@ -14,6 +14,7 @@ import { TurnResult } from './entities/turnResult.entity';
 import { PlayersService } from './players.service';
 import { RoomService } from './room.service';
 import { gameTimerMap } from './util/game-timer.map';
+import { gameMap } from './util/game.map';
 import { gameResultIdMap } from './util/game.result.id.map';
 import { scoreMap } from './util/score.map';
 import { getTodayDate } from './util/today.date.constructor';
@@ -142,8 +143,24 @@ export class GamesService {
     mapGameResultIdWithUserId(roomId: number, gameResults): void {
         // 유저 아이디별 gameResult mapping
         for (let result of gameResults) {
-            gameMap.gameResultIdMap[roomId][result.userInfo] = result.gameResultId;
+            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
         }
+        return;
+    }
+
+    createGameMap(room: Room): void {
+        gameMap[room.roomId] = {
+            currentTurn: { turnId: null, turn: null },
+            remainingTurns: [], // pop으로 사용
+            gameResultIdMap: {},
+        };
+
+        // 처음 시작할때, player 정보를
+        const players = room.players;
+        for (let i = players.length - 1; i == 0; i--) {
+            gameMap[room.roomId].remainingTurns.push(players[i].userInfo);
+        }
+        return;
     }
 
     // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기

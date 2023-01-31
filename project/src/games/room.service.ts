@@ -83,9 +83,6 @@ export class RoomService {
 
         const roomInsert = await this.roomRepository.insert(newRoom);
         const roomId = roomInsert.identifiers[0].roomId;
-        scoreMap[roomId] = {};
-        gameResultIdMap[roomId] = {};
-
         return roomId;
     }
 
@@ -195,11 +192,12 @@ export class RoomService {
         }
 
         // 모두 ready라면, 방의 isGameOn 상태를 업데이트
-        room = await this.updateRoomStatusByRoomId({
+        await this.updateRoomStatusByRoomId({
             roomId,
             isGameOn: true,
         });
 
+        // 전체 방 정보를 return
         return await this.getOneRoomByRoomId(roomId);
     }
 }
