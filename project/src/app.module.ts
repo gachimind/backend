@@ -2,7 +2,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppController } from './app.controller';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -18,7 +17,8 @@ import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
 import { AdminModule } from './admin/admin.module';
 import { TodayResult } from './games/entities/todayResult.entity';
-import { winstonLogger } from './middlewares/logger.service';
+import { LoggerMiddleware } from './logger/logger.middleware';
+
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
 //   //const response = await axios.get('/비밀키요청')
@@ -50,7 +50,7 @@ import { winstonLogger } from './middlewares/logger.service';
             ],
             //migrations: [__dirname + '/migrations/*.ts'],
             // 처음 db를 생성할 때만 synchronize:true로 생성하고, 이 후에는 false로 바꿔야 함
-            synchronize: false,
+            synchronize: true,
             logging: false,
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',

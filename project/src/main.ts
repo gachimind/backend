@@ -5,7 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.filter';
 import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
-import { winstonLogger } from './middlewares/logger.service';
+import { winstonLogger } from './logger/winston.util';
+
 declare const module: any;
 
 async function bootstrap() {
