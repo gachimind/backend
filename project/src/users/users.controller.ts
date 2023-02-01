@@ -15,6 +15,7 @@ import { Response } from 'express';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from './auth/jwt.guard';
 
 @Controller('api/users')
 export class UsersController {
@@ -22,7 +23,7 @@ export class UsersController {
         private readonly usersService: UsersService,
         private configService: ConfigService,
     ) {}
-    // 카카로 로그인 API
+    // 카카오 로그인 API
     @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao')
     handleLogin() {
