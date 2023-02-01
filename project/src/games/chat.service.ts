@@ -1,32 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
-import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { GameResult } from './entities/gameResult.entity';
 import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
+import { gameMap } from './util/game.map';
 
 @Injectable()
 export class ChatService {
-    constructor(
-        @InjectRepository(Room)
-        private readonly roomRepository: Repository<Room>,
-        @InjectRepository(Turn)
-        private readonly turnRepository: Repository<Turn>,
-        @InjectRepository(TurnResult)
-        private readonly turnResultRepository: Repository<TurnResult>,
-        @InjectRepository(GameResult)
-        private readonly gameResultRepository: Repository<GameResult>,
-    ) {}
-
-    checkAnswer(message: string, room: Room): boolean {
-        const currentTurn = room.turns.at(-1);
-        if (message != currentTurn.keyword) {
+    checkAnswer(turn: Turn, message: string): boolean {
+        if (message != turn.keyword) {
             return false;
         }
         return true;
+    }
+
+    FilterAnswer(turn: Turn, userId: number, message: string): boolean {
+        const isAnswer: boolean = this.checkAnswer(turn, message);
+        if (!isAnswer) return false;
+
+        if (userId === turn.speechPlayer && turn.currentEvent === ('readyTime' || 'speechTime')) {
+            throw new SocketException(
+                '발표자는 정답을 채팅으로 알릴 수 없습니다.',
+                400,
+                'send-chat',
+            );
+        }
+
+        if (turn.currentEvent === 'speechTime') {
+            return true;
+        }
     }
 }

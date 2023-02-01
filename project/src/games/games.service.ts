@@ -1,24 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { User } from 'src/users/entities/user.entity';
 import { MoreThan, Repository } from 'typeorm';
-import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
-import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
-import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
+import { setTimeout } from 'timers/promises';
+import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { PlayersService } from './players.service';
+import { RoomService } from './room.service';
+import { User } from 'src/users/entities/user.entity';
 import { GameResult } from './entities/gameResult.entity';
 import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { PlayersService } from './players.service';
-import { RoomService } from './room.service';
+import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
+import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
+import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { gameTimerMap } from './util/game-timer.map';
 import { gameMap } from './util/game.map';
-import { gameResultIdMap } from './util/game.result.id.map';
-import { scoreMap } from './util/score.map';
-import { getTodayDate } from './util/today.date.constructor';
 import { turnMap } from './util/turn.map';
+import { getTodayDate } from './util/today.date.constructor';
 
 const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 
@@ -50,7 +49,7 @@ export class GamesService {
 
     async createTurn(roomId: number): Promise<Turn> {
         const turnIndex: number = gameMap[roomId].currentTurn.turnNumber;
-        const speechPlayer: number = gameMap[roomId].remainingTurns.pop();
+        const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
 
         // TODO : keyword random으로 가져오기
@@ -174,19 +173,7 @@ export class GamesService {
 
     // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
     // TODO : gameMap 업데이트
-    // TODO : scoreMap[roomId][turnData.speechPlayer] -> gameMap[roomId].score[speechPlayer]
-    async saveEvaluationScore(roomId: number, data: TurnEvaluateRequestDto) {
-        const { score, turn } = data;
-        const turnData: Turn = await this.turnRepository.findOne({
-            where: { roomInfo: roomId, turn: turn },
-        });
-        // TODO : redis 붙이고 cache로 이동
-        gameMap[roomId].score[turn].push(score);
-    }
-
-    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
-    // TODO : gameMap 업데이트
-    async recordSpeechPlayerScore(roomId: number, turn: Turn) {
+    async createSpeechPalyerTurnResult(roomId: number, turn: Turn) {
         console.log('recordSpeechPlayerScore, param turn : ', turn);
 
         const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
@@ -223,12 +210,7 @@ export class GamesService {
         return await this.createTurnResult(turnResult);
     }
 
-    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
-    // TODO : gameMap 초기화
-    // TODO : 게임 종료 로직과 턴 종료 로직을 분리할 것!!
     async handleGameEndEvent(room: Room): Promise<Room> {
-        // gameTimerMap에 기록된 방 타이머 삭제
-        delete gameTimerMap[room.roomId];
         // 게임에 참여한 모든 플레이어의 gameResult 업데이트
         // 1. roomId로 gameResult 조회
         const playerUserIds = await this.gameResultRepository.find({
@@ -287,8 +269,24 @@ export class GamesService {
         return;
     }
 
-    updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number) {
+    updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void {
         gameMap[roomId].currentTurn = { turnId, turn };
+    }
+
+    deductGameMapCurrentPlayers(roomId: number): void {
+        gameMap[roomId].currentPlayers--;
+    }
+
+    popPlayerFromGameMapRemainingTurns(roomId: number): number {
+        return gameMap[roomId].remainingTurns.pop();
+    }
+
+    deletePlayerFromGameMapRemainingTurns(roomId: number, userId: number): void {
+        gameMap[roomId].remainingSpeeches = gameMap[roomId].remainingSpeeches.filter(
+            (e: number) => {
+                if (e !== userId) return e;
+            },
+        );
     }
 
     mapGameResultIdWithUserId(roomId: number, gameResults): void {
@@ -300,8 +298,17 @@ export class GamesService {
     }
 
     // TurnMap
-    createTurnMap(roomId): void {
-        turnMap[roomId] = { score: [], turnQuizRank: 0 };
+    // 매 턴이 새로 생성될때, 초기화
+    createTurnMap(roomId: number): void {
+        turnMap[roomId] = { speechEvaluate: [], turnQuizRank: 1 };
+    }
+
+    updateTurnMapSpeechEvaluate(roomId: number, score: number): void {
+        turnMap[roomId].speechEvaluate.push(score);
+    }
+
+    updateTurnMapTurnQuizRank(roomId: number): void {
+        turnMap[roomId].turnQuizRank++;
     }
 
     // TimerMap & set timer
@@ -315,5 +322,9 @@ export class GamesService {
             signal: gameTimerMap[roomId].ac.signal,
         });
         return gameTimerMap[roomId].timer;
+    }
+
+    breakTimer(roomId: number) {
+        gameTimerMap[roomId].ac.abort();
     }
 }

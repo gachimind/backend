@@ -12,6 +12,9 @@ import { Player } from './entities/player.entity';
 import { scoreMap } from './util/score.map';
 import { GamesService } from './games.service';
 import { gameResultIdMap } from './util/game.result.id.map';
+import { gameMap } from './util/game.map';
+import { turnMap } from './util/turn.map';
+import { gameTimerMap } from './util/game-timer.map';
 
 @Injectable()
 export class RoomService {
@@ -54,6 +57,10 @@ export class RoomService {
     }
 
     async removeRoomByRoomId(roomId: number): Promise<number | any> {
+        // 방에 묶인 맵 정보 모두 삭제
+        delete gameMap[roomId];
+        delete turnMap[roomId];
+        delete gameTimerMap[roomId];
         await this.playerRepository.delete({ roomInfo: roomId });
         return await this.roomRepository.softDelete(roomId);
     }
