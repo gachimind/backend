@@ -592,7 +592,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // TODO : controlTurnTimer에서는 딱 한 턴을 수행하는 타이머를 만들고 실행하는 역할로 한정하고 정리 하기
     async controlTurnTimer(room: Room, eventName: string, turn?: Turn): Promise<void> {
         const roomId = room.roomId;
-        const timer = eventName === 'startCount' ? 10000 : room[eventName];
+        const timer = eventName === 'startCount' ? 5000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
 
         // 턴이 시작 전 player 수 충족하는지 검사
@@ -650,9 +650,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // emit events
     emitCannotStartError(roomId: number) {
         if (gameMap[roomId].currentPlayers < 2) {
-            this.server
-                .to(`${roomId}`)
-                .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
+            this.server.to(`${roomId}`).emit('error', {
+                errorMessage: '게임을 시작할 수 없습니다.',
+                status: 400,
+                event: 'game',
+            });
             throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
         }
     }
@@ -686,7 +688,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
     }
 
-    // TODO : NextTurn 정보 수정
     emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn) {
         let nextTurn: number;
         let key = 'currentTurn';
