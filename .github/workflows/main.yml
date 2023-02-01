@@ -6,9 +6,9 @@ on:
     branches: [release]
 env:
   AWS_REGION: ap-northeast-2
-  S3_BUCKET_NAME: tiltil
-  CODE_DEPLOY_APPLICATION_NAME: tiltil-code-deploy
-  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: til-server
+  S3_BUCKET_NAME: gachimindbucket
+  CODE_DEPLOY_APPLICATION_NAME: code-deploy
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: tiltil-code-deploy
 
 jobs:
   build:

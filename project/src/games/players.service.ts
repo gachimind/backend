@@ -7,7 +7,6 @@ import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Socket } from 'socket.io';
 import { TodayResult } from './entities/todayResult.entity';
 import { getTodayDate } from './util/today.date.constructor';
 
@@ -76,14 +75,14 @@ export class PlayersService {
     }
 
     async removeSocketBySocketId(socketId: string): Promise<number | any> {
-        return await this.socketIdMapRepository.delete(socketId);
+        return await this.socketIdMapRepository.softDelete(socketId);
     }
 
     async removePlayerByUserId(userId: number | User): Promise<number | any> {
         return await this.playerRepository.delete(userId);
     }
 
-    async socketIdMapToLoginUser(userInfo: number, socketId: string, socketMapId?: number | null) {
+    async socketIdMapToLoginUser(userInfo: number, socketId: string) {
         // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
         if (await this.getUserBySocketId(socketId)) {
             throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
@@ -91,9 +90,7 @@ export class PlayersService {
 
         // 위의 검사를 통과했다면, socketIdMap에 매핑
         let user: LoginUserToSocketIdMapDto = { socketId, userInfo };
-        if (socketMapId) {
-            user = { socketMapId, socketId, userInfo };
-        }
+
         return await this.socketIdMapRepository.save(user);
     }
 
