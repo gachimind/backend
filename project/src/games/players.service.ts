@@ -57,6 +57,14 @@ export class PlayersService {
         return player;
     }
 
+    async getPlayerByUserId(userInfo: number): Promise<Player> {
+        const player: Player = await this.playerRepository.findOne({
+            where: { userInfo },
+            select: { user: { nickname: true } },
+        });
+        return player;
+    }
+
     async getAllPlayersUserIdByRoomID(roomId: number): Promise<Player[]> {
         return await this.playerRepository.find({
             where: { roomInfo: roomId },

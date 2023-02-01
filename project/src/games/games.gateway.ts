@@ -149,7 +149,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('log-out')
     async socketIdMapToLogOutUser(@ConnectedSocket() socket: Socket) {
         const event = 'log-out';
-        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
         await this.playersService.removeSocketBySocketId(socket.id, requestUser.userInfo);
@@ -287,8 +286,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // announce to main
         await this.updateRoomListToMain();
 
-        // TODO : gameMap[roomId] = {} 만들기
         // gameMap[roomId] = { currentTurn: {turnNumber: , turnId}, remainingTurns : userId[](desc order), gameResultIdMap: {userId : gameResultId} }
+        // TODO : gameMap interface 만들기
         this.gamesService.createGameMap(room);
         // player별 gameResult 만들기
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
@@ -561,60 +560,33 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤
     // !!!!!! TODO : game 중 변경이 발생하면 바로바로 gameMap에 같이 반영되도록 수정!!!!!
     async controlGameTurns(room: Room, next: NextFunction) {
-        if (room.players.length < 2) {
-            this.server
-                .to(`${room.roomId}`)
-                .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
-            throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
-        }
+        // 게임 방 인원 체크
+        this.emitCannotStartError(room);
 
         // startCount 트리거
         await this.controlTurnTimer(room, 'startCount');
 
         // player 수만큼 turn 반복
-        // TODO : while의 조건을 남은 플레이해야 하는 turn 정보로 변경 (gameMap[roomId][remainingTurns])
-        let turnCount = room.turns.length - 1;
-        while (turnCount < room.players.length) {
-            // TODO : 변경된 방 정보에 따른 에러 핸들리은 모두 turnController에서 수행하도록 변경
-            // TODO : turnMap[roomId] = {} 만들기
-            // turnMap[roomId] = { score[turn] : [], turnQuizRank : number(++)}
-            // gameController에서는 gameMap에서 현재 턴 정보를 가지고 turnRepository에서 turn 정보 가져와서 사용하기
+        while (gameMap[room.roomId].remainingSpeeches.length) {
+            // create turn하면서 turnMap 같이 수행
             let turn: Turn = await this.gamesService.createTurn(room.roomId);
-            // TODO : 턴 종료 로직에 turnMap clearing추가
-            turnMap[room.roomId] = { score: [], turnQuizRank: 0 };
-            gameMap[room.roomId].currentTurn = { turnId: turn.turnId, turn: turn.turn };
+            this.gamesService.updateGameMapCurrentTurn(room.roomId, turn.turnId, turn.turn);
 
             // readyTimer 시작
             await this.controlTurnTimer(room, 'readyTime', turn);
             // speechTimer 시작
             await this.controlTurnTimer(room, 'speechTime', turn);
-
-            // TODO : gameMap / turnMap을 사용하여 게임 정보 업데이트
-            // [DELETE] player 정보를 확인하기 위해 room 정보 갱신
-            room = await this.roomService.getOneRoomByRoomId(room.roomId);
-            if (!room) {
-                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-            }
-
-            // TODO : gameMap에 remainTurn > 0인지 확인 후 레포에서 다음 턴 정보 로드
-            // [DELETE] 방에 남은 플레이어 수가 현재 턴 수보다 크다면 다음 턴을 생성
-            let nextTurn = turn;
-            if (turn.turn < room.players.length) {
-                nextTurn = await this.gamesService.createTurn(room.roomId);
-            }
             // discussionTimer시작
-            await this.controlTurnTimer(room, 'discussionTime', turn, nextTurn);
+            await this.controlTurnTimer(room, 'discussionTime', turn);
 
             // TODO : 턴 종료 함수 여기에서 call하기 -> turnController에서 삭제!!!
 
-            // 턴 종료 후 게임 데이터 업데이트
+            // 턴 종료 후 게임 데이터 업데이트 ????
+            // TODO : 턴 종료 로직에 turnMap clearing추가
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
             if (!room) {
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
-            // discussion Timer가 종료되면 다음 턴 정
-            turn = nextTurn;
-            turnCount++;
         }
     }
 
@@ -712,6 +684,15 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // emit events
+    emitCannotStartError(room: Room) {
+        if (room.players.length < 2) {
+            this.server
+                .to(`${room.roomId}`)
+                .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
+            throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
+        }
+    }
+
     emitGameInfo(turn: Turn, roomId: number) {
         const turnInfo = {
             currentTurn: turn.turn,
