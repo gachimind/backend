@@ -134,48 +134,36 @@ export class GamesService {
         return await this.gameResultRepository.save(data);
     }
 
-    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
-    // TODO : gameMap 업데이트
-    async recordPlayerScore(user: User, room: Room): Promise<TurnResult> {
-        const turns = room.turns.sort((a, b) => {
-            return a.turn - b.turn;
-        });
-
-        let currentTurn: Turn;
-        if ((turns.at(-1).currentEvent = 'speechTime')) {
-            currentTurn = turns.at(-1);
-        }
+    async recordPlayerScore(userId: number, room: Room): Promise<TurnResult> {
+        const roomId = room.roomId;
+        const turn = room.turns.at(-1);
+        const gameResultInfo = gameMap[roomId].gameResultIdMap[userId];
 
         // turnResult를 gameResultId로 검색해서 있으면 예외 처리
         if (
             await this.turnResultRepository.findOneBy({
-                gameResultInfo: gameResultIdMap[room.roomId][user.userId],
+                gameResultInfo,
             })
         ) {
             throw new SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
         }
 
-        const turnResults = await this.turnResultRepository.findBy({ turnId: currentTurn.turnId });
-        const myRank: number = turnResults.length;
-        const score = 100 - myRank * 20;
-
         const turnResult: TurnResultDataInsertDto = {
-            gameResultInfo: gameResultIdMap[room.roomId][user.userId],
-            roomId: room.roomId,
-            turnId: currentTurn.turnId,
-            userId: user.userId,
-            score,
-            keyword: currentTurn.keyword,
+            gameResultInfo,
+            roomId,
+            turnId: turn.turnId,
+            userId,
+            score: 100 - turnMap[roomId].turnQuizRank * 20,
+            keyword: turn.keyword,
             isSpeech: false,
         };
+        this.updateTurnMapTurnQuizRank(roomId);
         return await this.createTurnResult(turnResult);
     }
 
     // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
     // TODO : gameMap 업데이트
     async createSpeechPalyerTurnResult(roomId: number, turn: Turn) {
-        console.log('recordSpeechPlayerScore, param turn : ', turn);
-
         const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
 
         // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
@@ -300,7 +288,7 @@ export class GamesService {
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
     createTurnMap(roomId: number): void {
-        turnMap[roomId] = { speechEvaluate: [], turnQuizRank: 1 };
+        turnMap[roomId] = { speechEvaluate: [], turnQuizRank: 0 };
     }
 
     updateTurnMapSpeechEvaluate(roomId: number, score: number): void {

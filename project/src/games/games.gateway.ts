@@ -171,7 +171,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
 
             // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
-            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room, Next);
+            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room);
 
             // 업데이트 된 방 정보 announce
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
@@ -322,7 +322,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             );
             if (isAnswer) {
                 type = 'answer';
-                await this.gamesService.recordPlayerScore(requestUser.user, room);
+                await this.gamesService.recordPlayerScore(requestUser.userInfo, room);
                 data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
             }
         }
