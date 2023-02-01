@@ -68,9 +68,7 @@ let UsersService = class UsersService {
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-
         let tokenMapData = { userInfo: user.userId, token: token };
-
         if (tokenMapId) {
             tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
         }
@@ -108,11 +106,9 @@ let UsersService = class UsersService {
             userId,
             nickname,
             profileImg,
-
             isFirstLogin,
-            today: { todayScore, todayRank: 0 },
-            total: { totalScore: 0 },
-
+            today: { todayScore, todayRank },
+            total: { totalScore },
         };
     }
     async getTodayScoreByUserId(userInfo) {
@@ -137,9 +133,10 @@ let UsersService = class UsersService {
                 todayScore: true,
             },
             order: {
-                todayScore: 'ASC',
+                todayScore: 'DESC',
             },
         });
+        console.log(getAllUserScore);
         const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
         return todayRank;
     }

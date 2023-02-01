@@ -74,7 +74,6 @@ export class UsersService {
             select: { tokenMapId: true },
         });
 
-
         let tokenMapData = { userInfo: user.userId, token: token };
 
         if (tokenMapId) {
@@ -129,8 +128,8 @@ export class UsersService {
             nickname,
             profileImg,
             isFirstLogin,
-            today: { todayScore, todayRank: 0 },
-            total: { totalScore: 0 },
+            today: { todayScore, todayRank },
+            total: { totalScore },
         };
     }
 
@@ -160,9 +159,10 @@ export class UsersService {
                 todayScore: true,
             },
             order: {
-                todayScore: 'ASC',
+                todayScore: 'DESC',
             },
         });
+        console.log(getAllUserScore);
 
         // 인덱스 번호 찾기 (랭킹)
         const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
