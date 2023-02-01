@@ -24,7 +24,7 @@ __decorate([
     __metadata("design:type", Number)
 ], SocketIdMap.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true, createForeignKeyConstraints: false }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
 ], SocketIdMap.prototype, "user", void 0);

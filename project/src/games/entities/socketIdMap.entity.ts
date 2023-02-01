@@ -17,7 +17,7 @@ export class SocketIdMap {
 
     @Column({ name: 'userInfo' })
     userInfo: number;
-    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true })
+    @OneToOne(() => User, { onDelete: 'CASCADE', eager: true, createForeignKeyConstraints: false })
     @JoinColumn({ name: 'userInfo' })
     user: User;
 
