@@ -52,7 +52,7 @@ export class GamesService {
     }
 
     async createTurn(roomId: number): Promise<Turn> {
-        const turnIndex: number = gameMap[roomId].currentTurn.turnNumber;
+        const turnIndex: number = gameMap[roomId].currentTurn.turn;
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
 
@@ -238,7 +238,7 @@ export class GamesService {
     // ############################## MAPs #################################
 
     // GameMap
-    createGameMap(room: Room): void {
+    async createGameMap(room: Room): Promise<void> {
         gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: 0 },
             currentPlayers: room.players.length,
@@ -247,10 +247,15 @@ export class GamesService {
         };
 
         // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
-        const players = room.players;
-        for (let i = players.length - 1; i == 0; i--) {
-            gameMap[room.roomId].remainingTurns.push(players[i].userInfo);
-        }
+        new Promise((resolve) => {
+            for (let i = room.players.length - 1; i >= 0; i--) {
+                gameMap[room.roomId].remainingTurns.push(room.players[i].user.userId);
+            }
+            resolve;
+        });
+
+        console.log('in gamesService :', gameMap[room.roomId]);
+
         return;
     }
 
@@ -267,11 +272,9 @@ export class GamesService {
     }
 
     deletePlayerFromGameMapRemainingTurns(roomId: number, userId: number): void {
-        gameMap[roomId].remainingSpeeches = gameMap[roomId].remainingSpeeches.filter(
-            (e: number) => {
-                if (e !== userId) return e;
-            },
-        );
+        gameMap[roomId].remainingTurns = gameMap[roomId].remainingTurns.filter((e: number) => {
+            if (e !== userId) return e;
+        });
     }
 
     mapGameResultIdWithUserId(roomId: number, gameResults): void {
