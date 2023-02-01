@@ -21,15 +21,13 @@ const user_entity_1 = require("./entities/user.entity");
 const token_map_entity_1 = require("./entities/token-map.entity");
 const config_1 = require("@nestjs/config");
 const todayResult_entity_1 = require("../games/entities/todayResult.entity");
-const gameResult_entity_1 = require("../games/entities/gameResult.entity");
 const turnResult_entity_1 = require("../games/entities/turnResult.entity");
 const today_date_constructor_1 = require("../games/util/today.date.constructor");
 let UsersService = class UsersService {
-    constructor(usersRepository, tokenMapRepository, todayResultRepository, gameResultRepository, TurnResultRepository, jwtService, configService) {
+    constructor(usersRepository, tokenMapRepository, todayResultRepository, TurnResultRepository, jwtService, configService) {
         this.usersRepository = usersRepository;
         this.tokenMapRepository = tokenMapRepository;
         this.todayResultRepository = todayResultRepository;
-        this.gameResultRepository = gameResultRepository;
         this.TurnResultRepository = TurnResultRepository;
         this.jwtService = jwtService;
         this.configService = configService;
@@ -64,15 +62,15 @@ let UsersService = class UsersService {
         const token = this.jwtService.sign({
             payload,
         });
-        const tokenMapId = await this.tokenMapRepository.findOne({
+        const newToken = { userInfo: user.userId, token: token };
+        const existToken = await this.tokenMapRepository.findOne({
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-        let tokenMapData = { userInfo: user.userId, token: token };
-        if (tokenMapId) {
-            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
+        if (existToken) {
+            newToken['tokenMapId'] = existToken.tokenMapId;
         }
-        await this.tokenMapRepository.save(tokenMapData);
+        await this.tokenMapRepository.save(newToken);
         return token;
     }
     async tokenValidate(token) {
@@ -199,16 +197,45 @@ let UsersService = class UsersService {
         };
         return data;
     }
+    async overlapCheck(nickname) {
+        const overlapCheck = await this.usersRepository.findOne({
+            where: { nickname },
+        });
+        if (overlapCheck) {
+            throw new common_1.HttpException('이미 사용 중인 닉네임입니다.', 412);
+        }
+        return { Message: '사용 가능한 닉네임입니다.' };
+    }
+    async updateUser(token, body) {
+        const userInfoChange = await this.tokenMapRepository.findOne({
+            where: { token },
+        });
+        if (!userInfoChange) {
+            throw new common_1.HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
+        }
+        const { nickname, profileImg } = body;
+        if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
+            throw new common_1.HttpException('닉네임 규칙을 확인해주세요.', 400);
+        }
+        const updateUser = await this.usersRepository.save({
+            userId: userInfoChange.userInfo,
+            nickname,
+            profileImg,
+        });
+        console.log('변경되 유저 정보 :', updateUser);
+        if (!updateUser) {
+            throw new common_1.HttpException('Internal Sever Error', 500);
+        }
+        return updateUser;
+    }
 };
 UsersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(token_map_entity_1.TokenMap)),
     __param(2, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
-    __param(3, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
-    __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

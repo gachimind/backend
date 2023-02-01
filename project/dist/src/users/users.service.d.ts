@@ -5,17 +5,16 @@ import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { TodayResult } from '../games/entities/todayResult.entity';
-import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
 export declare class UsersService {
     private readonly usersRepository;
     private readonly tokenMapRepository;
     private readonly todayResultRepository;
-    private readonly gameResultRepository;
     private readonly TurnResultRepository;
     private jwtService;
     private configService;
-    constructor(usersRepository: Repository<User>, tokenMapRepository: Repository<TokenMap>, todayResultRepository: Repository<TodayResult>, gameResultRepository: Repository<GameResult>, TurnResultRepository: Repository<TurnResult>, jwtService: JwtService, configService: ConfigService);
+    constructor(usersRepository: Repository<User>, tokenMapRepository: Repository<TokenMap>, todayResultRepository: Repository<TodayResult>, TurnResultRepository: Repository<TurnResult>, jwtService: JwtService, configService: ConfigService);
     createUser(details: CreateUserDto): Promise<User>;
     findUserByNickname(nickname: string): Promise<User[]>;
     findUser(kakaoUserId: number, email: string): Promise<User>;
@@ -46,4 +45,8 @@ export declare class UsersService {
         totalSpeechKeyword: any[];
         totalQuizKeyword: any[];
     }>;
+    overlapCheck(nickname: string): Promise<{
+        Message: string;
+    }>;
+    updateUser(token: string, body: UpdateUserDto): Promise<User>;
 }

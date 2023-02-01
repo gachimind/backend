@@ -16,11 +16,7 @@ const player_entity_1 = require("./player.entity");
 let SocketIdMap = class SocketIdMap {
 };
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)(),
-    __metadata("design:type", Number)
-], SocketIdMap.prototype, "socketMapId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', unique: true }),
+    (0, typeorm_1.PrimaryColumn)('varchar'),
     __metadata("design:type", String)
 ], SocketIdMap.prototype, "socketId", void 0);
 __decorate([
@@ -28,7 +24,7 @@ __decorate([
     __metadata("design:type", Number)
 ], SocketIdMap.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { onDelete: 'CASCADE', eager: true, createForeignKeyConstraints: false }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
 ], SocketIdMap.prototype, "user", void 0);
@@ -40,6 +36,10 @@ __decorate([
     (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
 ], SocketIdMap.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.DeleteDateColumn)({ select: false }),
+    __metadata("design:type", Date)
+], SocketIdMap.prototype, "deletedAt", void 0);
 SocketIdMap = __decorate([
     (0, typeorm_1.Entity)()
 ], SocketIdMap);

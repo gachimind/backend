@@ -7,7 +7,6 @@ import {
     OneToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    DeleteDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 

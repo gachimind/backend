@@ -70,19 +70,16 @@ let PlayersService = class PlayersService {
         return await this.playerRepository.save(users);
     }
     async removeSocketBySocketId(socketId) {
-        return await this.socketIdMapRepository.delete(socketId);
+        return await this.socketIdMapRepository.softDelete(socketId);
     }
     async removePlayerByUserId(userId) {
         return await this.playerRepository.delete(userId);
     }
-    async socketIdMapToLoginUser(userInfo, socketId, socketMapId) {
+    async socketIdMapToLoginUser(userInfo, socketId) {
         if (await this.getUserBySocketId(socketId)) {
             throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
         let user = { socketId, userInfo };
-        if (socketMapId) {
-            user = { socketMapId, socketId, userInfo };
-        }
         return await this.socketIdMapRepository.save(user);
     }
     async createTodayResult(userInfo) {

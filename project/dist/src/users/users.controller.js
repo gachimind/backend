@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const users_service_1 = require("./users.service");
 const passport_1 = require("@nestjs/passport");
+const jwt_guard_1 = require("./auth/jwt.guard");
 let UsersController = class UsersController {
     constructor(usersService, configService) {
         this.usersService = usersService;
@@ -49,6 +50,15 @@ let UsersController = class UsersController {
         const data = await this.usersService.userKeyword(token);
         return { data };
     }
+    async overlapCheck(nickname) {
+        const overlapCheck = await this.usersService.overlapCheck(nickname);
+        return overlapCheck;
+    }
+    async userInfoChange(headers, body) {
+        const token = headers.authorization.replace('Bearer ', '');
+        await this.usersService.updateUser(token, body);
+        return { data: { message: '사용자 정보 변경에 성공하셨습니다.' } };
+    }
 };
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
@@ -69,6 +79,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -76,6 +87,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "logout", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
@@ -83,12 +95,30 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserDetailsByToken", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/me/keyword'),
     __param(0, (0, common_1.Headers)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "userKeyword", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('/:nickname'),
+    __param(0, (0, common_1.Param)('nickname')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "overlapCheck", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('/me/update'),
+    __param(0, (0, common_1.Headers)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "userInfoChange", null);
 UsersController = __decorate([
     (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,

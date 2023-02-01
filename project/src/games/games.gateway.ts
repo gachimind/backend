@@ -99,8 +99,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             requestUser.userId,
         );
 
-        // TODO : throw new socketException & next 호출로 전환
         if (prevLogInInfo) {
+            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId);
+
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
@@ -114,11 +115,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             }
         }
         // 로그인을 요청한 유저의 socketId와 userId 정보로 socketIdMap에 맵핑
-        await this.playersService.socketIdMapToLoginUser(
-            requestUser.userId,
-            socket.id,
-            prevLogInInfo ? prevLogInInfo.socketMapId : null,
-        );
+        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id);
 
         await this.playersService.createTodayResult(requestUser.userId);
         console.log('로그인 성공!');

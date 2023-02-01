@@ -1,4 +1,5 @@
 import {
+    Body,
     Controller,
     Get,
     Headers,
@@ -8,6 +9,7 @@ import {
     Param,
     HttpException,
     Redirect,
+    Post,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
@@ -51,7 +53,7 @@ export class UsersController {
     }
 
     // 로그아웃 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/logout')
     async logout(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -61,7 +63,7 @@ export class UsersController {
     }
 
     // 회원 정보 상세 조회 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/me')
     async getUserDetailsByToken(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -70,11 +72,28 @@ export class UsersController {
     }
 
     // 회원 키워드 조회 API
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Get('/me/keyword')
     async userKeyword(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.userKeyword(token);
         return { data };
+    }
+
+    // 닉네임 중복확인 API
+    @UseGuards(JwtAuthGuard)
+    @Get('/:nickname')
+    async overlapCheck(@Param('nickname') nickname: string) {
+        const overlapCheck = await this.usersService.overlapCheck(nickname);
+        return overlapCheck;
+    }
+
+    // 닉네임/캐릭터 수정 API
+    @UseGuards(JwtAuthGuard)
+    @Post('/me/update')
+    async userInfoChange(@Headers() headers, @Body() body) {
+        const token: string = headers.authorization.replace('Bearer ', '');
+        await this.usersService.updateUser(token, body);
+        return { data: { message: '사용자 정보 변경에 성공하셨습니다.' } };
     }
 }
