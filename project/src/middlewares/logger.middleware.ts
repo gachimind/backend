@@ -1,28 +1,21 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { LoggerService } from '../logger.service';
-import { Request, Response } from 'express';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-    constructor() {}
-    use(req: Request, res: Response, next: Function) {
-        const loggerService = new LoggerService(
-            req.url.slice(1).split('/')[req.url.slice(1).split('/').length - 1],
-        );
-        const tempUrl = req.method + ' ' + req.url.split('?')[0];
-        const _headers = req.headers ? req.headers : {};
-        const _query = req.query ? req.query : {};
-        const _body = req.body ? req.body : {};
-        const _url = tempUrl ? tempUrl : {};
+    private logger = new Logger('HTTP');
 
-        loggerService.info(
-            JSON.stringify({
-                url: _url,
-                headers: _headers,
-                query: _query,
-                body: _body,
-            }),
-        );
+    use(request: Request, response: Response, next: NextFunction): void {
+        const { ip, method, originalUrl } = request;
+        const userAgent = request.get('user-agent') || '';
+
+        response.on('finish', () => {
+            const { statusCode } = response;
+            const contentLength = response.get('content-length');
+            this.logger.log(
+                `${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip}`,
+            );
+        });
 
         next();
     }

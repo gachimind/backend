@@ -3,7 +3,7 @@ seeding.ts
 
 # compiled output
 /node_modules
-
+/logs
 # Logs
 logs
 *.log

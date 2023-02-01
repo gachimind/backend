@@ -26,7 +26,7 @@ export class NotionService {
         await this.notion.pages.create({
             parent: { database_id: '8dbda62147ca4990a401f23f9758879b' },
             properties: {
-                '접속자 수(최대)': {
+                '접속자 수': {
                     type: 'title',
                     title: [
                         {
@@ -100,7 +100,7 @@ export class NotionService {
         await this.notion.pages.create({
             parent: { database_id: 'e5eecf2093d04f2e9664d89fae0f6654' },
             properties: {
-                '접속자 수(최대)': {
+                '접속자 수': {
                     type: 'title',
                     title: [
                         {
@@ -140,9 +140,7 @@ export class NotionService {
                 where: { createdAt: Between(startDate, endDate) },
             })
         ).length;
-        console.log(userCnt);
         const gameCnt = (await this.roomRepository.find({ withDeleted: true })).length;
-        console.log(gameCnt);
         await this.notion.blocks.update({
             block_id: '5350b7cc90224f6e82eabc01d0f415d1',
             callout: {

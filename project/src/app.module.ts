@@ -18,7 +18,7 @@ import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
 import { AdminModule } from './admin/admin.module';
 import { TodayResult } from './games/entities/todayResult.entity';
-
+import { winstonLogger } from './middlewares/logger.service';
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
 //   //const response = await axios.get('/비밀키요청')

@@ -167,11 +167,14 @@ const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(69);
-const passport = __webpack_require__(70);
-const cookieParser = __webpack_require__(71);
+const http_exception_filter_1 = __webpack_require__(65);
+const passport = __webpack_require__(66);
+const cookieParser = __webpack_require__(67);
+const logger_service_1 = __webpack_require__(68);
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: logger_service_1.winstonLogger,
+    });
     const port = process.env.PORT || 3000;
     app.enableCors({ origin: '*' });
     app.use(cookieParser());
@@ -233,7 +236,7 @@ const users_module_1 = __webpack_require__(8);
 const games_module_1 = __webpack_require__(28);
 const config_1 = __webpack_require__(11);
 const logger_middleware_1 = __webpack_require__(47);
-const app_controller_1 = __webpack_require__(52);
+const app_controller_1 = __webpack_require__(48);
 const passport_1 = __webpack_require__(23);
 const typeorm_1 = __webpack_require__(9);
 const user_entity_1 = __webpack_require__(15);
@@ -241,12 +244,12 @@ const token_map_entity_1 = __webpack_require__(20);
 const room_entity_1 = __webpack_require__(33);
 const player_entity_1 = __webpack_require__(34);
 const socketIdMap_entity_1 = __webpack_require__(35);
-const keyword_module_1 = __webpack_require__(55);
-const keyword_entities_1 = __webpack_require__(56);
+const keyword_module_1 = __webpack_require__(51);
+const keyword_entities_1 = __webpack_require__(52);
 const turn_entity_1 = __webpack_require__(36);
 const turnResult_entity_1 = __webpack_require__(19);
 const gameResult_entity_1 = __webpack_require__(18);
-const admin_module_1 = __webpack_require__(61);
+const admin_module_1 = __webpack_require__(57);
 const todayResult_entity_1 = __webpack_require__(16);
 let AppModule = class AppModule {
     configure(consumer) {
@@ -2772,125 +2775,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LoggerMiddleware = void 0;
 const common_1 = __webpack_require__(7);
-const logger_service_1 = __webpack_require__(48);
 let LoggerMiddleware = class LoggerMiddleware {
-    constructor() { }
-    use(req, res, next) {
-        const loggerService = new logger_service_1.LoggerService(req.url.slice(1).split('/')[req.url.slice(1).split('/').length - 1]);
-        const tempUrl = req.method + ' ' + req.url.split('?')[0];
-        const _headers = req.headers ? req.headers : {};
-        const _query = req.query ? req.query : {};
-        const _body = req.body ? req.body : {};
-        const _url = tempUrl ? tempUrl : {};
-        loggerService.info(JSON.stringify({
-            url: _url,
-            headers: _headers,
-            query: _query,
-            body: _body,
-        }));
+    constructor() {
+        this.logger = new common_1.Logger('HTTP');
+    }
+    use(request, response, next) {
+        const { ip, method, originalUrl } = request;
+        const userAgent = request.get('user-agent') || '';
+        response.on('finish', () => {
+            const { statusCode } = response;
+            const contentLength = response.get('content-length');
+            this.logger.log(`${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
+        });
         next();
     }
 };
 LoggerMiddleware = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [])
+    (0, common_1.Injectable)()
 ], LoggerMiddleware);
 exports.LoggerMiddleware = LoggerMiddleware;
 
 
 /***/ }),
 /* 48 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LoggerService = void 0;
-const winston = __webpack_require__(49);
-const moment = __webpack_require__(50);
-const nest_winston_1 = __webpack_require__(51);
-const { errors, combine, timestamp, printf } = winston.format;
-class LoggerService {
-    constructor(service) {
-        this.logger = winston.createLogger({
-            transports: [
-                new winston.transports.File({
-                    level: 'error',
-                    filename: `error-${moment(new Date()).format('YYYY-MM-DD')}.log`,
-                    dirname: 'logs',
-                    maxsize: 5000000,
-                    format: combine(errors({ stack: true }), timestamp({ format: 'isoDateTime' }), printf((info) => {
-                        return `${info.message}`;
-                    })),
-                }),
-                new winston.transports.Console({
-                    level: 'debug',
-                    format: combine(timestamp({ format: 'isoDateTime' }), nest_winston_1.utilities.format.nestLike(service, {
-                        prettyPrint: true,
-                    })),
-                }),
-                new winston.transports.File({
-                    filename: `application-${moment(new Date()).format('YYYY-MM-DD')}.log`,
-                    dirname: 'logs',
-                    maxsize: 5000000,
-                    format: combine(timestamp({ format: 'isoDateTime' }), printf((info) => {
-                        return `${info.message}`;
-                    })),
-                }),
-            ],
-        });
-    }
-    log(message) {
-        this.logger.log({ level: 'info', message });
-    }
-    info(message) {
-        this.logger.info(message);
-    }
-    error(message, trace) {
-        this.logger.error(message, trace);
-    }
-    warn(message) {
-        this.logger.warning(message);
-    }
-    debug(message) {
-        this.logger.debug(message);
-    }
-    verbose(message) {
-        this.logger.verbose(message);
-    }
-}
-exports.LoggerService = LoggerService;
-
-
-/***/ }),
-/* 49 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("winston");
-
-/***/ }),
-/* 50 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("moment");
-
-/***/ }),
-/* 51 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("nest-winston");
-
-/***/ }),
-/* 52 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -2913,7 +2823,7 @@ exports.AppController = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(13);
-const resultToData_interceptor_1 = __webpack_require__(53);
+const resultToData_interceptor_1 = __webpack_require__(49);
 const gameResult_entity_1 = __webpack_require__(18);
 const room_entity_1 = __webpack_require__(33);
 const todayResult_entity_1 = __webpack_require__(16);
@@ -3094,7 +3004,7 @@ exports.AppController = AppController;
 
 
 /***/ }),
-/* 53 */
+/* 49 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3108,7 +3018,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ResultToDataInterceptor = void 0;
 const common_1 = __webpack_require__(7);
-const rxjs_1 = __webpack_require__(54);
+const rxjs_1 = __webpack_require__(50);
 let ResultToDataInterceptor = class ResultToDataInterceptor {
     intercept(context, next) {
         return next.handle().pipe((0, rxjs_1.map)((data) => ({ data })));
@@ -3121,14 +3031,14 @@ exports.ResultToDataInterceptor = ResultToDataInterceptor;
 
 
 /***/ }),
-/* 54 */
+/* 50 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("rxjs");
 
 /***/ }),
-/* 55 */
+/* 51 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3143,9 +3053,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KeywordModule = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
-const keyword_entities_1 = __webpack_require__(56);
-const keyword_service_1 = __webpack_require__(57);
-const keyword_controller_1 = __webpack_require__(60);
+const keyword_entities_1 = __webpack_require__(52);
+const keyword_service_1 = __webpack_require__(53);
+const keyword_controller_1 = __webpack_require__(56);
 let KeywordModule = class KeywordModule {
 };
 KeywordModule = __decorate([
@@ -3160,7 +3070,7 @@ exports.KeywordModule = KeywordModule;
 
 
 /***/ }),
-/* 56 */
+/* 52 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3202,7 +3112,7 @@ exports.Keyword = Keyword;
 
 
 /***/ }),
-/* 57 */
+/* 53 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3225,9 +3135,9 @@ exports.KeywordService = void 0;
 const common_1 = __webpack_require__(7);
 const typeorm_1 = __webpack_require__(9);
 const typeorm_2 = __webpack_require__(13);
-const keyword_entities_1 = __webpack_require__(56);
-const puppeteer = __webpack_require__(58);
-const cheerio = __webpack_require__(59);
+const keyword_entities_1 = __webpack_require__(52);
+const puppeteer = __webpack_require__(54);
+const cheerio = __webpack_require__(55);
 let KeywordService = class KeywordService {
     constructor(keywordRepository) {
         this.keywordRepository = keywordRepository;
@@ -3274,21 +3184,21 @@ exports.KeywordService = KeywordService;
 
 
 /***/ }),
-/* 58 */
+/* 54 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("puppeteer");
 
 /***/ }),
-/* 59 */
+/* 55 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("cheerio");
 
 /***/ }),
-/* 60 */
+/* 56 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3306,7 +3216,7 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.KeywordController = void 0;
 const common_1 = __webpack_require__(7);
-const keyword_service_1 = __webpack_require__(57);
+const keyword_service_1 = __webpack_require__(53);
 let KeywordController = class KeywordController {
     constructor(keywordService) {
         this.keywordService = keywordService;
@@ -3329,7 +3239,7 @@ exports.KeywordController = KeywordController;
 
 
 /***/ }),
-/* 61 */
+/* 57 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3343,14 +3253,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AdminModule = void 0;
 const common_1 = __webpack_require__(7);
-const cron_service_1 = __webpack_require__(62);
-const notion_service_1 = __webpack_require__(64);
-const schedule_1 = __webpack_require__(63);
+const cron_service_1 = __webpack_require__(58);
+const notion_service_1 = __webpack_require__(60);
+const schedule_1 = __webpack_require__(59);
 const player_entity_1 = __webpack_require__(34);
 const room_entity_1 = __webpack_require__(33);
 const typeorm_1 = __webpack_require__(9);
 const games_module_1 = __webpack_require__(28);
-const admin_controller_1 = __webpack_require__(66);
+const admin_controller_1 = __webpack_require__(62);
 let AdminModule = class AdminModule {
 };
 AdminModule = __decorate([
@@ -3364,7 +3274,7 @@ exports.AdminModule = AdminModule;
 
 
 /***/ }),
-/* 62 */
+/* 58 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3382,8 +3292,8 @@ var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CronService = void 0;
 const common_1 = __webpack_require__(7);
-const schedule_1 = __webpack_require__(63);
-const notion_service_1 = __webpack_require__(64);
+const schedule_1 = __webpack_require__(59);
+const notion_service_1 = __webpack_require__(60);
 let CronService = class CronService {
     constructor(notionService) {
         this.notionService = notionService;
@@ -3417,14 +3327,14 @@ exports.CronService = CronService;
 
 
 /***/ }),
-/* 63 */
+/* 59 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@nestjs/schedule");
 
 /***/ }),
-/* 64 */
+/* 60 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3445,7 +3355,7 @@ var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.NotionService = void 0;
 const common_1 = __webpack_require__(7);
-const client_1 = __webpack_require__(65);
+const client_1 = __webpack_require__(61);
 const typeorm_1 = __webpack_require__(13);
 const typeorm_2 = __webpack_require__(9);
 const player_entity_1 = __webpack_require__(34);
@@ -3466,7 +3376,7 @@ let NotionService = class NotionService {
         await this.notion.pages.create({
             parent: { database_id: '8dbda62147ca4990a401f23f9758879b' },
             properties: {
-                '접속자 수(최대)': {
+                '접속자 수': {
                     type: 'title',
                     title: [
                         {
@@ -3537,7 +3447,7 @@ let NotionService = class NotionService {
         await this.notion.pages.create({
             parent: { database_id: 'e5eecf2093d04f2e9664d89fae0f6654' },
             properties: {
-                '접속자 수(최대)': {
+                '접속자 수': {
                     type: 'title',
                     title: [
                         {
@@ -3575,9 +3485,7 @@ let NotionService = class NotionService {
         const userCnt = (await this.gameResultRepository.find({
             where: { createdAt: (0, typeorm_1.Between)(startDate, endDate) },
         })).length;
-        console.log(userCnt);
         const gameCnt = (await this.roomRepository.find({ withDeleted: true })).length;
-        console.log(gameCnt);
         await this.notion.blocks.update({
             block_id: '5350b7cc90224f6e82eabc01d0f415d1',
             callout: {
@@ -3650,14 +3558,14 @@ exports.NotionService = NotionService;
 
 
 /***/ }),
-/* 65 */
+/* 61 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("@notionhq/client");
 
 /***/ }),
-/* 66 */
+/* 62 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3678,17 +3586,17 @@ var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AdminController = void 0;
 const common_1 = __webpack_require__(7);
-const create_bug_dto_1 = __webpack_require__(67);
-const notion_service_1 = __webpack_require__(64);
+const create_bug_dto_1 = __webpack_require__(63);
+const notion_service_1 = __webpack_require__(60);
 let AdminController = class AdminController {
     constructor(notionService) {
         this.notionService = notionService;
     }
-    async bugReport(Date) {
-        if (!common_1.Body) {
+    async bugReport(Body) {
+        if (!Body) {
             throw new common_1.HttpException('전송 실패.', 400);
         }
-        await this.notionService.updateBugReport(Date);
+        await this.notionService.updateBugReport(Body);
         const message = '리포트가 전송되었습니다.';
         return { data: message };
     }
@@ -3708,7 +3616,7 @@ exports.AdminController = AdminController;
 
 
 /***/ }),
-/* 67 */
+/* 63 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3724,7 +3632,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BugDto = void 0;
-const class_validator_1 = __webpack_require__(68);
+const class_validator_1 = __webpack_require__(64);
 class BugDto {
 }
 __decorate([
@@ -3739,14 +3647,14 @@ exports.BugDto = BugDto;
 
 
 /***/ }),
-/* 68 */
+/* 64 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("class-validator");
 
 /***/ }),
-/* 69 */
+/* 65 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3779,18 +3687,76 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 
 
 /***/ }),
-/* 70 */
+/* 66 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("passport");
 
 /***/ }),
-/* 71 */
+/* 67 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("cookie-parser");
+
+/***/ }),
+/* 68 */
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.winstonLogger = void 0;
+const nest_winston_1 = __webpack_require__(69);
+const winstonDaily = __webpack_require__(70);
+const winston = __webpack_require__(71);
+const logDir = __dirname + '/../../logs';
+const dailyOptions = (level) => {
+    return {
+        level,
+        datePattern: 'YYYY-MM-DD',
+        dirname: logDir + `/${level}`,
+        filename: `%DATE%.${level}.log`,
+        maxFiles: 30,
+        zippedArchive: true,
+    };
+};
+exports.winstonLogger = nest_winston_1.WinstonModule.createLogger({
+    transports: [
+        new winston.transports.Console({
+            level: 'silly',
+            format: winston.format.combine(winston.format.timestamp(), winston.format.colorize(), nest_winston_1.utilities.format.nestLike('가치마인드', {
+                prettyPrint: true,
+            })),
+        }),
+        new winstonDaily(dailyOptions('info')),
+        new winstonDaily(dailyOptions('warn')),
+        new winstonDaily(dailyOptions('error')),
+    ],
+});
+
+
+/***/ }),
+/* 69 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("nest-winston");
+
+/***/ }),
+/* 70 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("winston-daily-rotate-file");
+
+/***/ }),
+/* 71 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("winston");
 
 /***/ })
 /******/ 	]);
@@ -3854,7 +3820,7 @@ module.exports = require("cookie-parser");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("195e8b2bd2723fcb18c9")
+/******/ 		__webpack_require__.h = () => ("bd1bd2a8d19bdf242935")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
