@@ -7,9 +7,9 @@ import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { TodayResult } from '../games/entities/todayResult.entity';
-import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
+import { TokenMapRequestDto } from './dto/token.map.request.dto';
 
 @Injectable()
 export class UsersService {
@@ -20,8 +20,6 @@ export class UsersService {
         private readonly tokenMapRepository: Repository<TokenMap>,
         @InjectRepository(TodayResult)
         private readonly todayResultRepository: Repository<TodayResult>,
-        @InjectRepository(GameResult)
-        private readonly gameResultRepository: Repository<GameResult>,
         @InjectRepository(TurnResult)
         private readonly TurnResultRepository: Repository<TurnResult>,
         private jwtService: JwtService,
@@ -68,18 +66,17 @@ export class UsersService {
         const token: string = this.jwtService.sign({
             payload,
         });
+        const newToken: TokenMapRequestDto = { userInfo: user.userId, token: token };
 
-        const tokenMapId: TokenMap = await this.tokenMapRepository.findOne({
+        const existToken: TokenMap = await this.tokenMapRepository.findOne({
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-
-        const tokenMapData = { userInfo: user.userId, token: token };
-        if (tokenMapId) {
-            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
+        if (existToken) {
+            newToken['tokenMapId'] = existToken.tokenMapId;
         }
 
-        await this.tokenMapRepository.save(tokenMapData);
+        await this.tokenMapRepository.save(newToken);
 
         return token;
     }
