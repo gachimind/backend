@@ -559,18 +559,17 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // ############################## Game ###################################
     // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤
     // !!!!!! TODO : game 중 변경이 발생하면 바로바로 gameMap에 같이 반영되도록 수정!!!!!
-    async controlGameTurns(room: Room, next: NextFunction) {
+    async controlGameTurns(room: Room): Promise<void> {
         // 게임 방 인원 체크
         this.emitCannotStartError(room.roomId);
 
         // startCount 트리거
         await this.controlTurnTimer(room, 'startCount');
 
-        // player 수만큼 turn 반복
+        // remainingSpeeches만큼 턴을 반복
         while (gameMap[room.roomId].remainingSpeeches.length) {
-            // create turn하면서 turnMap 같이 수행
+            // create turn -> createTurnMap & updateGameMapCurrentTurn 포함
             let turn: Turn = await this.gamesService.createTurn(room.roomId);
-            this.gamesService.updateGameMapCurrentTurn(room.roomId, turn.turnId, turn.turn);
 
             // readyTimer 시작
             await this.controlTurnTimer(room, 'readyTime', turn);
@@ -579,14 +578,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // discussionTimer시작
             await this.controlTurnTimer(room, 'discussionTime', turn);
 
-            // TODO : 턴 종료 함수 여기에서 call하기 -> turnController에서 삭제!!!
-
-            // 턴 종료 후 게임 데이터 업데이트 ????
-            // TODO : 턴 종료 로직에 turnMap clearing추가
+            // 턴 종료 -> 발표자 최종 점수 처리 & 룸 정보 최신화
+            await this.emitSpeechPlayerScoreEvent(room.roomId, turn);
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
-            if (!room) {
-                throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-            }
         }
         // TODO : 게임 종료 로직은 게임 컨트롤러로 이동!!
         // 현재 턴이 마지막 턴이라면, 게임 종료 처리
@@ -596,7 +590,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // [Logic] turn controller (턴 시작 ~ 턴 종료 컨트롤, turn event별 처리)
     // TODO : controlTurnTimer에서는 딱 한 턴을 수행하는 타이머를 만들고 실행하는 역할로 한정하고 정리 하기
-    async controlTurnTimer(room: Room, eventName: string, turn?: Turn) {
+    async controlTurnTimer(room: Room, eventName: string, turn?: Turn): Promise<void> {
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
@@ -612,22 +606,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             this.emitGameInfo(turn, roomId);
         }
 
-        let currentTurn = 1;
-        if (turn) currentTurn = turn.turn;
         // time-start event 처리
-        this.emitTimeStartEvent(roomId, currentTurn, timer, event);
-
+        this.emitTimeStartEvent(roomId, turn.turn, timer, event);
         // time-start 후 event 별 timer 생성
-        await this.createTimer(timer, roomId);
-
+        await this.gamesService.createTimer(timer, roomId);
         // time-end event 처리
-        this.emitTimeEndEvent(roomId, timer, event, turn, nextTurn);
-
-        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
-        if (event === 'discussionTimer') {
-            // 해당 턴 speechPlayer의 합산 점수 emit
-            await this.emitSpeechPlayerScoreEvent(roomId, turn);
-        }
+        this.emitTimeEndEvent(roomId, timer, event, turn);
+        return;
     }
 
     // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
@@ -660,19 +645,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         }
         room = await this.gamesService.handleGameEndEvent(room);
         return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
-    }
-
-    // set timer
-    async createTimer(time: number, roomId: number) {
-        const ac = new AbortController();
-        gameTimerMap[roomId] = {
-            ac,
-        };
-        gameTimerMap[roomId].ac;
-        gameTimerMap[roomId].timer = await setTimeout(time, 'timer-end', {
-            signal: gameTimerMap[roomId].ac.signal,
-        });
-        return gameTimerMap[roomId].timer;
     }
 
     // emit events
@@ -714,22 +686,19 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
     }
 
-    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn, nextTurn?: Turn) {
+    // TODO : NextTurn 정보 수정
+    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn) {
+        let nextTurn: number;
         let key = 'currentTurn';
-        // discussionTime일때는, 발표자의 turnResult & 현재 턴이 마지막일 경우 처리
         if (event === 'discussionTimer') {
-            // 현재 턴이 마지막 턴일때 처리
+            nextTurn = gameMap[roomId].remainingTurns.length ? turn.turn + 1 : 0;
             key = 'nextTurn';
-            if (turn === nextTurn) {
-                nextTurn.turn = 0;
-            }
         }
 
-        // startCount event의 경우, turn정보를 가지지 않으므로, currentTurn을 생성
-        let currentTurn = 1;
-        if (turn) currentTurn = turn.turn;
         const data = {
-            [key]: key === 'currentTurn' ? currentTurn : nextTurn.turn,
+            // key 값이 current vs next인지에 따라 정보 입력
+            // startCount일때는 turn 정보가 없으므로, 1을 입력
+            [key]: key === 'currentTurn' ? (turn ? turn.turn : 1) : nextTurn,
             timer,
             event,
         };

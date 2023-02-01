@@ -49,14 +49,13 @@ export class GamesService {
     }
 
     async createTurn(roomId: number): Promise<Turn> {
-        const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
         const turnIndex: number = gameMap[roomId].currentTurn.turnNumber;
         const speechPlayer: number = gameMap[roomId].remainingTurns.pop();
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
-            roomInfo: room.roomId,
+            roomInfo: roomId,
             turn: turnIndex + 1,
             currentEvent: 'start',
             speechPlayer,
@@ -66,8 +65,8 @@ export class GamesService {
         };
 
         const turn = await this.turnRepository.save(newTurnData);
-        this.updateGameMapCurrentTurn(room.roomId, turn.turnId, turn.turn);
-        this.createTurnMap(room.roomId);
+        this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
+        this.createTurnMap(roomId);
 
         return turn;
     }
@@ -134,38 +133,6 @@ export class GamesService {
         }
 
         return await this.gameResultRepository.save(data);
-    }
-
-    createGameMap(room: Room): void {
-        gameMap[room.roomId] = {
-            currentTurn: { turnId: null, turn: 0 },
-            currentPlayers: room.players.length,
-            remainingTurns: [], // pop으로 사용
-            gameResultIdMap: {},
-        };
-
-        // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
-        const players = room.players;
-        for (let i = players.length - 1; i == 0; i--) {
-            gameMap[room.roomId].remainingTurns.push(players[i].userInfo);
-        }
-        return;
-    }
-
-    updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number) {
-        gameMap[roomId].currentTurn = { turnId, turn };
-    }
-
-    createTurnMap(roomId): void {
-        turnMap[roomId] = { score: [], turnQuizRank: 0 };
-    }
-
-    mapGameResultIdWithUserId(roomId: number, gameResults): void {
-        // 유저 아이디별 gameResult mapping
-        for (let result of gameResults) {
-            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
-        }
-        return;
     }
 
     // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
@@ -299,5 +266,54 @@ export class GamesService {
         });
         // return updated room Info
         return await this.roomService.getOneRoomByRoomId(room.roomId);
+    }
+
+    // ############################## MAPs #################################
+
+    // GameMap
+    createGameMap(room: Room): void {
+        gameMap[room.roomId] = {
+            currentTurn: { turnId: null, turn: 0 },
+            currentPlayers: room.players.length,
+            remainingTurns: [], // pop으로 사용
+            gameResultIdMap: {},
+        };
+
+        // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
+        const players = room.players;
+        for (let i = players.length - 1; i == 0; i--) {
+            gameMap[room.roomId].remainingTurns.push(players[i].userInfo);
+        }
+        return;
+    }
+
+    updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number) {
+        gameMap[roomId].currentTurn = { turnId, turn };
+    }
+
+    mapGameResultIdWithUserId(roomId: number, gameResults): void {
+        // 유저 아이디별 gameResult mapping
+        for (let result of gameResults) {
+            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
+        }
+        return;
+    }
+
+    // TurnMap
+    createTurnMap(roomId): void {
+        turnMap[roomId] = { score: [], turnQuizRank: 0 };
+    }
+
+    // TimerMap & set timer
+    async createTimer(time: number, roomId: number) {
+        const ac = new AbortController();
+        gameTimerMap[roomId] = {
+            ac,
+        };
+        gameTimerMap[roomId].ac;
+        gameTimerMap[roomId].timer = await setTimeout(time, 'timer-end', {
+            signal: gameTimerMap[roomId].ac.signal,
+        });
+        return gameTimerMap[roomId].timer;
     }
 }
