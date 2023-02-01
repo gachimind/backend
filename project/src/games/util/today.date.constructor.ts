@@ -1,5 +1,5 @@
 export function getTodayDate() {
-    const date = new Date('Z');
+    const date = new Date();
     console.log('date :', date);
     console.log('ISOString :', date.toISOString());
 

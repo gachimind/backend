@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTodayDate = void 0;
 function getTodayDate() {
-    const date = new Date('Z');
+    const date = new Date();
     console.log('date :', date);
     console.log('ISOString :', date.toISOString());
     const dateString = date.toDateString();
