@@ -9,7 +9,7 @@ import {
     Param,
     HttpException,
     Redirect,
-    Post,
+    Patch,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
@@ -81,16 +81,15 @@ export class UsersController {
     }
 
     // 닉네임 중복확인 API
-    @UseGuards(JwtAuthGuard)
     @Get('/:nickname')
     async overlapCheck(@Param('nickname') nickname: string) {
-        const overlapCheck = await this.usersService.overlapCheck(nickname);
-        return overlapCheck;
+        await this.usersService.overlapCheck(nickname);
+        return { data: { Message: '사용 가능한 닉네임입니다.' } };
     }
 
     // 닉네임/캐릭터 수정 API
     @UseGuards(JwtAuthGuard)
-    @Post('/me/update')
+    @Patch('/me')
     async userInfoChange(@Headers() headers, @Body() body) {
         const token: string = headers.authorization.replace('Bearer ', '');
         await this.usersService.updateUser(token, body);

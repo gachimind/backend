@@ -198,13 +198,16 @@ let UsersService = class UsersService {
         return data;
     }
     async overlapCheck(nickname) {
+        if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
+            throw new common_1.HttpException('닉네임 규칙을 확인해주세요.', 400);
+        }
         const overlapCheck = await this.usersRepository.findOne({
             where: { nickname },
         });
         if (overlapCheck) {
             throw new common_1.HttpException('이미 사용 중인 닉네임입니다.', 412);
         }
-        return { Message: '사용 가능한 닉네임입니다.' };
+        return true;
     }
     async updateUser(token, body) {
         const userInfoChange = await this.tokenMapRepository.findOne({
@@ -222,7 +225,6 @@ let UsersService = class UsersService {
             nickname,
             profileImg,
         });
-        console.log('변경되 유저 정보 :', updateUser);
         if (!updateUser) {
             throw new common_1.HttpException('Internal Sever Error', 500);
         }

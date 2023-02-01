@@ -45,8 +45,6 @@ export declare class UsersService {
         totalSpeechKeyword: any[];
         totalQuizKeyword: any[];
     }>;
-    overlapCheck(nickname: string): Promise<{
-        Message: string;
-    }>;
+    overlapCheck(nickname: string): Promise<boolean>;
     updateUser(token: string, body: UpdateUserDto): Promise<User>;
 }

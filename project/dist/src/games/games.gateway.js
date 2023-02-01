@@ -42,7 +42,7 @@ let GamesGateway = class GamesGateway {
         const requestUser = await this.playersService.getUserBySocketId(socket.id);
         if (!requestUser)
             return console.log('disconnected socket', socket.id);
-        await this.playersService.removeSocketBySocketId(socket.id);
+        await this.playersService.removeSocketBySocketId(socket.id, requestUser.userInfo);
         if (requestUser.player) {
             const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
@@ -60,7 +60,7 @@ let GamesGateway = class GamesGateway {
         }
         const prevLogInInfo = await this.playersService.getUserByUserID(requestUser.userId);
         if (prevLogInInfo) {
-            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId);
+            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId, prevLogInInfo.userInfo);
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
@@ -81,7 +81,7 @@ let GamesGateway = class GamesGateway {
     async socketIdMapToLogOutUser(socket) {
         const event = 'log-out';
         const requestUser = await this.socketAuthentication(socket.id, event);
-        await this.playersService.removeSocketBySocketId(socket.id);
+        await this.playersService.removeSocketBySocketId(socket.id, requestUser.userInfo);
         if (requestUser.player) {
             const updateRoom = await this.updateRoom(requestUser.player.roomInfo);
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
