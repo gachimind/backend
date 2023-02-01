@@ -561,7 +561,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // !!!!!! TODO : game 중 변경이 발생하면 바로바로 gameMap에 같이 반영되도록 수정!!!!!
     async controlGameTurns(room: Room, next: NextFunction) {
         // 게임 방 인원 체크
-        this.emitCannotStartError(room);
+        this.emitCannotStartError(room.roomId);
 
         // startCount 트리거
         await this.controlTurnTimer(room, 'startCount');
@@ -588,22 +588,21 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
             }
         }
+        // TODO : 게임 종료 로직은 게임 컨트롤러로 이동!!
+        // 현재 턴이 마지막 턴이라면, 게임 종료 처리
+        room = await this.gamesService.handleGameEndEvent(room);
+        this.announceUpdateRoomInfo({ room, state: 'update' }, null, 'game-end');
     }
 
     // [Logic] turn controller (턴 시작 ~ 턴 종료 컨트롤, turn event별 처리)
-    // TODO : 턴이 시작 전 player 수 충족하는지 검사
     // TODO : controlTurnTimer에서는 딱 한 턴을 수행하는 타이머를 만들고 실행하는 역할로 한정하고 정리 하기
-    async controlTurnTimer(room: Room, eventName: string, turn?: Turn, nextTurn?: Turn) {
-        room = await this.roomService.getOneRoomByRoomId(room.roomId);
-        if (!room) {
-            throw new SocketException('방이 존재하지 않습니다.', 500, 'start');
-        }
-        if (room.players.length < 2) {
-            throw new SocketException();
-        }
+    async controlTurnTimer(room: Room, eventName: string, turn?: Turn) {
         const roomId = room.roomId;
         const timer = eventName === 'startCount' ? 10000 : room[eventName];
         const event = eventName === 'startCount' ? eventName : `${eventName}r`;
+
+        // 턴이 시작 전 player 수 충족하는지 검사
+        this.emitCannotStartError(roomId);
 
         // update turn currentTime
         if (event != 'startCount') turn = await this.gamesService.updateTurn(turn, eventName);
@@ -628,13 +627,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (event === 'discussionTimer') {
             // 해당 턴 speechPlayer의 합산 점수 emit
             await this.emitSpeechPlayerScoreEvent(roomId, turn);
-
-            // TODO : 게임 종료 로직은 여기서 수행하지 않게 분리!! -> 게임 컨트롤러로 이동!!
-            // 현재 턴이 마지막 턴이라면, 게임 종료 처리
-            if (!nextTurn.turn) {
-                room = await this.gamesService.handleGameEndEvent(room);
-                this.announceUpdateRoomInfo({ room, state: 'update' }, null, 'game-end');
-            }
         }
     }
 
@@ -684,10 +676,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // emit events
-    emitCannotStartError(room: Room) {
-        if (room.players.length < 2) {
+    emitCannotStartError(roomId: number) {
+        if (gameMap[roomId].currentPlayers < 2) {
             this.server
-                .to(`${room.roomId}`)
+                .to(`${roomId}`)
                 .emit('error', { errorMessage: '게임을 시작할 수 없습니다.', satus: 400 });
             throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
         }

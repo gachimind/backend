@@ -139,6 +139,7 @@ export class GamesService {
     createGameMap(room: Room): void {
         gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: 0 },
+            currentPlayers: room.players.length,
             remainingTurns: [], // pop으로 사용
             gameResultIdMap: {},
         };
