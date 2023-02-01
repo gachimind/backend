@@ -29,6 +29,10 @@ let PlayersService = class PlayersService {
         this.playerRepository = playerRepository;
         this.todayResultRepository = todayResultRepository;
     }
+    async getUserIdByToken(token) {
+        const tokenMap = await this.tokenMapRepository.findOneBy({ token });
+        return tokenMap.user;
+    }
     async getUserBySocketId(socketId) {
         const user = await this.socketIdMapRepository.findOne({
             where: { socketId },
@@ -71,20 +75,14 @@ let PlayersService = class PlayersService {
     async removePlayerByUserId(userId) {
         return await this.playerRepository.delete(userId);
     }
-    async socketIdMapToLoginUser(token, socketId) {
-        const requestUser = await this.tokenMapRepository.findOneBy({ token });
-        const userId = requestUser.userInfo;
-        if (!userId) {
-            throw new ws_exception_filter_1.SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
-        }
+    async socketIdMapToLoginUser(userInfo, socketId, socketMapId) {
         if (await this.getUserBySocketId(socketId)) {
             throw new ws_exception_filter_1.SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
-        const prevLoinInfo = await this.getUserByUserID(userId);
-        if (prevLoinInfo) {
-            await this.removeSocketBySocketId(prevLoinInfo.socketId);
+        let user = { socketId, userInfo };
+        if (socketMapId) {
+            user = { socketMapId, socketId, userInfo };
         }
-        const user = { socketId, userInfo: userId };
         return await this.socketIdMapRepository.save(user);
     }
     async createTodayResult(userInfo) {

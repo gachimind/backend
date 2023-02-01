@@ -69,6 +69,6 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoom(roomId: number): Promise<UpdateRoomDto>;
     announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap, event: string): Promise<void>;
-    updateRoomInfoToRoom(requestUser: SocketIdMap, room: Room, event: string): Promise<void>;
+    updateRoomInfoToRoom(requestUser: SocketIdMap | null, room: Room, event: string): void;
     updateRoomListToMain(): Promise<void>;
 }

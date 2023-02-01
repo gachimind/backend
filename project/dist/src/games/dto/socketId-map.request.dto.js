@@ -15,6 +15,11 @@ const swagger_1 = require("@nestjs/swagger");
 class LoginUserToSocketIdMapDto {
 }
 __decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], LoginUserToSocketIdMapDto.prototype, "socketMapId", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     (0, swagger_1.ApiProperty)({
         example: 'N0AKYKQnMgP5lv6ZAAAB',

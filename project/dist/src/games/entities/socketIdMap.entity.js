@@ -16,7 +16,11 @@ const player_entity_1 = require("./player.entity");
 let SocketIdMap = class SocketIdMap {
 };
 __decorate([
-    (0, typeorm_1.PrimaryColumn)('varchar'),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], SocketIdMap.prototype, "socketMapId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', unique: true }),
     __metadata("design:type", String)
 ], SocketIdMap.prototype, "socketId", void 0);
 __decorate([

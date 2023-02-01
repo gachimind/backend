@@ -54,8 +54,26 @@ let GamesGateway = class GamesGateway {
         if (!token) {
             throw new ws_exception_filter_1.SocketException('사용자 인증에 실패했습니다.', 401, 'log-in');
         }
-        const requestUser = await this.playersService.socketIdMapToLoginUser(token, socket.id);
-        await this.playersService.createTodayResult(requestUser.userInfo);
+        const requestUser = await this.playersService.getUserIdByToken(token);
+        if (!requestUser) {
+            throw new ws_exception_filter_1.SocketException('사용자 정보를 찾을 수 없습니다', 404, 'log-in');
+        }
+        const prevLogInInfo = await this.playersService.getUserByUserID(requestUser.userId);
+        if (prevLogInInfo) {
+            const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
+            if (prevSockets.length) {
+                prevSockets[0].emit('error', {
+                    error: {
+                        errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
+                        status: 409,
+                        event: 'log-in',
+                    },
+                });
+                prevSockets[0].disconnect(true);
+            }
+        }
+        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id, prevLogInInfo ? prevLogInInfo.socketMapId : null);
+        await this.playersService.createTodayResult(requestUser.userId);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
     }
@@ -197,10 +215,7 @@ let GamesGateway = class GamesGateway {
         this.server.to(`${roomId}`).emit('time-end', { data });
         if (event === 'discussionTimer' && !nextTurn.turn) {
             const roomInfo = await this.gamesService.handleGameEndEvent(room);
-            const updateRoom = (0, update_room_info_constructor_1.updateRoomInfoConstructor)(roomInfo);
-            this.server.to(`${updateRoom.roomId}`).emit('update-room', {
-                data: { room: updateRoom, eventUserInfo: null, event: 'game-end' },
-            });
+            this.updateRoomInfoToRoom(null, roomInfo, 'game-end');
             this.updateRoomListToMain;
         }
     }
@@ -320,7 +335,7 @@ let GamesGateway = class GamesGateway {
         }
         await this.updateRoomListToMain();
     }
-    async updateRoomInfoToRoom(requestUser, room, event) {
+    updateRoomInfoToRoom(requestUser, room, event) {
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         const updateRoom = (0, update_room_info_constructor_1.updateRoomInfoConstructor)(room);
         this.server.to(`${updateRoom.roomId}`).emit('update-room', {

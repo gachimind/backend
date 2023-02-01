@@ -11,6 +11,7 @@ export declare class PlayersService {
     private readonly playerRepository;
     private readonly todayResultRepository;
     constructor(tokenMapRepository: Repository<TokenMap>, socketIdMapRepository: Repository<SocketIdMap>, playerRepository: Repository<Player>, todayResultRepository: Repository<TodayResult>);
+    getUserIdByToken(token: string): Promise<User>;
     getUserBySocketId(socketId: string): Promise<SocketIdMap>;
     getUserByUserID(userId: number): Promise<SocketIdMap>;
     getPlayerBySocketId(socketInfo: string): Promise<Player>;
@@ -22,7 +23,7 @@ export declare class PlayersService {
     }[]): Promise<Player[]>;
     removeSocketBySocketId(socketId: string): Promise<number | any>;
     removePlayerByUserId(userId: number | User): Promise<number | any>;
-    socketIdMapToLoginUser(token: string, socketId: string): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
+    socketIdMapToLoginUser(userInfo: number, socketId: string, socketMapId?: number | null): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
     createTodayResult(userInfo: number): Promise<void>;
     setPlayerReady(player: Player): Promise<Player>;
 }

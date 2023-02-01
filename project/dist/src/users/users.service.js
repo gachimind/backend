@@ -136,7 +136,6 @@ let UsersService = class UsersService {
                 todayScore: 'DESC',
             },
         });
-        console.log(getAllUserScore);
         const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
         return todayRank;
     }
@@ -198,7 +197,6 @@ let UsersService = class UsersService {
             totalSpeechKeyword,
             totalQuizKeyword,
         };
-        console.log(data);
         return data;
     }
 };
