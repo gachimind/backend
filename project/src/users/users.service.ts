@@ -162,7 +162,6 @@ export class UsersService {
                 todayScore: 'DESC',
             },
         });
-        console.log(getAllUserScore);
 
         // 인덱스 번호 찾기 (랭킹)
         const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
@@ -239,7 +238,6 @@ export class UsersService {
             totalSpeechKeyword,
             totalQuizKeyword,
         };
-        console.log(data);
         return data;
     }
 }

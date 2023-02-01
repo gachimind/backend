@@ -98,21 +98,27 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const prevLogInInfo: SocketIdMap = await this.playersService.getUserByUserID(
             requestUser.userId,
         );
-        console.log(prevLogInInfo);
 
+        // TODO : throw new socketException & next 호출로 전환
         if (prevLogInInfo) {
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
-            prevSockets[0].emit('error', {
-                error: {
-                    errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
-                    status: 409,
-                    event: 'log-in',
-                },
-            });
-            prevSockets[0].disconnect(true);
+            if (prevSockets.length) {
+                prevSockets[0].emit('error', {
+                    error: {
+                        errorMessage: '해당 유저가 새로운 socketId로 로그인 하였습니다.',
+                        status: 409,
+                        event: 'log-in',
+                    },
+                });
+                prevSockets[0].disconnect(true);
+            }
         }
         // 로그인을 요청한 유저의 socketId와 userId 정보로 socketIdMap에 맵핑
-        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id);
+        await this.playersService.socketIdMapToLoginUser(
+            requestUser.userId,
+            socket.id,
+            prevLogInInfo ? prevLogInInfo.socketMapId : null,
+        );
 
         await this.playersService.createTodayResult(requestUser.userId);
         console.log('로그인 성공!');

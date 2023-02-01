@@ -83,14 +83,17 @@ export class PlayersService {
         return await this.playerRepository.delete(userId);
     }
 
-    async socketIdMapToLoginUser(userInfo: number, socketId: string) {
+    async socketIdMapToLoginUser(userInfo: number, socketId: string, socketMapId?: number | null) {
         // socketIdMap에 scoketId 중복 체크 // db에 없어야 성공
         if (await this.getUserBySocketId(socketId)) {
             throw new SocketException('이미 로그인된 회원입니다.', 403, 'log-in');
         }
 
         // 위의 검사를 통과했다면, socketIdMap에 매핑
-        const user: LoginUserToSocketIdMapDto = { socketId, userInfo };
+        let user: LoginUserToSocketIdMapDto = { socketId, userInfo };
+        if (socketMapId) {
+            user = { socketMapId, socketId, userInfo };
+        }
         return await this.socketIdMapRepository.save(user);
     }
 
