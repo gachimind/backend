@@ -1,16 +1,13 @@
-export function getTodayDate() {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getTodayDate = void 0;
+function getTodayDate() {
     const date = new Date();
     console.log('date :', date);
     console.log('ISOString :', date.toISOString());
-
     const dateString = date.toDateString();
     const newDate = new Date(`${dateString} 0:00:00`);
     return newDate;
 }
-
-export function getDate() {
-    const date = new Date();
-    const dateString = date.toISOString();
-    dateString.split('T')[0];
-    return new Date(`${dateString.split('T')[0]}`);
-}
+exports.getTodayDate = getTodayDate;
+//# sourceMappingURL=today.date.constructor.js.map

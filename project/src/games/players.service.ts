@@ -7,7 +7,6 @@ import { TokenMap } from 'src/users/entities/token-map.entity';
 import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Socket } from 'socket.io';
 import { TodayResult } from './entities/todayResult.entity';
 import { getDate, getTodayDate } from './util/today.date.constructor';
 
@@ -75,7 +74,8 @@ export class PlayersService {
         return await this.playerRepository.save(users);
     }
 
-    async removeSocketBySocketId(socketId: string): Promise<number | any> {
+    async removeSocketBySocketId(socketId: string, userId: number): Promise<number | any> {
+        await this.removePlayerByUserId(userId);
         return await this.socketIdMapRepository.softDelete(socketId);
     }
 
@@ -90,7 +90,8 @@ export class PlayersService {
         }
 
         // 위의 검사를 통과했다면, socketIdMap에 매핑
-        const user: LoginUserToSocketIdMapDto = { socketId, userInfo };
+        let user: LoginUserToSocketIdMapDto = { socketId, userInfo };
+
         return await this.socketIdMapRepository.save(user);
     }
 

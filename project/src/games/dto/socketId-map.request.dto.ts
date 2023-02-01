@@ -1,4 +1,4 @@
-import { IsObject, IsString } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 // 로그인한 유저의 socket id와 회원 정보를 매핑시켜 cache db에 create할 때 사용

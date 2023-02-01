@@ -54,6 +54,7 @@ export class RoomService {
     }
 
     async removeRoomByRoomId(roomId: number): Promise<number | any> {
+        await this.playerRepository.delete({ roomInfo: roomId });
         return await this.roomRepository.softDelete(roomId);
     }
 

@@ -7,9 +7,10 @@ import { TokenMap } from './entities/token-map.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { TodayResult } from '../games/entities/todayResult.entity';
-import { GameResult } from '../games/entities/gameResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
 import { getTodayDate } from '../games/util/today.date.constructor';
+import { TokenMapRequestDto } from './dto/token.map.request.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -20,8 +21,6 @@ export class UsersService {
         private readonly tokenMapRepository: Repository<TokenMap>,
         @InjectRepository(TodayResult)
         private readonly todayResultRepository: Repository<TodayResult>,
-        @InjectRepository(GameResult)
-        private readonly gameResultRepository: Repository<GameResult>,
         @InjectRepository(TurnResult)
         private readonly TurnResultRepository: Repository<TurnResult>,
         private jwtService: JwtService,
@@ -68,19 +67,17 @@ export class UsersService {
         const token: string = this.jwtService.sign({
             payload,
         });
+        const newToken: TokenMapRequestDto = { userInfo: user.userId, token: token };
 
-        const tokenMapId: TokenMap = await this.tokenMapRepository.findOne({
+        const existToken: TokenMap = await this.tokenMapRepository.findOne({
             where: { userInfo: user.userId },
             select: { tokenMapId: true },
         });
-
-        let tokenMapData = { userInfo: user.userId, token: token };
-
-        if (tokenMapId) {
-            tokenMapData['tokenMapId'] = tokenMapId.tokenMapId;
+        if (existToken) {
+            newToken['tokenMapId'] = existToken.tokenMapId;
         }
 
-        await this.tokenMapRepository.save(tokenMapData);
+        await this.tokenMapRepository.save(newToken);
 
         return token;
     }
@@ -162,7 +159,6 @@ export class UsersService {
                 todayScore: 'DESC',
             },
         });
-        console.log(getAllUserScore);
 
         // 인덱스 번호 찾기 (랭킹)
         const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
@@ -239,7 +235,52 @@ export class UsersService {
             totalSpeechKeyword,
             totalQuizKeyword,
         };
-        console.log(data);
         return data;
+    }
+
+    // 닉네임 중복확인 API
+    async overlapCheck(nickname: string): Promise<boolean> {
+        if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
+            throw new HttpException('닉네임 규칙을 확인해주세요.', 400);
+        }
+
+        const overlapCheck = await this.usersRepository.findOne({
+            where: { nickname },
+        });
+
+        if (overlapCheck) {
+            throw new HttpException('이미 사용 중인 닉네임입니다.', 412);
+        }
+        return true;
+    }
+
+    // 닉네임/캐릭터 수정 API
+    async updateUser(token: string, body: UpdateUserDto): Promise<User> {
+        const userInfoChange = await this.tokenMapRepository.findOne({
+            where: { token },
+        });
+
+        if (!userInfoChange) {
+            throw new HttpException('해당하는 사용자를 찾을 수 없습니다.', 401);
+        }
+
+        const { nickname, profileImg } = body;
+
+        // TODO : nickname, profileImg 검증 규칙 수정
+        if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
+            throw new HttpException('닉네임 규칙을 확인해주세요.', 400);
+        }
+
+        const updateUser = await this.usersRepository.save({
+            userId: userInfoChange.userInfo,
+            nickname,
+            profileImg,
+        });
+
+        if (!updateUser) {
+            throw new HttpException('Internal Sever Error', 500);
+        }
+
+        return updateUser;
     }
 }
