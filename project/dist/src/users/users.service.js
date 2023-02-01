@@ -100,13 +100,15 @@ let UsersService = class UsersService {
             await this.usersRepository.save({ userId, isFirstLogin: false });
         }
         const todayScore = await this.getTodayScoreByUserId(userId);
+        const todayRank = await this.getAllUserScore(userId);
+        const totalScore = await this.getUserTotalScore(userId);
         return {
             userId,
             nickname,
             profileImg,
             isFirstLogin,
-            today: { todayScore, todayRank: 0 },
-            total: { totalScore: 0 },
+            today: { todayScore, todayRank },
+            total: { totalScore },
         };
     }
     async getTodayScoreByUserId(userInfo) {
@@ -121,6 +123,31 @@ let UsersService = class UsersService {
         if (findTodayScore)
             todayScore = findTodayScore.todayScore;
         return todayScore;
+    }
+    async getAllUserScore(userInfo) {
+        const today = (0, today_date_constructor_1.getTodayDate)();
+        const getAllUserScore = await this.todayResultRepository.find({
+            where: { createdAt: (0, typeorm_2.MoreThan)(today) },
+            select: {
+                userInfo: true,
+                todayScore: true,
+            },
+            order: {
+                todayScore: 'DESC',
+            },
+        });
+        console.log(getAllUserScore);
+        const todayRank = getAllUserScore.findIndex((i) => i.userInfo == userInfo) + 1;
+        return todayRank;
+    }
+    async getUserTotalScore(userInfo) {
+        const { sum } = await this.todayResultRepository
+            .createQueryBuilder('todayResult')
+            .select('SUM(todayResult.todayScore)', 'sum')
+            .where('todayResult.userInfo = :userInfo', { userInfo })
+            .cache(60 * 60 * 1000)
+            .getRawOne();
+        return Number(sum);
     }
     async userKeyword(token) {
         const user = await this.tokenMapRepository.findOneBy({

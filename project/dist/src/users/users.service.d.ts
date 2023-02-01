@@ -37,6 +37,8 @@ export declare class UsersService {
         };
     }>;
     getTodayScoreByUserId(userInfo: number): Promise<number>;
+    getAllUserScore(userInfo: number): Promise<number>;
+    getUserTotalScore(userInfo: number): Promise<number>;
     userKeyword(token: string): Promise<{
         userId: number;
         todaySpeechKeyword: any[];
