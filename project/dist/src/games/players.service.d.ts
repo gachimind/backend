@@ -23,7 +23,7 @@ export declare class PlayersService {
     }[]): Promise<Player[]>;
     removeSocketBySocketId(socketId: string): Promise<number | any>;
     removePlayerByUserId(userId: number | User): Promise<number | any>;
-    socketIdMapToLoginUser(userInfo: number, socketId: string, socketMapId?: number | null): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
+    socketIdMapToLoginUser(userInfo: number, socketId: string): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
     createTodayResult(userInfo: number): Promise<void>;
     setPlayerReady(player: Player): Promise<Player>;
 }

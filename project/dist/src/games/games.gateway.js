@@ -60,6 +60,7 @@ let GamesGateway = class GamesGateway {
         }
         const prevLogInInfo = await this.playersService.getUserByUserID(requestUser.userId);
         if (prevLogInInfo) {
+            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId);
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
@@ -72,7 +73,7 @@ let GamesGateway = class GamesGateway {
                 prevSockets[0].disconnect(true);
             }
         }
-        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id, prevLogInInfo ? prevLogInInfo.socketMapId : null);
+        await this.playersService.socketIdMapToLoginUser(requestUser.userId, socket.id);
         await this.playersService.createTodayResult(requestUser.userId);
         console.log('로그인 성공!');
         socket.emit('log-in', { message: '로그인 성공!' });
