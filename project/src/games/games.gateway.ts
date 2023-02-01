@@ -91,7 +91,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
 
             // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
-            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room, Next);
+            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room);
 
             // 업데이트 된 방 정보 announce
             await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
@@ -322,8 +322,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             );
             if (isAnswer) {
                 type = 'answer';
-                await this.gamesService.recordPlayerScore(requestUser.userInfo, room);
+                const turnResult: TurnResult = await this.gamesService.recordPlayerScore(
+                    requestUser.userInfo,
+                    room,
+                );
                 data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
+                this.emitScoreEvent(room.roomId, requestUser.userInfo, turnResult.score);
             }
         }
         return this.emitReceiveChatEvent(room.roomId, requestUser, data.message, type);
@@ -337,7 +341,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     ) {
         const event = 'turn-evaluate';
         const requestUser = await this.socketAuthentication(socket.id, event);
-        this.gamesService.updateTurnMapSpeechEvaluate(requestUser.player.roomInfo, data.score);
+        if (!requestUser.player) {
+            throw new SocketException('잘못된 요청입니다.', 400, event);
+        }
+        const score = this.gamesService.updateTurnMapSpeechEvaluate(
+            requestUser.player.roomInfo,
+            data.score,
+        );
+        this.emitscore;
     }
 
     @SubscribeMessage('webrtc-ice')
@@ -433,7 +444,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     }
 
                     // 남은 플레이어들이 게임을 계속 이어가는 상황 처리
-                    await this.controlGameTurns(room, Next);
+                    await this.controlGameTurns(room);
                 }
                 // request user가 나간 후 게임 종료 상황 -> 타이머/턴정보 삭제 후 게임 종료
                 if (room.players.length === allTurns.length || room.players.length < 2) {
@@ -561,7 +572,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
             // 턴 종료 -> 발표자 최종 점수 처리 & 룸 정보 최신화
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
-            await this.emitSpeechPlayerScoreEvent(room.roomId, turn);
+            await this.gamesService.createSpeechPalyerTurnResult;
+            await this.emitScoreEvent(room.roomId, turn);
         }
         // 모든 턴이 종료되면 게임 종료 처리
         room = await this.gamesService.handleGameEndEvent(room);
@@ -582,17 +594,28 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             this.emitGameInfo(turn, roomId);
         }
 
+        if (event === 'discussionTimer') {
+            await this.gamesService.updateTurnMapNumberOfEvaluators(roomId);
+        }
+
         // time-start event 처리
         this.emitTimeStartEvent(roomId, turn.turn, timer, event);
         // time-start 후 event 별 timer 생성
         await this.gamesService.createTimer(timer, roomId);
+
+        if (event === 'discussionTimer') {
+            const unevaluatedScore: number = await this.gamesService.createSpeechPlayerTurnResult(
+                roomId,
+                turn,
+            );
+            this.emitScoreEvent(roomId, turn.speechPlayer, unevaluatedScore);
+        }
         // time-end event 처리
         this.emitTimeEndEvent(roomId, timer, event, turn);
         return;
     }
 
     // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
-
     // [logic] 발표자가 퇴장한 경우,
     async handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction) {
         try {
@@ -655,13 +678,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         });
     }
 
-    async emitSpeechPlayerScoreEvent(roomId: number, turn: Turn) {
-        // 해당 턴 발표자의 turnResult 생성
-        const turnResult = await this.gamesService.createSpeechPalyerTurnResult(roomId, turn);
-        // 해당턴 발표자의 합산 점수 emit
-        this.server
-            .to(`${roomId}`)
-            .emit('score', { data: { userId: turn.speechPlayer, score: turnResult.score } });
+    async emitScoreEvent(roomId: number, userId: number, score: number) {
+        this.server.to(`${roomId}`).emit('score', { data: { userId, score } });
     }
 
     emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: Turn) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { TokenMap } from 'src/users/entities/token-map.entity';
@@ -8,7 +8,7 @@ import { SocketIdMap } from './entities/socketIdMap.entity';
 import { Player } from './entities/player.entity';
 import { User } from 'src/users/entities/user.entity';
 import { TodayResult } from './entities/todayResult.entity';
-import { getDate, getTodayDate } from './util/today.date.constructor';
+import { getDate } from './util/today.date.constructor';
 
 @Injectable()
 export class PlayersService {

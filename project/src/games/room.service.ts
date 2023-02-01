@@ -9,9 +9,6 @@ import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
-import { scoreMap } from './util/score.map';
-import { GamesService } from './games.service';
-import { gameResultIdMap } from './util/game.result.id.map';
 import { gameMap } from './util/game.map';
 import { turnMap } from './util/turn.map';
 import { gameTimerMap } from './util/game-timer.map';

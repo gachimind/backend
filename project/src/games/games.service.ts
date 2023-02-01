@@ -18,6 +18,7 @@ import { gameTimerMap } from './util/game-timer.map';
 import { gameMap } from './util/game.map';
 import { turnMap } from './util/turn.map';
 import { getTodayDate } from './util/today.date.constructor';
+import { Player } from './entities/player.entity';
 
 const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 
@@ -26,6 +27,8 @@ export class GamesService {
     constructor(
         private readonly roomService: RoomService,
         private readonly playersService: PlayersService,
+        @InjectRepository(Player)
+        private readonly playersRepository: Repository<Player>,
         @InjectRepository(Turn)
         private readonly turnRepository: Repository<Turn>,
         @InjectRepository(TurnResult)
@@ -36,6 +39,7 @@ export class GamesService {
         private readonly todayResultRepository: Repository<TodayResult>,
     ) {}
 
+    // ######################### Turn ##################################
     async getTurnsByRoomId(roomInfo: number): Promise<Turn[]> {
         return await this.turnRepository.findBy({ roomInfo });
     }
@@ -81,9 +85,9 @@ export class GamesService {
 
     async deleteTurnByTurnId(turn: Turn): Promise<void> {
         await this.turnRepository.delete({ turnId: turn.turnId });
-        scoreMap[turn.roomInfo][turn.speechPlayer] = null;
     }
 
+    // ######################### TurnResults ##################################
     async createTurnResult(turnResult: TurnResultDataInsertDto) {
         return await this.turnResultRepository.save(turnResult);
     }
@@ -98,22 +102,7 @@ export class GamesService {
         return Number(sum);
     }
 
-    async updateGameResult(gameResultId: number, gameScore: number) {
-        return await this.gameResultRepository.save({ gameResultId, gameScore });
-    }
-
-    async softDeleteGameResult(gameResultId: number) {
-        return await this.gameResultRepository.softDelete(gameResultId);
-    }
-
-    async updateTodayResultByIncrement(todayResultId: number, gameScore: number) {
-        return await this.todayResultRepository.increment(
-            { todayResultId },
-            'todayScore',
-            gameScore,
-        );
-    }
-
+    // ######################### GameResult ##################################
     async createGameResultPerPlayer(roomId): Promise<GameResult[]> {
         const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
@@ -134,6 +123,24 @@ export class GamesService {
         return await this.gameResultRepository.save(data);
     }
 
+    async updateGameResult(gameResultId: number, gameScore: number) {
+        return await this.gameResultRepository.save({ gameResultId, gameScore });
+    }
+
+    async softDeleteGameResult(gameResultId: number) {
+        return await this.gameResultRepository.softDelete(gameResultId);
+    }
+
+    // ######################### TodayResult ##################################
+    async updateTodayResultByIncrement(todayResultId: number, gameScore: number) {
+        return await this.todayResultRepository.increment(
+            { todayResultId },
+            'todayScore',
+            gameScore,
+        );
+    }
+
+    // ######################### [logic] ##################################
     async recordPlayerScore(userId: number, room: Room): Promise<TurnResult> {
         const roomId = room.roomId;
         const turn = room.turns.at(-1);
@@ -161,29 +168,20 @@ export class GamesService {
         return await this.createTurnResult(turnResult);
     }
 
-    // TODO : turn 순서 등 현재 게임정보는 gameMap을 이용하기
-    // TODO : gameMap 업데이트
-    async createSpeechPalyerTurnResult(roomId: number, turn: Turn) {
-        const room = await this.roomService.getOneRoomByRoomIdWithTurnKeyword(roomId);
-
-        // 만약 참가자 중 발제자 평가를 하지 않은 사람이 있다면, 무조건 5점 준걸로 간주
-        let sum: number = 0;
-        let unevaluatedNum: number = 0;
-        if (room.players.length > 1 && scoreMap[roomId][turn] != null) {
-            console.log('scoreMap 계산');
-            for (let score of scoreMap[roomId][turn]) {
-                sum += score;
-            }
-            unevaluatedNum = room.players.length - 1 - scoreMap[roomId][turn].length;
+    async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
+        // 평가하지 않은 인원 수
+        const unevaluatedNum: number =
+            turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
+        // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
+        let sum: number;
+        while (turnMap[roomId].speechScore.length) {
+            const pop = turnMap[roomId].speechScore.pop();
+            sum += pop;
         }
+        // 최종 점수 합계
+        const score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
 
-        let score = sum * 20;
-        if (room.players.length - 1) {
-            console.log('total score 계산');
-            score = ((unevaluatedNum * 5 + sum) * 20) / (room.players.length - 1);
-        }
-
-        const gameResultInfo = gameResultIdMap[roomId][turn.speechPlayer];
+        const gameResultInfo = gameMap[roomId].gameResultIdMap[turn.speechPlayer];
         const turnResult: TurnResultDataInsertDto = {
             gameResultInfo,
             roomId,
@@ -193,9 +191,8 @@ export class GamesService {
             keyword: turn.keyword,
             isSpeech: true,
         };
-        console.log('write turnResult :', turnResult);
-
-        return await this.createTurnResult(turnResult);
+        await this.createTurnResult(turnResult);
+        return unevaluatedNum * 5;
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
@@ -288,15 +285,22 @@ export class GamesService {
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
     createTurnMap(roomId: number): void {
-        turnMap[roomId] = { speechEvaluate: [], turnQuizRank: 0 };
+        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0 };
     }
 
-    updateTurnMapSpeechEvaluate(roomId: number, score: number): void {
-        turnMap[roomId].speechEvaluate.push(score);
+    updateTurnMapSpeechScore(roomId: number, score: number): number {
+        turnMap[roomId].speechScore.push(score);
+        return (score * 20) / turnMap[roomId].numberOfEvaluators;
     }
 
     updateTurnMapTurnQuizRank(roomId: number): void {
         turnMap[roomId].turnQuizRank++;
+    }
+
+    async updateTurnMapNumberOfEvaluators(roomInfo) {
+        const numberOfPlayers: number = await this.playersRepository.countBy({ roomInfo });
+
+        turnMap[roomInfo].numberOfEvaluators = numberOfPlayers - 1;
     }
 
     // TimerMap & set timer
