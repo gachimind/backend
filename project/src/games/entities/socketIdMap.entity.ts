@@ -6,16 +6,13 @@ import {
     PrimaryColumn,
     OneToOne,
     Column,
-    PrimaryGeneratedColumn,
+    DeleteDateColumn,
 } from 'typeorm';
 import { Player } from './player.entity';
 
 @Entity()
 export class SocketIdMap {
-    @PrimaryGeneratedColumn()
-    socketMapId: number;
-
-    @Column({ type: 'varchar', unique: true })
+    @PrimaryColumn('varchar')
     socketId: string;
 
     @Column({ name: 'userInfo' })
@@ -29,4 +26,7 @@ export class SocketIdMap {
 
     @CreateDateColumn({ select: false })
     createdAt: Date;
+
+    @DeleteDateColumn({ select: false })
+    deletedAt: Date | null;
 }
