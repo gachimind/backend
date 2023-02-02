@@ -38,7 +38,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             roomId: any;
         };
     }): Promise<void>;
-    handleLeaveRoomEvent(socket: Socket): Promise<void | Room>;
+    handleLeaveRoomEvent(socket: Socket): Promise<void>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
@@ -63,7 +63,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
-    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void | Room>;
+    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void>;
     RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoomAfterEnterOrLeave(roomId: number): Promise<UpdateRoomDto>;
@@ -75,6 +75,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket): Promise<void>;
     handleEndGameByPlayerLeaveEvent(room: Room): Promise<void>;
     emitCannotStartError(roomId: number): void;
+    throwCannotStartError(roomId: number): void;
     emitGameInfo(turn: Turn, roomId: number): void;
     emitTimeStartEvent(roomId: number, timer: number, event: string, turn?: number): void;
     emitScoreEvent(roomId: number, userId: number, score: number): Promise<void>;
