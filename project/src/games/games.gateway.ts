@@ -65,7 +65,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser) return console.log('disconnected socket', socket.id);
 
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
-        await this.playersService.removeSocketBySocketId(socket.id);
+        await this.playersService.removeSocketBySocketId(socket.id, requestUser.userInfo);
 
         // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
         if (requestUser.player) {
@@ -100,7 +100,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         );
 
         if (prevLogInInfo) {
-            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId);
+            await this.playersService.removeSocketBySocketId(
+                prevLogInInfo.socketId,
+                prevLogInInfo.userInfo,
+            );
 
             const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
             if (prevSockets.length) {
@@ -128,7 +131,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
         // socketIdMap에서 삭제 -> Player 테이블과 Room 테이블에서 cascade
-        await this.playersService.removeSocketBySocketId(socket.id);
+        await this.playersService.removeSocketBySocketId(socket.id, requestUser.userInfo);
 
         // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
         if (requestUser.player) {
