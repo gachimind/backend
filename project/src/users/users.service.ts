@@ -239,7 +239,11 @@ export class UsersService {
     }
 
     // 닉네임 중복확인 API
-    async overlapCheck(nickname: string) {
+    async overlapCheck(nickname: string): Promise<boolean> {
+        if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
+            throw new HttpException('닉네임 규칙을 확인해주세요.', 400);
+        }
+
         const overlapCheck = await this.usersRepository.findOne({
             where: { nickname },
         });
@@ -247,7 +251,7 @@ export class UsersService {
         if (overlapCheck) {
             throw new HttpException('이미 사용 중인 닉네임입니다.', 412);
         }
-        return { Message: '사용 가능한 닉네임입니다.' };
+        return true;
     }
 
     // 닉네임/캐릭터 수정 API
@@ -262,7 +266,7 @@ export class UsersService {
 
         const { nickname, profileImg } = body;
 
-        // TODO : nickname, profileImg class-validator 사용하여 검증
+        // TODO : nickname, profileImg 검증 규칙 수정
         if (nickname.length > 10 || nickname.includes(' ') || !nickname) {
             throw new HttpException('닉네임 규칙을 확인해주세요.', 400);
         }
@@ -272,7 +276,6 @@ export class UsersService {
             nickname,
             profileImg,
         });
-        console.log('변경되 유저 정보 :', updateUser);
 
         if (!updateUser) {
             throw new HttpException('Internal Sever Error', 500);
