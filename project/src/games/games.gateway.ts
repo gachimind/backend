@@ -33,7 +33,6 @@ import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { User } from 'src/users/entities/user.entity';
-import { KeywordService } from 'src/keyword/keyword.service';
 import { Keyword } from 'src/keyword/entities/keyword.entities';
 
 @UseFilters(new SocketExceptionFilter())
@@ -44,7 +43,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         private readonly playersService: PlayersService,
         private readonly chatService: ChatService,
         private readonly gamesService: GamesService,
-        private readonly keywordService: KeywordService,
     ) {}
 
     @WebSocketServer()

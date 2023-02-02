@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { KeywordService } from 'src/keyword/keyword.service';
 import { User } from 'src/users/entities/user.entity';
 import { MoreThan, Repository } from 'typeorm';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
@@ -24,6 +25,7 @@ export class GamesService {
     constructor(
         private readonly roomService: RoomService,
         private readonly playersService: PlayersService,
+        private readonly keywordsService: KeywordService,
         @InjectRepository(Turn)
         private readonly turnRepository: Repository<Turn>,
         @InjectRepository(TurnResult)
