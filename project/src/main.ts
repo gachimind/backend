@@ -5,11 +5,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.filter';
 import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
+import { winstonLogger } from './logger/winston.util';
 
 declare const module: any;
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, {
+        logger: winstonLogger,
+    });
     const port = process.env.PORT || 3000;
     app.enableCors({ origin: '*' });
     app.use(cookieParser());
@@ -31,7 +34,6 @@ async function bootstrap() {
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
-
     await app.listen(port);
     console.log(`listening on port ${port}`);
 

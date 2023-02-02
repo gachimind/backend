@@ -1,8 +1,5 @@
-#!/bin/bash
-REPOSITORY=/home/ubuntu/build
-
-cd $REPOSITORY/project
-    npm i
-    pm2 delete 0
-    npm run start:prod
-
+cd /home/ubuntu/build
+sudo npm ci
+sudo npm run build
+sudo pm2 delete 0
+sudo npm run start:prod
