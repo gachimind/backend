@@ -12,14 +12,12 @@ import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
-import { KeywordService } from 'src/keyword/keyword.service';
 export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomService;
     private readonly playersService;
     private readonly chatService;
     private readonly gamesService;
-    private readonly keywordService;
-    constructor(roomService: RoomService, playersService: PlayersService, chatService: ChatService, gamesService: GamesService, keywordService: KeywordService);
+    constructor(roomService: RoomService, playersService: PlayersService, chatService: ChatService, gamesService: GamesService);
     server: Server;
     afterInit(server: Server): any;
     handleConnection(socket: Socket): Promise<void>;

@@ -22,8 +22,7 @@ import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
 import { nextTick } from 'process';
 import { NextFunction } from 'express';
-
-const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 
 @Injectable()
 export class GamesService {
@@ -59,6 +58,7 @@ export class GamesService {
         const turnIndex: number = gameMap[roomId].currentTurn.turn;
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
+        const keyword: Keyword = this.popGameMapKeywords(roomId);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
@@ -67,13 +67,13 @@ export class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keywords[turnIndex],
-            hint: null,
+            keyword: keyword.keywordKor,
+            hint: keyword.keywordEng,
         };
 
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId);
+        this.createTurnMap(roomId, keyword);
 
         return turn;
     }
@@ -265,11 +265,14 @@ export class GamesService {
 
     // GameMap
     async createGameMap(room: Room): Promise<void> {
+        const keywords = await this.keywordsService.generateRandomKeyword(room.players.length);
+
         gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: 0 },
             currentPlayers: room.players.length,
             remainingTurns: [], // pop으로 사용
             gameResultIdMap: {},
+            keywords,
         };
 
         // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
@@ -279,7 +282,13 @@ export class GamesService {
             }
             resolve;
         });
+        console.log(gameMap[room.roomId]);
+
         return;
+    }
+
+    popGameMapKeywords(roomId: number): Keyword {
+        return gameMap[roomId].keywords.pop();
     }
 
     getGameMapCurrentTurn(roomId: number) {
@@ -322,8 +331,8 @@ export class GamesService {
 
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
-    createTurnMap(roomId: number): void {
-        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0 };
+    createTurnMap(roomId: number, keyword: Keyword): void {
+        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0, keyword };
     }
 
     updateTurnMapSpeechScore(roomId: number, score: number): number {

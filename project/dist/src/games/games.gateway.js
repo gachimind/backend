@@ -21,20 +21,15 @@ const room_service_1 = require("./room.service");
 const players_service_1 = require("./players.service");
 const chat_service_1 = require("./chat.service");
 const games_service_1 = require("./games.service");
-<<<<<<< HEAD
-const keyword_service_1 = require("../keyword/keyword.service");
-=======
 const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
 const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 const game_map_1 = require("./util/game.map");
->>>>>>> 895cc224391ebf72c1f6d007d732da90954d250d
 let GamesGateway = class GamesGateway {
-    constructor(roomService, playersService, chatService, gamesService, keywordService) {
+    constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
         this.playersService = playersService;
         this.chatService = chatService;
         this.gamesService = gamesService;
-        this.keywordService = keywordService;
     }
     afterInit(server) {
         console.log('webSocketServer init');
@@ -43,8 +38,6 @@ let GamesGateway = class GamesGateway {
         console.log('connected socket', socket.id);
         const data = await this.roomService.getAllRoomList();
         socket.emit('room-list', { data });
-        const keywordTest = await this.keywordService.generateRandomKeyword(6);
-        console.log(keywordTest);
     }
     async handleDisconnect(socket) {
         const requestUser = await this.playersService.getUserBySocketId(socket.id);
@@ -152,7 +145,6 @@ let GamesGateway = class GamesGateway {
         await this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
         room = await this.controlGameTurns(room);
         room = await this.gamesService.handleGameEndEvent(room);
-        console.log('room after gameEnd form start event :', room);
         this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
     }
     async sendChatRequest(socket, { data }) {
@@ -250,7 +242,7 @@ let GamesGateway = class GamesGateway {
                 requestUser.player.userInfo === turn.speechPlayer &&
                 turn.currentEvent === ('readyTime' || 'speechTime')) {
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
-                if (this.gamesService.getGameMapCurrentPlayers(roomId) === 2) {
+                if (this.gamesService.getGameMapCurrentPlayers(roomId) > 2) {
                     this.emitCannotStartError(roomId);
                     await this.gamesService.handleGameEndEvent(requestUser.player.room);
                     const updateRoom = await this.updateRoomAfterEnterOrLeave(roomId);
@@ -574,8 +566,7 @@ GamesGateway = __decorate([
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,
         chat_service_1.ChatService,
-        games_service_1.GamesService,
-        keyword_service_1.KeywordService])
+        games_service_1.GamesService])
 ], GamesGateway);
 exports.GamesGateway = GamesGateway;
 //# sourceMappingURL=games.gateway.js.map

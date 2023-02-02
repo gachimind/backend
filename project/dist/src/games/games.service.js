@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const promises_1 = require("timers/promises");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
+const keyword_service_1 = require("../keyword/keyword.service");
 const players_service_1 = require("./players.service");
 const room_service_1 = require("./room.service");
 const gameResult_entity_1 = require("./entities/gameResult.entity");
@@ -29,11 +30,11 @@ const game_map_1 = require("./util/game.map");
 const turn_map_1 = require("./util/turn.map");
 const today_date_constructor_1 = require("./util/today.date.constructor");
 const player_entity_1 = require("./entities/player.entity");
-const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 let GamesService = class GamesService {
-    constructor(roomService, playersService, playersRepository, turnRepository, turnResultRepository, gameResultRepository, todayResultRepository) {
+    constructor(roomService, playersService, keywordsService, playersRepository, turnRepository, turnResultRepository, gameResultRepository, todayResultRepository) {
         this.roomService = roomService;
         this.playersService = playersService;
+        this.keywordsService = keywordsService;
         this.playersRepository = playersRepository;
         this.turnRepository = turnRepository;
         this.turnResultRepository = turnResultRepository;
@@ -53,18 +54,19 @@ let GamesService = class GamesService {
         const turnIndex = game_map_1.gameMap[roomId].currentTurn.turn;
         const speechPlayer = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
+        const keyword = this.popGameMapKeywords(roomId);
         const newTurnData = {
             roomInfo: roomId,
             turn: turnIndex + 1,
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keywords[turnIndex],
-            hint: null,
+            keyword: keyword.keywordKor,
+            hint: keyword.keywordEng,
         };
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId);
+        this.createTurnMap(roomId, keyword);
         return turn;
     }
     async updateTurn(turn, timer) {
@@ -201,11 +203,13 @@ let GamesService = class GamesService {
         return await this.roomService.getOneRoomByRoomId(room.roomId);
     }
     async createGameMap(room) {
+        const keywords = await this.keywordsService.generateRandomKeyword(room.players.length);
         game_map_1.gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: 0 },
             currentPlayers: room.players.length,
             remainingTurns: [],
             gameResultIdMap: {},
+            keywords,
         };
         new Promise((resolve) => {
             for (let i = room.players.length - 1; i >= 0; i--) {
@@ -213,7 +217,11 @@ let GamesService = class GamesService {
             }
             resolve;
         });
+        console.log(game_map_1.gameMap[room.roomId]);
         return;
+    }
+    popGameMapKeywords(roomId) {
+        return game_map_1.gameMap[roomId].keywords.pop();
     }
     getGameMapCurrentTurn(roomId) {
         return game_map_1.gameMap[roomId].currentTurn.turn;
@@ -247,8 +255,8 @@ let GamesService = class GamesService {
             resolve;
         });
     }
-    createTurnMap(roomId) {
-        turn_map_1.turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0 };
+    createTurnMap(roomId, keyword) {
+        turn_map_1.turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0, keyword };
     }
     updateTurnMapSpeechScore(roomId, score) {
         turn_map_1.turnMap[roomId].speechScore.push(score);
@@ -283,13 +291,14 @@ let GamesService = class GamesService {
 };
 GamesService = __decorate([
     (0, common_1.Injectable)(),
-    __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
-    __param(3, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
-    __param(4, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
-    __param(5, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
-    __param(6, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
+    __param(3, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
+    __param(4, (0, typeorm_1.InjectRepository)(turn_entity_1.Turn)),
+    __param(5, (0, typeorm_1.InjectRepository)(turnResult_entity_1.TurnResult)),
+    __param(6, (0, typeorm_1.InjectRepository)(gameResult_entity_1.GameResult)),
+    __param(7, (0, typeorm_1.InjectRepository)(todayResult_entity_1.TodayResult)),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,
+        keyword_service_1.KeywordService,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

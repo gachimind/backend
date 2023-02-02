@@ -260,7 +260,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 모든 턴이 종료되면 게임 종료 처리
         room = await this.gamesService.handleGameEndEvent(room);
-        console.log('room after gameEnd form start event :', room);
 
         this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
     }
@@ -415,7 +414,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             ) {
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
                 // 발표자가 나가고 남은 인원 1명이면 게임 종료
-                if (this.gamesService.getGameMapCurrentPlayers(roomId) === 2) {
+                if (this.gamesService.getGameMapCurrentPlayers(roomId) > 2) {
                     this.emitCannotStartError(roomId);
                     await this.gamesService.handleGameEndEvent(requestUser.player.room);
                     const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(

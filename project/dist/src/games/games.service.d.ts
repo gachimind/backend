@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { KeywordService } from 'src/keyword/keyword.service';
 import { PlayersService } from './players.service';
 import { RoomService } from './room.service';
 import { GameResult } from './entities/gameResult.entity';
@@ -9,15 +10,17 @@ import { TurnResult } from './entities/turnResult.entity';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { Player } from './entities/player.entity';
 import { NextFunction } from 'express';
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 export declare class GamesService {
     private readonly roomService;
     private readonly playersService;
+    private readonly keywordsService;
     private readonly playersRepository;
     private readonly turnRepository;
     private readonly turnResultRepository;
     private readonly gameResultRepository;
     private readonly todayResultRepository;
-    constructor(roomService: RoomService, playersService: PlayersService, playersRepository: Repository<Player>, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
+    constructor(roomService: RoomService, playersService: PlayersService, keywordsService: KeywordService, playersRepository: Repository<Player>, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
     getTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
     getAllTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
     createTurn(roomId: number): Promise<Turn>;
@@ -37,6 +40,7 @@ export declare class GamesService {
     createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number>;
     handleGameEndEvent(room: Room): Promise<Room>;
     createGameMap(room: Room): Promise<void>;
+    popGameMapKeywords(roomId: number): Keyword;
     getGameMapCurrentTurn(roomId: number): any;
     getGameMapCurrentPlayers(roomId: number): any;
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void;
@@ -44,7 +48,7 @@ export declare class GamesService {
     popPlayerFromGameMapRemainingTurns(roomId: number): number;
     removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void>;
     mapGameResultIdWithUserId(roomId: number, gameResults: any): Promise<void>;
-    createTurnMap(roomId: number): void;
+    createTurnMap(roomId: number, keyword: Keyword): void;
     updateTurnMapSpeechScore(roomId: number, score: number): number;
     updateTurnMapTurnQuizRank(roomId: number): void;
     updateTurnMapNumberOfEvaluators(roomInfo: any): Promise<void>;

@@ -14,7 +14,7 @@ export class KeywordService {
 
     async cachingKeywords(): Promise<Keyword[]> {
         const allKeywords: Keyword[] = await this.keywordRepository.find({
-            select: { keywordId: true, keywordKor: true, keywordEng: true },
+            select: { keywordKor: true, keywordEng: true },
             cache: 1000 * 60 * 60 * 24 * 7,
         });
 
