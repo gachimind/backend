@@ -38,16 +38,7 @@ UsersModule = __decorate([
             passport_1.PassportModule,
         ],
         controllers: [users_controller_1.UsersController],
-        providers: [
-            users_service_1.UsersService,
-            kakao_serializer_1.SessionSerializer,
-            kakao_strategy_1.KakaoStrategy,
-            jwt_guard_1.JwtAuthGuard,
-            {
-                provide: 'USER_SERVICE',
-                useClass: users_service_1.UsersService,
-            },
-        ],
+        providers: [users_service_1.UsersService, kakao_serializer_1.SessionSerializer, kakao_strategy_1.KakaoStrategy, jwt_guard_1.JwtAuthGuard],
         exports: [typeorm_1.TypeOrmModule],
     })
 ], UsersModule);

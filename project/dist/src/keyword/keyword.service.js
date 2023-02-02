@@ -23,6 +23,33 @@ let KeywordService = class KeywordService {
     constructor(keywordRepository) {
         this.keywordRepository = keywordRepository;
     }
+    async cachingKeywords() {
+        const allKeywords = await this.keywordRepository.find({
+            select: { keywordId: true, keywordKor: true, keywordEng: true },
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+        return allKeywords;
+    }
+    async cachingKeywordsCount() {
+        const keywordsCount = await this.keywordRepository.count({
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+        return keywordsCount;
+    }
+    async generateRandomKeyword(selectNumber) {
+        const allKeywords = await this.cachingKeywords();
+        const count = await this.cachingKeywordsCount();
+        const randomKeywordArray = [];
+        const randomNumberArray = [];
+        for (let i = 0; i < selectNumber; i++) {
+            let randomNum = Math.floor(Math.random() * count);
+            if (!randomNumberArray.includes(randomNum)) {
+                randomNumberArray.push(randomNum);
+                randomKeywordArray.push(allKeywords[randomNum]);
+            }
+        }
+        return randomKeywordArray;
+    }
     async getData() {
         const browser = await puppeteer.launch({ headless: false });
         const page = await browser.newPage();

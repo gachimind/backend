@@ -5,12 +5,12 @@ export class Keyword {
     @PrimaryGeneratedColumn()
     keywordId: number;
 
-    @Column()
+    @Column('varchar')
     keywordKor: string;
 
-    @Column()
-    keywordEng: string;
+    @Column({ nullable: true })
+    keywordEng?: string;
 
-    @Column()
-    hint: string;
+    @Column({ nullable: true })
+    hint?: string;
 }

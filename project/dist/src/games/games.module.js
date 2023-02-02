@@ -22,6 +22,7 @@ const turnResult_entity_1 = require("./entities/turnResult.entity");
 const gameResult_entity_1 = require("./entities/gameResult.entity");
 const games_service_1 = require("./games.service");
 const todayResult_entity_1 = require("./entities/todayResult.entity");
+const keyword_module_1 = require("../keyword/keyword.module");
 let GamesModule = class GamesModule {
 };
 GamesModule = __decorate([
@@ -37,6 +38,7 @@ GamesModule = __decorate([
                 gameResult_entity_1.GameResult,
                 todayResult_entity_1.TodayResult,
             ]),
+            keyword_module_1.KeywordModule,
         ],
         providers: [games_gateway_1.GamesGateway, room_service_1.RoomService, chat_service_1.ChatService, players_service_1.PlayersService, games_service_1.GamesService],
         exports: [games_gateway_1.GamesGateway, typeorm_1.TypeOrmModule],

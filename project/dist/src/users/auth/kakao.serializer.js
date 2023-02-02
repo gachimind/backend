@@ -31,7 +31,7 @@ let SessionSerializer = class SessionSerializer extends passport_1.PassportSeria
 };
 SessionSerializer = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, common_1.Inject)('USER_SERVICE')),
+    __param(0, (0, common_1.Inject)(users_service_1.UsersService)),
     __metadata("design:paramtypes", [users_service_1.UsersService])
 ], SessionSerializer);
 exports.SessionSerializer = SessionSerializer;

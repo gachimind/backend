@@ -23,12 +23,14 @@ const chat_service_1 = require("./chat.service");
 const common_1 = require("@nestjs/common");
 const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
 const games_service_1 = require("./games.service");
+const keyword_service_1 = require("../keyword/keyword.service");
 let GamesGateway = class GamesGateway {
-    constructor(roomService, playersService, chatService, gamesService) {
+    constructor(roomService, playersService, chatService, gamesService, keywordService) {
         this.roomService = roomService;
         this.playersService = playersService;
         this.chatService = chatService;
         this.gamesService = gamesService;
+        this.keywordService = keywordService;
     }
     afterInit(server) {
         console.log('webSocketServer init');
@@ -37,6 +39,8 @@ let GamesGateway = class GamesGateway {
         console.log('connected socket', socket.id);
         const data = await this.roomService.getAllRoomList();
         socket.emit('room-list', { data });
+        const keywordTest = await this.keywordService.generateRandomKeyword(6);
+        console.log(keywordTest);
     }
     async handleDisconnect(socket) {
         const requestUser = await this.playersService.getUserBySocketId(socket.id);
@@ -490,7 +494,8 @@ GamesGateway = __decorate([
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,
         chat_service_1.ChatService,
-        games_service_1.GamesService])
+        games_service_1.GamesService,
+        keyword_service_1.KeywordService])
 ], GamesGateway);
 exports.GamesGateway = GamesGateway;
 //# sourceMappingURL=games.gateway.js.map
