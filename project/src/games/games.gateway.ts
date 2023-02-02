@@ -285,11 +285,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         // announce to main
         await this.updateRoomListToMain();
 
-        // gameMap[roomId] = { currentTurn: {turnNumber: , turnId}, remainingTurns : userId[](desc order), gameResultIdMap: {userId : gameResultId} }
+        // 게임 정보 매핑
         // TODO : gameMap interface 만들기
         await this.gamesService.createGameMap(room);
-        console.log(gameMap[room.roomId]);
-
         // player별 gameResult 만들기
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
             room.roomId,
@@ -297,9 +295,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
 
         // 게임 시작
-        await this.controlGameTurns(room);
+        room = await this.controlGameTurns(room);
 
-        // TODO : 게임 종료 함수 여기에서 call하기
+        // 모든 턴이 종료되면 게임 종료 처리
+        room = await this.gamesService.handleGameEndEvent(room);
+        console.log('room after gameEnd form start event :', room);
+
+        this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
     }
 
     @SubscribeMessage('send-chat')
@@ -312,26 +314,31 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser.player) {
             throw new SocketException('잘못된 요청입니다.', 400, event);
         }
-        const room: Room = requestUser.player.room;
+
         let type = 'chat';
+        const room: Room = requestUser.player.room;
+        const turn = room.turns.at(-1);
+
         // room이 game상태일때만 정답 검사
-        if (room.isGameOn) {
-            const turn = room.turns.at(-1);
+        if (room.isGameOn && turn) {
             const isAnswer: boolean = this.chatService.FilterAnswer(
                 turn,
                 requestUser.userInfo,
                 data.message,
             );
-            if (isAnswer) {
+
+            if (isAnswer && requestUser.player.userInfo != turn.speechPlayer) {
                 type = 'answer';
                 const turnResult: TurnResult = await this.gamesService.recordPlayerScore(
                     requestUser.userInfo,
                     room,
                 );
-                data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
                 this.emitScoreEvent(room.roomId, requestUser.userInfo, turnResult.score);
+                data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
             }
         }
+        console.log('채팅 내보낼 내용:', data.message, type);
+
         return this.emitReceiveChatEvent(room.roomId, requestUser, data.message, type);
     }
 
@@ -353,7 +360,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             requestUser.player.roomInfo,
             data.score,
         );
-        this.emitScoreEvent(requestUser.player.roomInfo, requestUser.userInfo, score);
+        const speechPlayerId = requestUser.player.room.turns.at(-1).speechPlayer;
+        this.emitScoreEvent(requestUser.player.roomInfo, speechPlayerId, score);
     }
 
     @SubscribeMessage('webrtc-ice')
@@ -548,7 +556,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // ############################## Game ###################################
     // [logic] game controller (게임 시작 ~ 게임 종료 컨트롤
     // !!!!!! TODO : game 중 변경이 발생하면 바로바로 gameMap에 같이 반영되도록 수정!!!!!
-    async controlGameTurns(room: Room): Promise<void> {
+    async controlGameTurns(room: Room): Promise<Room> {
         // startCount 트리거
         await this.controlTurnTimer(room, 'startCount');
 
@@ -578,9 +586,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // 턴 종료 -> 룸 정보 최신화
             room = await this.roomService.getOneRoomByRoomId(room.roomId);
         }
-        // 모든 턴이 종료되면 게임 종료 처리
-        room = await this.gamesService.handleGameEndEvent(room);
-        this.announceUpdateRoomInfo({ room, state: 'update' }, null, 'game-end');
+        return room;
     }
 
     // [Logic] turn controller (턴 시작 ~ 턴 종료 컨트롤, turn event별 처리)
@@ -609,11 +615,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // 발표자의 추가 점수 처리
         if (event === 'discussionTimer') {
-            const unevaluatedScore: number = await this.gamesService.createSpeechPlayerTurnResult(
+            const extraScore: number = await this.gamesService.createSpeechPlayerTurnResult(
                 roomId,
                 turn,
             );
-            this.emitScoreEvent(roomId, turn.speechPlayer, unevaluatedScore);
+            console.log('controlTurnTimer, discussionTime end, 발표자 추가 점수 :', extraScore);
+            this.emitScoreEvent(roomId, turn.speechPlayer, extraScore);
         }
         // time-end event 처리
         this.emitTimeEndEvent(roomId, timer, event, currentTurn);
@@ -707,7 +714,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // ######################## CHAT ##################################
     emitReceiveChatEvent(roomId: number, requestUser: SocketIdMap, message: string, type: string) {
+        console.log('emit-chat');
+
         const eventUserInfo: EventUserInfoDto = eventUserInfoConstructor(requestUser);
-        this.server.to(`${roomId}`).emit('receive-chat', { message, eventUserInfo, type });
+        this.server
+            .to(`${roomId}`)
+            .emit('receive-chat', { data: { message, eventUserInfo, type } });
     }
 }

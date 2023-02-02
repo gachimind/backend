@@ -17,7 +17,7 @@ import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { gameTimerMap } from './util/game-timer.map';
 import { gameMap } from './util/game.map';
 import { turnMap } from './util/turn.map';
-import { getTodayDate } from './util/today.date.constructor';
+import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
 
 const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
@@ -92,30 +92,35 @@ export class GamesService {
         return await this.turnResultRepository.save(turnResult);
     }
 
-    async sumTurnScorePerPlayerByUserId(roomId: number, userId: number): Promise<number> {
+    async sumTurnScorePerPlayerByUserId(roomId: number, gameResultId: number): Promise<number> {
         const { sum } = await this.turnResultRepository
             .createQueryBuilder('turnResult')
             .select('SUM(turnResult.score)', 'sum')
             .where('turnResult.roomId = :roomId', { roomId })
-            .andWhere('turnResult.userId = :userId', { userId })
+            .andWhere('turnResult.gameResultInfo = :gameResultId', { gameResultId })
             .getRawOne();
         return Number(sum);
     }
 
     // ######################### GameResult ##################################
     async createGameResultPerPlayer(roomId): Promise<GameResult[]> {
-        const playersUserId = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
+        const allPlayersInRoom = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
-        const today = getTodayDate();
         let data = [];
-        for (let userId of playersUserId) {
+        for (let player of allPlayersInRoom) {
+            const today = getDate();
             const todayResult: TodayResult = await this.todayResultRepository.findOne({
-                where: { userInfo: userId.userInfo, createdAt: MoreThan(today) },
+                where: { userInfo: player.userInfo, createdAt: MoreThan(today) },
+                select: { todayResultId: true, createdAt: true },
+            });
+            console.log('find TodayResult to make gameResult :', {
+                id: todayResult.todayResultId,
+                createdAt: todayResult.createdAt,
             });
 
             data.push({
                 roomId,
-                userInfo: userId.userInfo,
+                userInfo: player.userInfo,
                 todayResultInfo: todayResult.todayResultId,
             });
         }
@@ -146,10 +151,10 @@ export class GamesService {
         const turn = room.turns.at(-1);
         const gameResultInfo = gameMap[roomId].gameResultIdMap[userId];
 
-        // turnResult를 gameResultId로 검색해서 있으면 예외 처리
+        // turnResult를 검색해서 있으면 예외 처리
         if (
-            await this.turnResultRepository.findOneBy({
-                gameResultInfo,
+            await this.turnResultRepository.findOne({
+                where: { userId, turnId: turn.turnId },
             })
         ) {
             throw new SocketException('정답을 이미 맞추셨습니다!', 400, 'send-chat');
@@ -169,11 +174,13 @@ export class GamesService {
     }
 
     async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
+        console.log('createSpeechPlayerTurnResult', 'speechPlayer :', turn.speechPlayer);
+
         // 평가하지 않은 인원 수
         const unevaluatedNum: number =
             turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
         // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
-        let sum: number;
+        let sum: number = 0;
         while (turnMap[roomId].speechScore.length) {
             const pop = turnMap[roomId].speechScore.pop();
             sum += pop;
@@ -181,9 +188,8 @@ export class GamesService {
         // 최종 점수 합계
         const score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
 
-        const gameResultInfo = gameMap[roomId].gameResultIdMap[turn.speechPlayer];
         const turnResult: TurnResultDataInsertDto = {
-            gameResultInfo,
+            gameResultInfo: gameMap[roomId].gameResultIdMap[turn.speechPlayer],
             roomId,
             turnId: turn.turnId,
             userId: turn.speechPlayer,
@@ -192,27 +198,26 @@ export class GamesService {
             isSpeech: true,
         };
         await this.createTurnResult(turnResult);
-        return unevaluatedNum * 5;
+        return unevaluatedNum * 5 * 20;
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
         // 게임에 참여한 모든 플레이어의 gameResult 업데이트
-        // 1. roomId로 gameResult 조회
-        const playerUserIds = await this.gameResultRepository.find({
-            where: { roomId: room.roomId },
-            select: { gameResultId: true, userInfo: true, todayResultInfo: true },
-        });
+        const playerGameResultIds: number[] = Object.values(gameMap[room.roomId].gameResultIdMap);
 
-        for (let user of playerUserIds) {
+        for (let gameResultId of playerGameResultIds) {
+            // 1. roomId로 gameResult 조회
+            const gameResult = await this.gameResultRepository.findOne({
+                where: { gameResultId: gameResultId },
+                select: { gameResultId: true, userInfo: true, todayResultInfo: true },
+            });
+
             // player당 게임에서 얻은 점수 합산
-            const sum: number = await this.sumTurnScorePerPlayerByUserId(
-                room.roomId,
-                user.userInfo,
-            );
+            const sum: number = await this.sumTurnScorePerPlayerByUserId(room.roomId, gameResultId);
             // gameResult와 todayResult에 합산 점수를++
-            await this.updateGameResult(user.gameResultId, sum);
-            await this.softDeleteGameResult(user.gameResultId);
-            await this.updateTodayResultByIncrement(user.todayResultInfo, sum);
+            await this.updateGameResult(gameResultId, sum);
+            await this.softDeleteGameResult(gameResultId);
+            await this.updateTodayResultByIncrement(gameResult.todayResultInfo, sum);
         }
 
         // delete all turn data
@@ -253,9 +258,6 @@ export class GamesService {
             }
             resolve;
         });
-
-        console.log('in gamesService :', gameMap[room.roomId]);
-
         return;
     }
 
