@@ -3,8 +3,9 @@ seeding.ts
 
 # compiled output
 /node_modules
-/logs
+
 # Logs
+/logs
 logs
 *.log
 npm-debug.log*
