@@ -9,7 +9,7 @@ import {
     WebSocketServer,
     OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server, Socket, RemoteSocket } from 'socket.io';
 import {
     SocketException,
     SocketExceptionFilter,
@@ -105,7 +105,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 prevLogInInfo.userInfo,
             );
 
-            const prevSockets = await this.server.in(prevLogInInfo.socketId).fetchSockets();
+            const prevSockets: RemoteSocket<any, any>[] = await this.server
+                .in(prevLogInInfo.socketId)
+                .fetchSockets();
+            await this.handleLeaveRoomRequest(prevSockets[0], prevLogInInfo);
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
                     error: {
@@ -391,7 +394,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // ###################### ALTER PLAYER ##############################
     // [logic] game state / player state에 따른 player leave-room request handler
-    async handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap) {
+    async handleLeaveRoomRequest(socket: Socket | any, requestUser: SocketIdMap) {
         const roomId = requestUser.player.roomInfo;
 
         // 1. player leave 처리
@@ -439,7 +442,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         return this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
 
-    async RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket) {
+    async RemovePlayerFromRoom(
+        roomId: number,
+        requestUser: SocketIdMap | null,
+        socket: Socket | any,
+    ) {
         // request user를 leave처리
         socket.leave(`${roomId}`);
         // request user를 player 테이블에서 삭제(leave-room 이벤트에만 해당)
@@ -591,7 +598,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
     // [logic] 발표자가 퇴장한 경우,
-    async handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket) {
+    async handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket | any) {
         this.gamesService.breakTimer(turn.roomInfo, Next);
         // 방안에 남은 player에게 에러 메세지 emit
         socket.to(`${turn.roomInfo}`).emit('error', {
