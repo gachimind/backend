@@ -29,6 +29,8 @@ let SocketExceptionFilter = class SocketExceptionFilter extends websockets_1.Bas
         logger.error(exception instanceof SocketException ? 'SocketException' : 'UnknownError', exception instanceof SocketException ? exception.eventName : 'unknownEvent', exception instanceof Error ? exception.stack : null);
     }
     handleError(client, exception) {
+        if (exception.name === 'AbortError' || exception.eventName === 'game')
+            return null;
         if (!(exception instanceof SocketException)) {
             return this.handleUnknownError(exception, client);
         }

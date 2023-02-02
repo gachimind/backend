@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { TodayResult } from '../games/entities/todayResult.entity';
 import { TurnResult } from '../games/entities/turnResult.entity';
-import { getTodayDate } from '../games/util/today.date.constructor';
+import { getDate } from '../games/util/today.date.constructor';
 import { TokenMapRequestDto } from './dto/token.map.request.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -99,8 +99,8 @@ export class UsersService {
     }
 
     // 회원 정보 상세 조회 API
-    async getUserDetailsByToken(token: string) {
-        const getUserInfoByToken = await this.tokenMapRepository.findOne({
+    async getUserDetailsByToken(token: string): Promise<any> {
+        const getUserInfoByToken: TokenMap = await this.tokenMapRepository.findOne({
             where: { token },
             select: {
                 user: { userId: true, nickname: true, profileImg: true, isFirstLogin: true },
@@ -133,7 +133,7 @@ export class UsersService {
     // 유저 오늘 스코어
     async getTodayScoreByUserId(userInfo: number): Promise<number> {
         // 오늘 스코어 찾아오기
-        const today: Date = getTodayDate();
+        const today: Date = getDate();
         const findTodayScore: TodayResult = await this.todayResultRepository.findOne({
             where: {
                 userInfo,
@@ -148,7 +148,7 @@ export class UsersService {
 
     // 유저 랭킹
     async getAllUserScore(userInfo: number): Promise<number> {
-        const today: Date = getTodayDate();
+        const today: Date = getDate();
         const getAllUserScore = await this.todayResultRepository.find({
             where: { createdAt: MoreThan(today) },
             select: {
@@ -206,7 +206,7 @@ export class UsersService {
         const totalQuizKeyword = [...new Set(quizKeywordArray)];
 
         // 오늘 전체 키워드 찾아오기
-        const today: Date = getTodayDate();
+        const today: Date = getDate();
         const findTodaykeyword = await this.TurnResultRepository.find({
             where: {
                 userId: user.userInfo,

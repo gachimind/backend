@@ -8,13 +8,10 @@ export class TurnResultDataInsertDto {
     roomId: number;
 
     @IsNumber()
-    turn: number;
+    turnId: number;
 
     @IsNumber()
     userId: number;
-
-    @IsString()
-    nickname: string;
 
     @IsNumber()
     score: number;

@@ -19,7 +19,9 @@ const typeorm_2 = require("typeorm");
 const room_entity_1 = require("./entities/room.entity");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const player_entity_1 = require("./entities/player.entity");
-const score_map_1 = require("./util/score.map");
+const game_map_1 = require("./util/game.map");
+const turn_map_1 = require("./util/turn.map");
+const game_timer_map_1 = require("./util/game-timer.map");
 let RoomService = class RoomService {
     constructor(roomRepository, playerRepository) {
         this.roomRepository = roomRepository;
@@ -53,6 +55,9 @@ let RoomService = class RoomService {
         });
     }
     async removeRoomByRoomId(roomId) {
+        delete game_map_1.gameMap[roomId];
+        delete turn_map_1.turnMap[roomId];
+        delete game_timer_map_1.gameTimerMap[roomId];
         await this.playerRepository.delete({ roomInfo: roomId });
         return await this.roomRepository.softDelete(roomId);
     }
@@ -72,7 +77,6 @@ let RoomService = class RoomService {
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
         const roomInsert = await this.roomRepository.insert(newRoom);
         const roomId = roomInsert.identifiers[0].roomId;
-        score_map_1.scoreMap[roomId] = {};
         return roomId;
     }
     async enterRoom(requestUser, requestRoom) {
@@ -146,7 +150,7 @@ let RoomService = class RoomService {
                 throw new ws_exception_filter_1.SocketException('모든 플레이어가 ready상태여야 게임을 시작할 수 있습니다.', 400, 'start');
             }
         }
-        room = await this.updateRoomStatusByRoomId({
+        await this.updateRoomStatusByRoomId({
             roomId,
             isGameOn: true,
         });

@@ -110,7 +110,7 @@ let UsersService = class UsersService {
         };
     }
     async getTodayScoreByUserId(userInfo) {
-        const today = (0, today_date_constructor_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getDate)();
         const findTodayScore = await this.todayResultRepository.findOne({
             where: {
                 userInfo,
@@ -123,7 +123,7 @@ let UsersService = class UsersService {
         return todayScore;
     }
     async getAllUserScore(userInfo) {
-        const today = (0, today_date_constructor_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getDate)();
         const getAllUserScore = await this.todayResultRepository.find({
             where: { createdAt: (0, typeorm_2.MoreThan)(today) },
             select: {
@@ -168,7 +168,7 @@ let UsersService = class UsersService {
         }
         const totalSpeechKeyword = [...new Set(speechKeywordArray)];
         const totalQuizKeyword = [...new Set(quizKeywordArray)];
-        const today = (0, today_date_constructor_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getDate)();
         const findTodaykeyword = await this.TurnResultRepository.find({
             where: {
                 userId: user.userInfo,

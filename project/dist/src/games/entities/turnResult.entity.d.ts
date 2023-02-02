@@ -4,9 +4,8 @@ export declare class TurnResult {
     gameResultInfo: number;
     gameResult: GameResult;
     roomId: number;
-    turn: number;
+    turnId: number;
     userId: number;
-    nickname: string;
     score: number;
     keyword: string;
     isSpeech: boolean;
