@@ -27,16 +27,7 @@ import { TurnResult } from 'src/games/entities/turnResult.entity';
         PassportModule,
     ],
     controllers: [UsersController],
-    providers: [
-        UsersService,
-        SessionSerializer,
-        KakaoStrategy,
-        JwtAuthGuard,
-        {
-            provide: 'USER_SERVICE',
-            useClass: UsersService,
-        },
-    ],
+    providers: [UsersService, SessionSerializer, KakaoStrategy, JwtAuthGuard],
     exports: [TypeOrmModule],
 })
 export class UsersModule {}
