@@ -12,6 +12,23 @@ export class KeywordService {
         private readonly keywordRepository: Repository<Keyword>,
     ) {}
 
+    async cachingKeywords() {
+        const allKeywords: Keyword[] = await this.keywordRepository.find({
+            select: { keywordId: true, keywordKor: true, keywordEng: true },
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+
+        return allKeywords;
+    }
+
+    async cachingKeywordsCount() {
+        const keywordsCount: number = await this.keywordRepository.count({
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+
+        return keywordsCount;
+    }
+
     async getData() {
         const browser = await puppeteer.launch({ headless: false });
         // 작동 중인 화면 보고 싶지 않을 때는 headless true로 변경할 것
