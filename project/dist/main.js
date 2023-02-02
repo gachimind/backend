@@ -167,10 +167,10 @@ const core_1 = __webpack_require__(4);
 const swagger_1 = __webpack_require__(5);
 const app_module_1 = __webpack_require__(6);
 const common_1 = __webpack_require__(7);
-const http_exception_filter_1 = __webpack_require__(65);
-const passport = __webpack_require__(66);
-const cookieParser = __webpack_require__(67);
-const winston_util_1 = __webpack_require__(68);
+const http_exception_filter_1 = __webpack_require__(64);
+const passport = __webpack_require__(65);
+const cookieParser = __webpack_require__(66);
+const winston_util_1 = __webpack_require__(67);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: winston_util_1.winstonLogger,
@@ -250,11 +250,7 @@ const turnResult_entity_1 = __webpack_require__(19);
 const gameResult_entity_1 = __webpack_require__(18);
 const admin_module_1 = __webpack_require__(56);
 const todayResult_entity_1 = __webpack_require__(16);
-const logger_middleware_1 = __webpack_require__(64);
 let AppModule = class AppModule {
-    configure(consumer) {
-        consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
-    }
 };
 AppModule = __decorate([
     (0, common_1.Module)({
@@ -3733,42 +3729,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LoggerMiddleware = void 0;
-const common_1 = __webpack_require__(7);
-let LoggerMiddleware = class LoggerMiddleware {
-    constructor() {
-        this.logger = new common_1.Logger('HTTP');
-    }
-    use(request, response, next) {
-        const { ip, method, originalUrl } = request;
-        const userAgent = request.get('user-agent') || '';
-        response.on('finish', () => {
-            const { statusCode } = response;
-            const contentLength = response.get('content-length');
-            this.logger.log(`${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip}`);
-        });
-        next();
-    }
-};
-LoggerMiddleware = __decorate([
-    (0, common_1.Injectable)()
-], LoggerMiddleware);
-exports.LoggerMiddleware = LoggerMiddleware;
-
-
-/***/ }),
-/* 65 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-"use strict";
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HttpExceptionFilter = void 0;
 const common_1 = __webpack_require__(7);
 let HttpExceptionFilter = class HttpExceptionFilter {
@@ -3790,30 +3750,30 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 
 
 /***/ }),
-/* 66 */
+/* 65 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("passport");
 
 /***/ }),
-/* 67 */
+/* 66 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("cookie-parser");
 
 /***/ }),
-/* 68 */
+/* 67 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.winstonLogger = exports.dailyOptions = exports.consoleOptions = void 0;
-const nest_winston_1 = __webpack_require__(69);
-const winstonDaily = __webpack_require__(70);
-const winston = __webpack_require__(71);
+const nest_winston_1 = __webpack_require__(68);
+const winstonDaily = __webpack_require__(69);
+const winston = __webpack_require__(70);
 const logDir = __dirname + '../../logs';
 const { simple, combine, timestamp, colorize } = winston.format;
 exports.consoleOptions = {
@@ -3847,21 +3807,21 @@ exports.winstonLogger = nest_winston_1.WinstonModule.createLogger({
 
 
 /***/ }),
-/* 69 */
+/* 68 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("nest-winston");
 
 /***/ }),
-/* 70 */
+/* 69 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("winston-daily-rotate-file");
 
 /***/ }),
-/* 71 */
+/* 70 */
 /***/ ((module) => {
 
 "use strict";
@@ -3929,7 +3889,7 @@ module.exports = require("winston");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("65bdbb540470b127fdb3")
+/******/ 		__webpack_require__.h = () => ("56c5b5d4ea46f225ad02")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
