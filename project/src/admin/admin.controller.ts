@@ -7,7 +7,7 @@ export class AdminController {
     constructor(private readonly notionService: NotionService) {}
 
     @Post('report')
-    async bugReport(@Body() Body: BugDto) {
+    async bugReport(@Body() body: BugDto) {
         if (!Body) {
             throw new HttpException('전송 실패.', 400);
         }
