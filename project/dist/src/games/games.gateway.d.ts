@@ -12,7 +12,6 @@ import { EnterRoomRequestDto } from './dto/enter-room.request.dto';
 import { AuthorizationRequestDto } from 'src/users/dto/authorization.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
-import { NextFunction } from 'express';
 export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly roomService;
     private readonly playersService;
@@ -39,7 +38,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             roomId: any;
         };
     }): Promise<void>;
-    handleLeaveRoomEvent(socket: Socket, next: NextFunction): Promise<void>;
+    handleLeaveRoomEvent(socket: Socket): Promise<void | Room>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
@@ -64,17 +63,17 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
-    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void>;
+    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void | Room>;
     RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
-    updateRoom(roomId: number): Promise<UpdateRoomDto>;
+    updateRoomAfterEnterOrLeave(roomId: number): Promise<UpdateRoomDto>;
     announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap | null, event: string): Promise<void>;
     updateRoomInfoToRoom(room: Room, requestUser: SocketIdMap | null, event: string): void;
     updateRoomListToMain(): Promise<void>;
     controlGameTurns(room: Room): Promise<Room>;
     controlTurnTimer(room: Room, eventName: string, turn?: Turn): Promise<void>;
-    handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction): Promise<void>;
-    handleEndGameByPlayerLeaveEvent(room: Room, next: NextFunction): Promise<void>;
+    handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket): Promise<void>;
+    handleEndGameByPlayerLeaveEvent(room: Room): Promise<void>;
     emitCannotStartError(roomId: number): void;
     emitGameInfo(turn: Turn, roomId: number): void;
     emitTimeStartEvent(roomId: number, timer: number, event: string, turn?: number): void;

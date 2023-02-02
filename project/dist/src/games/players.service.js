@@ -96,10 +96,6 @@ let PlayersService = class PlayersService {
             where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
             select: { todayResultId: true, userInfo: true, todayScore: true, createdAt: true },
         });
-        console.log('login TodayResult:', {
-            id: todayResult.todayResultId,
-            createdAt: todayResult.createdAt,
-        });
         if (!todayResult) {
             await this.todayResultRepository.save({ userInfo, todayScore: 0 });
         }

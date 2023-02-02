@@ -74,8 +74,8 @@ let GamesService = class GamesService {
     async deleteTurnByRoomId(roomInfo) {
         await this.turnRepository.delete({ roomInfo });
     }
-    async deleteTurnByTurnId(turn) {
-        await this.turnRepository.delete({ turnId: turn.turnId });
+    async deleteTurnByTurnId(turnId) {
+        await this.turnRepository.delete({ turnId });
     }
     async createTurnResult(turnResult) {
         return await this.turnResultRepository.save(turnResult);
@@ -143,12 +143,19 @@ let GamesService = class GamesService {
     async createSpeechPlayerTurnResult(roomId, turn) {
         console.log('createSpeechPlayerTurnResult', 'speechPlayer :', turn.speechPlayer);
         const unevaluatedNum = turn_map_1.turnMap[roomId].numberOfEvaluators - turn_map_1.turnMap[roomId].speechScore.length;
+        console.log('speechPlayer unevaluatedNum :', unevaluatedNum);
+        console.log('number of evaluators :', turn_map_1.turnMap[roomId].numberOfEvaluators);
         let sum = 0;
         while (turn_map_1.turnMap[roomId].speechScore.length) {
             const pop = turn_map_1.turnMap[roomId].speechScore.pop();
             sum += pop;
         }
-        const score = ((sum + unevaluatedNum * 5) * 20) / turn_map_1.turnMap[roomId].numberOfEvaluators;
+        console.log('speechPlayer sum :', sum);
+        let score = 0;
+        if (turn_map_1.turnMap[roomId].numberOfEvaluators) {
+            score = ((sum + unevaluatedNum * 5) * 20) / turn_map_1.turnMap[roomId].numberOfEvaluators;
+            console.log('speechPlayer score :', score);
+        }
         const turnResult = {
             gameResultInfo: game_map_1.gameMap[roomId].gameResultIdMap[turn.speechPlayer],
             roomId,
@@ -159,7 +166,10 @@ let GamesService = class GamesService {
             isSpeech: true,
         };
         await this.createTurnResult(turnResult);
-        return unevaluatedNum * 5 * 20;
+        if (unevaluatedNum) {
+            return (unevaluatedNum * 5 * 20) / unevaluatedNum;
+        }
+        return 0;
     }
     async handleGameEndEvent(room) {
         const playerGameResultIds = Object.values(game_map_1.gameMap[room.roomId].gameResultIdMap);
@@ -174,6 +184,10 @@ let GamesService = class GamesService {
             await this.updateTodayResultByIncrement(gameResult.todayResultInfo, sum);
         }
         await this.deleteTurnByRoomId(room.roomId);
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            return room;
+        }
         let users = [];
         for (let player of room.players) {
             users.push({ userInfo: player.userInfo, isReady: false });
@@ -201,26 +215,37 @@ let GamesService = class GamesService {
         });
         return;
     }
+    getGameMapCurrentTurn(roomId) {
+        return game_map_1.gameMap[roomId].currentTurn.turn;
+    }
+    getGameMapCurrentPlayers(roomId) {
+        return game_map_1.gameMap[roomId].currentPlayers;
+    }
     updateGameMapCurrentTurn(roomId, turnId, turn) {
         game_map_1.gameMap[roomId].currentTurn = { turnId, turn };
     }
-    deductGameMapCurrentPlayers(roomId) {
+    reduceGameMapCurrentPlayers(roomId) {
         game_map_1.gameMap[roomId].currentPlayers--;
     }
     popPlayerFromGameMapRemainingTurns(roomId) {
         return game_map_1.gameMap[roomId].remainingTurns.pop();
     }
-    deletePlayerFromGameMapRemainingTurns(roomId, userId) {
-        game_map_1.gameMap[roomId].remainingTurns = game_map_1.gameMap[roomId].remainingTurns.filter((e) => {
-            if (e !== userId)
-                return e;
+    async removePlayerFromGameMapRemainingTurns(roomId, userId) {
+        new Promise((resolve) => {
+            game_map_1.gameMap[roomId].remainingTurns = game_map_1.gameMap[roomId].remainingTurns.filter((e) => {
+                if (e !== userId)
+                    return e;
+            });
+            resolve;
         });
     }
-    mapGameResultIdWithUserId(roomId, gameResults) {
-        for (let result of gameResults) {
-            game_map_1.gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
-        }
-        return;
+    async mapGameResultIdWithUserId(roomId, gameResults) {
+        new Promise((resolve) => {
+            for (let result of gameResults) {
+                game_map_1.gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
+            }
+            resolve;
+        });
     }
     createTurnMap(roomId) {
         turn_map_1.turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0 };
@@ -247,8 +272,13 @@ let GamesService = class GamesService {
         });
         return game_timer_map_1.gameTimerMap[roomId].timer;
     }
-    breakTimer(roomId) {
-        game_timer_map_1.gameTimerMap[roomId].ac.abort();
+    breakTimer(roomId, next) {
+        try {
+            game_timer_map_1.gameTimerMap[roomId].ac.abort();
+        }
+        catch (ett) {
+            next();
+        }
     }
 };
 GamesService = __decorate([

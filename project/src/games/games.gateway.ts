@@ -74,27 +74,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // player였다면, leave-room 로직 수행
         if (requestUser.player) {
-            // request user가 게임 중 자신이 발표자일 때 돌고 있는 timer 종료
-            const turn: Turn = requestUser.player.room.turns.at(-1);
-            if (
-                turn &&
-                turn.speechPlayer === requestUser.userInfo &&
-                (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')
-            ) {
-                await this.handleSpeechPlayerLeaveRoomRequest(turn, socket, Next);
-            }
-
-            // leave-room 처리
-            socket.leave(`${requestUser.player.roomInfo}`);
-
-            // 유저가 나간 뒤 방 정보 갱신
-            const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
-
-            // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
-            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room);
-
-            // 업데이트 된 방 정보 announce
-            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+            await this.handleLeaveRoomRequest(socket, requestUser);
         }
         return console.log('disconnected socket', socket.id);
     }
@@ -154,27 +134,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         // request user가 방에 있었다면, 방 나간 후 방 업데이트 & announce
         if (requestUser.player) {
-            // request user가 게임 중 자신이 발표자일 때 돌고 있는 timer 종료
-            const turn: Turn = requestUser.player.room.turns.at(-1);
-            if (
-                turn &&
-                turn.speechPlayer === requestUser.userInfo &&
-                (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')
-            ) {
-                await this.handleSpeechPlayerLeaveRoomRequest(turn, socket, Next);
-            }
-
-            // leave-room 처리
-            socket.leave(`${requestUser.player.roomInfo}`);
-
-            // 유저가 나간 뒤 방 정보 갱신
-            const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
-
-            // 방 정보를 갱신하고, 게임 중이었다면, 다시 게임 시작
-            if (updateRoom.room.isGameOn) await this.controlGameTurns(updateRoom.room);
-
-            // 업데이트 된 방 정보 announce
-            await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+            await this.handleLeaveRoomRequest(socket, requestUser);
         }
 
         console.log('로그아웃 성공!');
@@ -219,7 +179,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         socket.join(`${requestRoom.roomId}`);
 
         // 3. 방 정보를 업데이트
-        const updateRoom: { room: Room; state: string } = await this.updateRoom(requestRoom.roomId);
+        const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(
+            requestRoom.roomId,
+        );
 
         // 4. 업데이트 된 방 정보를 announce
         await this.announceUpdateRoomInfo(updateRoom, requestUser, 'enter');
@@ -237,8 +199,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     @SubscribeMessage('leave-room')
-    async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket, next: NextFunction) {
-        // socketIdMap에 포함된 유저인지 검사 -> !!authGuard 만들어서 달기!!
+    async handleLeaveRoomEvent(@ConnectedSocket() socket: Socket) {
         const event = 'leave-room';
         const requestUser: SocketIdMap = await this.socketAuthentication(socket.id, event);
 
@@ -247,7 +208,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             throw new SocketException('잘못된 요청입니다.', 400, event);
         }
 
-        await this.handleLeaveRoomRequest(socket, requestUser);
+        return await this.handleLeaveRoomRequest(socket, requestUser);
     }
 
     @SubscribeMessage('ready')
@@ -292,7 +253,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
             room.roomId,
         );
-        this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
+        await this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
 
         // 게임 시작
         room = await this.controlGameTurns(room);
@@ -432,45 +393,51 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // ###################### ALTER PLAYER ##############################
     // [logic] game state / player state에 따른 player leave-room request handler
     async handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap) {
-        // request user의 player 정보 삭제
+        const roomId = requestUser.player.roomInfo;
+
+        // 1. player leave 처리
+        if (requestUser.player.room.isGameOn) {
+            await this.gamesService.removePlayerFromGameMapRemainingTurns(
+                roomId,
+                requestUser.userInfo,
+            );
+            this.gamesService.reduceGameMapCurrentPlayers(roomId);
+        }
         await this.RemovePlayerFromRoom(requestUser.player.roomInfo, requestUser, socket);
 
-        // player leave 처리 후 방 정보
-        const room: Room = await this.roomService.getOneRoomByRoomId(requestUser.player.roomInfo);
-
-        // 게임 중이었다면
-        if (room.isGameOn) {
-            const allTurns: Turn[] = room.turns;
-            // 턴 정보가 존재하고, readyTime 또는 speechTime일때
+        // 1) speechPlayer && !discussionTime -> end turn
+        if (requestUser.player.room.isGameOn) {
+            const turn = requestUser.player.room.turns.at(-1);
             if (
-                allTurns.length &&
-                (allTurns.at(-1).currentEvent === 'readyTime' ||
-                    allTurns.at(-1).currentEvent === 'speechTime')
+                turn &&
+                requestUser.player.userInfo === turn.speechPlayer &&
+                turn.currentEvent === ('readyTime' || 'speechTime')
             ) {
-                // request user가 speechPlayer일때 -> 타이머/턴정보 삭제 후 게임 로직 재시작
-                if (allTurns.at(-1).speechPlayer === requestUser.userInfo) {
-                    await this.handleSpeechPlayerLeaveRoomRequest(allTurns.at(-1), socket, Next);
-
-                    // speechPlayer가 나간 후 게임 종료 상황 처리
-                    if (room.players.length === allTurns.length || room.players.length < 2) {
-                        return await this.handleEndGameByPlayerLeaveEvent(room, Next);
-                    }
-
-                    // 남은 플레이어들이 게임을 계속 이어가는 상황 처리
-                    await this.controlGameTurns(room);
+                await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
+                // 발표자가 나가고 남은 인원 1명이면 게임 종료
+                if (this.gamesService.getGameMapCurrentPlayers(roomId) < 2) {
+                    this.emitCannotStartError(roomId);
+                    await this.gamesService.handleGameEndEvent(requestUser.player.room);
+                    const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(
+                        roomId,
+                    );
+                    this.announceUpdateRoomInfo(updateRoom, null, 'game-end');
                 }
-                // request user가 나간 후 게임 종료 상황 -> 타이머/턴정보 삭제 후 게임 종료
-                if (room.players.length === allTurns.length || room.players.length < 2) {
-                    return await this.handleEndGameByPlayerLeaveEvent(room, Next);
+                const room = await this.roomService.getOneRoomByRoomId(roomId);
+                return this.controlGameTurns(room);
+            }
+            const room = await this.roomService.getOneRoomByRoomId(roomId);
+            // 참여자가 나가고 플레이를 더 할 수 없을 때 게임 종료
+            if (room.players.length === 1) {
+                if (turn && turn.speechPlayer === requestUser.userInfo) {
+                    await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
                 }
+                await this.handleEndGameByPlayerLeaveEvent(requestUser.player.room);
             }
         }
-
-        // 유저가 나간 뒤 방의 정보 갱신
-        const updateRoom: UpdateRoomDto = await this.updateRoom(requestUser.player.roomInfo);
-
-        // 업데이트 된 방 정보 announce
-        await this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
+        console.log('handleLeaveRoomRequest, updateRoomInfo');
+        const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(roomId);
+        return this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
 
     async RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket) {
@@ -494,7 +461,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // [logic] update room while isGameOn is false
     // enter/leave/log-out/disconnect 이벤트 발생시 방 상태 업데이트 로직
-    async updateRoom(roomId: number): Promise<UpdateRoomDto> {
+    async updateRoomAfterEnterOrLeave(roomId: number): Promise<UpdateRoomDto> {
+        console.log('updateAfterEnterOrLeave');
+
         const room: Room = await this.roomService.getOneRoomByRoomId(roomId);
         // 1. 방에 player가 없다면 방 폭파 -> 폭파한 방의 id 리턴
         if (!room.players.length) {
@@ -577,6 +546,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             this.emitCannotStartError(room.roomId);
             // speechTimer 시작
             await this.controlTurnTimer(room, 'speechTime', turn);
+            // discussionTime 시작 전 발표자 평가할 플레이어 수 기록
+            await this.gamesService.updateTurnMapNumberOfEvaluators(room.roomId);
 
             // 이벤트 시작 전 게임 방 인원 체크
             this.emitCannotStartError(room.roomId);
@@ -603,10 +574,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             this.emitGameInfo(turn, roomId);
         }
 
-        if (event === 'discussionTimer') {
-            await this.gamesService.updateTurnMapNumberOfEvaluators(roomId);
-        }
-
         const currentTurn = event === 'startCount' ? null : turn.turn;
         // time-start event 처리
         this.emitTimeStartEvent(roomId, timer, event, currentTurn);
@@ -629,12 +596,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
     // [logic] 발표자가 퇴장한 경우,
-    async handleSpeechPlayerLeaveRoomRequest(turn: Turn, socket: Socket, next: NextFunction) {
-        try {
-            this.gamesService.breakTimer(turn.roomInfo);
-        } catch (err) {
-            next();
-        }
+    async handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket) {
+        this.gamesService.breakTimer(turn.roomInfo, Next);
         // 방안에 남은 player에게 에러 메세지 emit
         socket.to(`${turn.roomInfo}`).emit('error', {
             error: {
@@ -644,29 +607,27 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             },
         });
         // 탈주범의 turn 데이터 & timer 정보 삭제
-        await this.gamesService.deleteTurnByTurnId(turn);
+        await this.gamesService.deleteTurnByTurnId(turn.turnId);
     }
 
     // [logic] 게임 중 플레이어가 퇴장하여 게임을 종료해야 하는 경우
-    async handleEndGameByPlayerLeaveEvent(room: Room, next: NextFunction) {
-        try {
-            this.gamesService.breakTimer(room.roomId);
-        } catch (err) {
-            next();
-        }
+    async handleEndGameByPlayerLeaveEvent(room: Room) {
+        this.emitCannotStartError(room.roomId);
         room = await this.gamesService.handleGameEndEvent(room);
-        return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
+        const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(room.roomId);
+        return this.announceUpdateRoomInfo(updateRoom, null, 'game-end');
     }
 
     // emit events
     emitCannotStartError(roomId: number) {
         if (gameMap[roomId].currentPlayers < 2) {
+            this.gamesService.breakTimer(roomId, Next);
             this.server.to(`${roomId}`).emit('error', {
                 errorMessage: '게임을 시작할 수 없습니다.',
                 status: 400,
                 event: 'game',
             });
-            throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
+            // throw new SocketException('게임을 시작할 수 없습니다.', 400, 'game');
         }
     }
 
@@ -699,12 +660,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (event === 'discussionTimer') {
             turn = gameMap[roomId].remainingTurns.length ? turn + 1 : 0;
             key = 'nextTurn';
+            console.log('timeEndEvent, discussionTimer turn :', turn);
         }
 
         const data = {
             // [key] = currentTurn or nextTurn
             // startCount일때는 turn 정보가 없으므로, 1을 입력
-            [key]: turn ? turn : 1,
+            [key]: turn || turn === 0 ? turn : 1,
             timer,
             event,
         };

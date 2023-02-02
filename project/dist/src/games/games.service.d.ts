@@ -8,6 +8,7 @@ import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { Player } from './entities/player.entity';
+import { NextFunction } from 'express';
 export declare class GamesService {
     private readonly roomService;
     private readonly playersService;
@@ -22,7 +23,7 @@ export declare class GamesService {
     createTurn(roomId: number): Promise<Turn>;
     updateTurn(turn: Turn, timer: string): Promise<Turn>;
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
-    deleteTurnByTurnId(turn: Turn): Promise<void>;
+    deleteTurnByTurnId(turnId: number): Promise<void>;
     createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
     sumTurnScorePerPlayerByUserId(roomId: number, gameResultId: number): Promise<number>;
     createGameResultPerPlayer(roomId: any): Promise<GameResult[]>;
@@ -36,15 +37,17 @@ export declare class GamesService {
     createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number>;
     handleGameEndEvent(room: Room): Promise<Room>;
     createGameMap(room: Room): Promise<void>;
+    getGameMapCurrentTurn(roomId: number): any;
+    getGameMapCurrentPlayers(roomId: number): any;
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void;
-    deductGameMapCurrentPlayers(roomId: number): void;
+    reduceGameMapCurrentPlayers(roomId: number): void;
     popPlayerFromGameMapRemainingTurns(roomId: number): number;
-    deletePlayerFromGameMapRemainingTurns(roomId: number, userId: number): void;
-    mapGameResultIdWithUserId(roomId: number, gameResults: any): void;
+    removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void>;
+    mapGameResultIdWithUserId(roomId: number, gameResults: any): Promise<void>;
     createTurnMap(roomId: number): void;
     updateTurnMapSpeechScore(roomId: number, score: number): number;
     updateTurnMapTurnQuizRank(roomId: number): void;
     updateTurnMapNumberOfEvaluators(roomInfo: any): Promise<void>;
     createTimer(time: number, roomId: number): Promise<any>;
-    breakTimer(roomId: number): void;
+    breakTimer(roomId: number, next: NextFunction): void;
 }

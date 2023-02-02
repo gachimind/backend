@@ -19,6 +19,8 @@ import { gameMap } from './util/game.map';
 import { turnMap } from './util/turn.map';
 import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
+import { nextTick } from 'process';
+import { NextFunction } from 'express';
 
 const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
 
@@ -83,8 +85,8 @@ export class GamesService {
         await this.turnRepository.delete({ roomInfo });
     }
 
-    async deleteTurnByTurnId(turn: Turn): Promise<void> {
-        await this.turnRepository.delete({ turnId: turn.turnId });
+    async deleteTurnByTurnId(turnId: number): Promise<void> {
+        await this.turnRepository.delete({ turnId });
     }
 
     // ######################### TurnResults ##################################
@@ -179,14 +181,22 @@ export class GamesService {
         // 평가하지 않은 인원 수
         const unevaluatedNum: number =
             turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
+        console.log('speechPlayer unevaluatedNum :', unevaluatedNum);
+        console.log('number of evaluators :', turnMap[roomId].numberOfEvaluators);
+
         // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
         let sum: number = 0;
         while (turnMap[roomId].speechScore.length) {
             const pop = turnMap[roomId].speechScore.pop();
             sum += pop;
         }
+        console.log('speechPlayer sum :', sum);
         // 최종 점수 합계
-        const score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
+        let score: number = 0;
+        if (turnMap[roomId].numberOfEvaluators) {
+            score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
+            console.log('speechPlayer score :', score);
+        }
 
         const turnResult: TurnResultDataInsertDto = {
             gameResultInfo: gameMap[roomId].gameResultIdMap[turn.speechPlayer],
@@ -198,7 +208,11 @@ export class GamesService {
             isSpeech: true,
         };
         await this.createTurnResult(turnResult);
-        return unevaluatedNum * 5 * 20;
+
+        if (unevaluatedNum) {
+            return (unevaluatedNum * 5 * 20) / unevaluatedNum;
+        }
+        return 0;
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
@@ -223,6 +237,11 @@ export class GamesService {
         // delete all turn data
         await this.deleteTurnByRoomId(room.roomId);
 
+        // 게임 종료 후 방이 계속 남아있는지 확인
+        room = await this.roomService.getOneRoomByRoomId(room.roomId);
+        if (!room) {
+            return room;
+        }
         // set player's isReady to false
         let users: { userInfo: number; isReady: boolean }[] = [];
         for (let player of room.players) {
@@ -261,11 +280,19 @@ export class GamesService {
         return;
     }
 
+    getGameMapCurrentTurn(roomId: number) {
+        return gameMap[roomId].currentTurn.turn;
+    }
+
+    getGameMapCurrentPlayers(roomId: number) {
+        return gameMap[roomId].currentPlayers;
+    }
+
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void {
         gameMap[roomId].currentTurn = { turnId, turn };
     }
 
-    deductGameMapCurrentPlayers(roomId: number): void {
+    reduceGameMapCurrentPlayers(roomId: number): void {
         gameMap[roomId].currentPlayers--;
     }
 
@@ -273,18 +300,22 @@ export class GamesService {
         return gameMap[roomId].remainingTurns.pop();
     }
 
-    deletePlayerFromGameMapRemainingTurns(roomId: number, userId: number): void {
-        gameMap[roomId].remainingTurns = gameMap[roomId].remainingTurns.filter((e: number) => {
-            if (e !== userId) return e;
+    async removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void> {
+        new Promise((resolve) => {
+            gameMap[roomId].remainingTurns = gameMap[roomId].remainingTurns.filter((e: number) => {
+                if (e !== userId) return e;
+            });
+            resolve;
         });
     }
 
-    mapGameResultIdWithUserId(roomId: number, gameResults): void {
-        // 유저 아이디별 gameResult mapping
-        for (let result of gameResults) {
-            gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
-        }
-        return;
+    async mapGameResultIdWithUserId(roomId: number, gameResults): Promise<void> {
+        new Promise((resolve) => {
+            for (let result of gameResults) {
+                gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
+            }
+            resolve;
+        });
     }
 
     // TurnMap
@@ -321,7 +352,11 @@ export class GamesService {
         return gameTimerMap[roomId].timer;
     }
 
-    breakTimer(roomId: number) {
-        gameTimerMap[roomId].ac.abort();
+    breakTimer(roomId: number, next: NextFunction) {
+        try {
+            gameTimerMap[roomId].ac.abort();
+        } catch (ett) {
+            next();
+        }
     }
 }
