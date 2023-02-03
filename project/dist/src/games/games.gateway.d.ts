@@ -38,7 +38,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             roomId: any;
         };
     }): Promise<void>;
-    handleLeaveRoomEvent(socket: Socket): Promise<void>;
+    handleLeaveRoomEvent(socket: Socket): Promise<void | Room>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
@@ -63,8 +63,8 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
-    handleLeaveRoomRequest(socket: Socket | any, requestUser: SocketIdMap): Promise<void>;
-    RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket | any): Promise<void>;
+    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void | Room>;
+    RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoomAfterEnterOrLeave(roomId: number): Promise<UpdateRoomDto>;
     announceUpdateRoomInfo(roomUpdate: UpdateRoomDto, requestUser: SocketIdMap | null, event: string): Promise<void>;
@@ -72,7 +72,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     updateRoomListToMain(): Promise<void>;
     controlGameTurns(room: Room): Promise<Room>;
     controlTurnTimer(room: Room, eventName: string, turn?: Turn): Promise<void>;
-    handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket | any): Promise<void>;
+    handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket): Promise<void>;
     handleEndGameByPlayerLeaveEvent(room: Room): Promise<void>;
     emitCannotStartError(roomId: number): void;
     throwCannotStartError(roomId: number): void;

@@ -232,36 +232,32 @@ let GamesGateway = class GamesGateway {
     }
     async handleLeaveRoomRequest(socket, requestUser) {
         const roomId = requestUser.player.roomInfo;
+        await this.RemovePlayerFromRoom(requestUser.player.roomInfo, requestUser, socket);
+        const updateRoom = await this.updateRoomAfterEnterOrLeave(roomId);
+        this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         if (requestUser.player.room.isGameOn) {
             await this.gamesService.removePlayerFromGameMapRemainingTurns(roomId, requestUser.userInfo);
             this.gamesService.reduceGameMapCurrentPlayers(roomId);
-        }
-        await this.RemovePlayerFromRoom(requestUser.player.roomInfo, requestUser, socket);
-        if (requestUser.player.room.isGameOn) {
+            this.gamesService.popGameMapKeywords(roomId);
             const turn = requestUser.player.room.turns.at(-1);
             if (turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
                 turn.currentEvent === ('readyTime' || 'speechTime')) {
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
-                if (this.gamesService.getGameMapCurrentPlayers(roomId) > 2) {
+                if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
                     this.emitCannotStartError(roomId);
-                    await this.gamesService.handleGameEndEvent(requestUser.player.room);
-                    const updateRoom = await this.updateRoomAfterEnterOrLeave(roomId);
-                    this.announceUpdateRoomInfo(updateRoom, null, 'game-end');
+                    const room = await this.gamesService.handleGameEndEvent(requestUser.player.room);
+                    return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
                 }
-                const room = await this.roomService.getOneRoomByRoomId(roomId);
-                this.controlGameTurns(room);
+                return this.controlGameTurns(updateRoom.room);
             }
-            if (this.gamesService.getGameMapCurrentPlayers(roomId) === 2) {
+            if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
                 if (turn && turn.speechPlayer === requestUser.userInfo) {
                     await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
                 }
                 await this.handleEndGameByPlayerLeaveEvent(requestUser.player.room);
             }
         }
-        console.log('handleLeaveRoomRequest, updateRoomInfo');
-        const updateRoom = await this.updateRoomAfterEnterOrLeave(roomId);
-        return this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
     }
     async RemovePlayerFromRoom(roomId, requestUser, socket) {
         socket.leave(`${roomId}`);
@@ -318,7 +314,7 @@ let GamesGateway = class GamesGateway {
     async controlGameTurns(room) {
         await this.controlTurnTimer(room, 'startCount');
         while (game_map_1.gameMap[room.roomId].remainingTurns.length) {
-            this.emitCannotStartError(room.roomId);
+            this.throwCannotStartError(room.roomId);
             let turn = await this.gamesService.createTurn(room.roomId);
             await this.controlTurnTimer(room, 'readyTime', turn);
             await this.controlTurnTimer(room, 'speechTime', turn);
