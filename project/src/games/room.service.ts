@@ -9,8 +9,9 @@ import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter
 import { RoomDataInsertDto } from './dto/room.data.insert.dto';
 import { LoginUserToSocketIdMapDto } from 'src/games/dto/socketId-map.request.dto';
 import { Player } from './entities/player.entity';
-import { scoreMap } from './util/score.map';
-import { GamesService } from './games.service';
+import { gameMap } from './util/game.map';
+import { turnMap } from './util/turn.map';
+import { gameTimerMap } from './util/game-timer.map';
 
 @Injectable()
 export class RoomService {
@@ -53,6 +54,10 @@ export class RoomService {
     }
 
     async removeRoomByRoomId(roomId: number): Promise<number | any> {
+        // 방에 묶인 맵 정보 모두 삭제
+        delete gameMap[roomId];
+        delete turnMap[roomId];
+        delete gameTimerMap[roomId];
         await this.playerRepository.delete({ roomInfo: roomId });
         return await this.roomRepository.softDelete(roomId);
     }
@@ -83,8 +88,6 @@ export class RoomService {
 
         const roomInsert = await this.roomRepository.insert(newRoom);
         const roomId = roomInsert.identifiers[0].roomId;
-        scoreMap[roomId] = {};
-
         return roomId;
     }
 
@@ -194,11 +197,12 @@ export class RoomService {
         }
 
         // 모두 ready라면, 방의 isGameOn 상태를 업데이트
-        room = await this.updateRoomStatusByRoomId({
+        await this.updateRoomStatusByRoomId({
             roomId,
             isGameOn: true,
         });
 
+        // 전체 방 정보를 return
         return await this.getOneRoomByRoomId(roomId);
     }
 }

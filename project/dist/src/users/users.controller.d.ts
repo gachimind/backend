@@ -18,19 +18,7 @@ export declare class UsersController {
         data: string;
     }>;
     getUserDetailsByToken(headers: any): Promise<{
-        data: {
-            userId: number;
-            nickname: string;
-            profileImg: string;
-            isFirstLogin: boolean;
-            today: {
-                todayScore: number;
-                todayRank: number;
-            };
-            total: {
-                totalScore: number;
-            };
-        };
+        data: any;
     }>;
     userKeyword(headers: any): Promise<{
         data: {

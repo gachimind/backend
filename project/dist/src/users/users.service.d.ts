@@ -22,19 +22,7 @@ export declare class UsersService {
     createToken(user: User): Promise<string>;
     tokenValidate(token: string): Promise<any>;
     logout(token: string): Promise<import("typeorm").DeleteResult>;
-    getUserDetailsByToken(token: string): Promise<{
-        userId: number;
-        nickname: string;
-        profileImg: string;
-        isFirstLogin: boolean;
-        today: {
-            todayScore: number;
-            todayRank: number;
-        };
-        total: {
-            totalScore: number;
-        };
-    }>;
+    getUserDetailsByToken(token: string): Promise<any>;
     getTodayScoreByUserId(userInfo: number): Promise<number>;
     getAllUserScore(userInfo: number): Promise<number>;
     getUserTotalScore(userInfo: number): Promise<number>;

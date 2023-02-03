@@ -15,6 +15,7 @@ export declare class PlayersService {
     getUserBySocketId(socketId: string): Promise<SocketIdMap>;
     getUserByUserID(userId: number): Promise<SocketIdMap>;
     getPlayerBySocketId(socketInfo: string): Promise<Player>;
+    getPlayerByUserId(userInfo: number): Promise<Player>;
     getAllPlayersUserIdByRoomID(roomId: number): Promise<Player[]>;
     updatePlayerStatusByUserId(user: any): Promise<Player>;
     updateAllPlayerStatusByUserId(users: {

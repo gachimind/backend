@@ -24,15 +24,11 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], TurnResultDataInsertDto.prototype, "turn", void 0);
+], TurnResultDataInsertDto.prototype, "turnId", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], TurnResultDataInsertDto.prototype, "userId", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], TurnResultDataInsertDto.prototype, "nickname", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)

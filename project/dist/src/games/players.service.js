@@ -57,6 +57,13 @@ let PlayersService = class PlayersService {
         });
         return player;
     }
+    async getPlayerByUserId(userInfo) {
+        const player = await this.playerRepository.findOne({
+            where: { userInfo },
+            select: { user: { nickname: true } },
+        });
+        return player;
+    }
     async getAllPlayersUserIdByRoomID(roomId) {
         return await this.playerRepository.find({
             where: { roomInfo: roomId },
@@ -84,17 +91,13 @@ let PlayersService = class PlayersService {
         return await this.socketIdMapRepository.save(user);
     }
     async createTodayResult(userInfo) {
-        const today = (0, today_date_constructor_1.getTodayDate)();
+        const today = (0, today_date_constructor_1.getDate)();
         const todayResult = await this.todayResultRepository.findOne({
             where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
-            cache: 5 * 60 * 1000,
+            select: { todayResultId: true, userInfo: true, todayScore: true, createdAt: true },
         });
         if (!todayResult) {
             await this.todayResultRepository.save({ userInfo, todayScore: 0 });
-            await this.todayResultRepository.findOne({
-                where: { userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
-                cache: 5 * 60 * 1000,
-            });
         }
     }
     async setPlayerReady(player) {
