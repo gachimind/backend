@@ -1,11 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 import { Turn } from './entities/turn.entity';
+import { gameMap } from './util/game.map';
+import { turnMap } from './util/turn.map';
 
 @Injectable()
 export class ChatService {
     checkAnswer(turn: Turn, message: string): boolean {
-        if (message != turn.keyword) {
+        const answer: Keyword = turnMap[turn.roomInfo].keyword;
+        let answerEng: string;
+        answer.keywordEng
+            ? (answerEng = answer.keywordEng.toLocaleLowerCase().replace(/ /g, ''))
+            : null;
+
+        const answerKor = answer.keywordKor.replace(/ /g, '');
+        const englishCheckReg = /^[a-zA-Z]+$/;
+        if (englishCheckReg.test(message)) {
+            message = message.toLocaleLowerCase().replace(/ /g, '');
+        }
+        message = message.replace(/ /g, '');
+
+        if (message != answerKor || (answerEng && message != answerEng)) {
             return false;
         }
         return true;
