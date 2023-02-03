@@ -30,7 +30,7 @@ const dataSource = new typeorm_1.DataSource({
         gameResult_entity_1.GameResult,
         todayResult_entity_1.TodayResult,
     ],
-    synchronize: true,
+    synchronize: false,
     logging: true,
     timezone: 'Z',
     cache: true,

@@ -433,8 +433,21 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                         'game-end',
                     );
                 }
+                // 방에 여러명이 남은 상태에서 마지막 발표자가 나가면 게임 종료
+                if (!this.gamesService.getGameMapRemainingTurns(roomId)) {
+                    const room = await this.gamesService.handleGameEndEvent(
+                        requestUser.player.room,
+                    );
+                    return this.announceUpdateRoomInfo(
+                        { room, state: 'updated' },
+                        null,
+                        'game-end',
+                    );
+                }
                 // 다음 턴을 생성하여 게임을 지속
-                return this.controlGameTurns(updateRoom.room);
+                if (this.gamesService.getGameMapRemainingTurns(roomId)) {
+                    return this.controlGameTurns(updateRoom.room);
+                }
             }
 
             // 발표 타임이 아닐때 발표자가 나가거나, 참여자가 나간 경우 : 게임 종료?
