@@ -19,7 +19,7 @@ KeywordModule = __decorate([
         imports: [typeorm_1.TypeOrmModule.forFeature([keyword_entities_1.Keyword])],
         controllers: [keyword_controller_1.KeywordController],
         providers: [keyword_service_1.KeywordService],
-        exports: [typeorm_1.TypeOrmModule],
+        exports: [typeorm_1.TypeOrmModule, keyword_service_1.KeywordService],
     })
 ], KeywordModule);
 exports.KeywordModule = KeywordModule;

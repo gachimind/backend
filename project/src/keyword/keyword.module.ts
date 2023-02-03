@@ -7,6 +7,6 @@ import { KeywordController } from './keyword.controller';
     imports: [TypeOrmModule.forFeature([Keyword])],
     controllers: [KeywordController],
     providers: [KeywordService],
-    exports: [TypeOrmModule],
+    exports: [TypeOrmModule, KeywordService],
 })
 export class KeywordModule {}

@@ -9,7 +9,6 @@ export class JwtAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const authorization = request.headers.authorization;
-        console.log(authorization);
 
         if (!authorization) {
             throw new HttpException('확인되지 않는 유저입니다.', HttpStatus.UNAUTHORIZED);

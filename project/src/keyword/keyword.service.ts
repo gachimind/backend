@@ -12,6 +12,40 @@ export class KeywordService {
         private readonly keywordRepository: Repository<Keyword>,
     ) {}
 
+    async cachingKeywords(): Promise<Keyword[]> {
+        const allKeywords: Keyword[] = await this.keywordRepository.find({
+            select: { keywordKor: true, keywordEng: true },
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+
+        return allKeywords;
+    }
+
+    async cachingKeywordsCount(): Promise<number> {
+        const keywordsCount: number = await this.keywordRepository.count({
+            cache: 1000 * 60 * 60 * 24 * 7,
+        });
+
+        return keywordsCount;
+    }
+
+    async generateRandomKeyword(selectNumber: number): Promise<Keyword[]> {
+        const allKeywords: Keyword[] = await this.cachingKeywords();
+        const count: number = await this.cachingKeywordsCount();
+
+        //총 문제수, 뽑을 숫자
+        const randomKeywordArray: Keyword[] = [];
+        const randomNumberArray: number[] = [];
+        for (let i = 0; i < selectNumber; i++) {
+            let randomNum = Math.floor(Math.random() * count);
+            if (!randomNumberArray.includes(randomNum)) {
+                randomNumberArray.push(randomNum);
+                randomKeywordArray.push(allKeywords[randomNum]);
+            }
+        }
+        return randomKeywordArray;
+    }
+
     async getData() {
         const browser = await puppeteer.launch({ headless: false });
         // 작동 중인 화면 보고 싶지 않을 때는 headless true로 변경할 것

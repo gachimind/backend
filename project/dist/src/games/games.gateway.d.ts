@@ -38,7 +38,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
             roomId: any;
         };
     }): Promise<void>;
-    handleLeaveRoomEvent(socket: Socket): Promise<void>;
+    handleLeaveRoomEvent(socket: Socket): Promise<void | Room>;
     handleReadyEvent(socket: Socket): Promise<void>;
     handleStartEvent(socket: Socket): Promise<void>;
     sendChatRequest(socket: Socket, { data }: {
@@ -63,7 +63,7 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
         data: any;
     }): Promise<void>;
     socketAuthentication(socketId: string, event: string): Promise<SocketIdMap>;
-    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void>;
+    handleLeaveRoomRequest(socket: Socket, requestUser: SocketIdMap): Promise<void | Room>;
     RemovePlayerFromRoom(roomId: number, requestUser: SocketIdMap | null, socket: Socket): Promise<void>;
     updateHostPlayer(updateRoom: Room): Promise<boolean>;
     updateRoomAfterEnterOrLeave(roomId: number): Promise<UpdateRoomDto>;

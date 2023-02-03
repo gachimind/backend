@@ -4,7 +4,7 @@ exports.winstonLogger = exports.dailyOptions = exports.consoleOptions = void 0;
 const nest_winston_1 = require("nest-winston");
 const winstonDaily = require("winston-daily-rotate-file");
 const winston = require("winston");
-const logDir = __dirname + '../../logs';
+const logDir = __dirname + '/../../../../logs';
 const { simple, combine, timestamp, colorize } = winston.format;
 exports.consoleOptions = {
     level: process.env.NODE_ENV === 'production' ? 'http' : 'silly',

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import { setTimeout } from 'timers/promises';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
+import { KeywordService } from 'src/keyword/keyword.service';
 import { PlayersService } from './players.service';
 import { RoomService } from './room.service';
 import { User } from 'src/users/entities/user.entity';
@@ -21,14 +22,14 @@ import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
 import { nextTick } from 'process';
 import { NextFunction } from 'express';
-
-const keywords = ['MVC패턴', 'OOP', 'STACK', 'QUEUE', '함수형 프로그래밍', '메모리 계층'];
+import { Keyword } from 'src/keyword/entities/keyword.entities';
 
 @Injectable()
 export class GamesService {
     constructor(
         private readonly roomService: RoomService,
         private readonly playersService: PlayersService,
+        private readonly keywordsService: KeywordService,
         @InjectRepository(Player)
         private readonly playersRepository: Repository<Player>,
         @InjectRepository(Turn)
@@ -57,6 +58,7 @@ export class GamesService {
         const turnIndex: number = gameMap[roomId].currentTurn.turn;
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
+        const keyword: Keyword = this.popGameMapKeywords(roomId);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
@@ -65,13 +67,13 @@ export class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keywords[turnIndex],
-            hint: null,
+            keyword: keyword.keywordKor,
+            hint: keyword.keywordEng,
         };
 
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId);
+        this.createTurnMap(roomId, keyword);
 
         return turn;
     }
@@ -105,7 +107,7 @@ export class GamesService {
     }
 
     // ######################### GameResult ##################################
-    async createGameResultPerPlayer(roomId): Promise<GameResult[]> {
+    async createGameResultPerPlayer(roomId: number): Promise<GameResult[]> {
         const allPlayersInRoom = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
         let data = [];
@@ -114,10 +116,6 @@ export class GamesService {
             const todayResult: TodayResult = await this.todayResultRepository.findOne({
                 where: { userInfo: player.userInfo, createdAt: MoreThan(today) },
                 select: { todayResultId: true, createdAt: true },
-            });
-            console.log('find TodayResult to make gameResult :', {
-                id: todayResult.todayResultId,
-                createdAt: todayResult.createdAt,
             });
 
             data.push({
@@ -176,13 +174,9 @@ export class GamesService {
     }
 
     async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
-        console.log('createSpeechPlayerTurnResult', 'speechPlayer :', turn.speechPlayer);
-
         // 평가하지 않은 인원 수
         const unevaluatedNum: number =
             turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
-        console.log('speechPlayer unevaluatedNum :', unevaluatedNum);
-        console.log('number of evaluators :', turnMap[roomId].numberOfEvaluators);
 
         // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
         let sum: number = 0;
@@ -190,12 +184,10 @@ export class GamesService {
             const pop = turnMap[roomId].speechScore.pop();
             sum += pop;
         }
-        console.log('speechPlayer sum :', sum);
         // 최종 점수 합계
         let score: number = 0;
         if (turnMap[roomId].numberOfEvaluators) {
             score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
-            console.log('speechPlayer score :', score);
         }
 
         const turnResult: TurnResultDataInsertDto = {
@@ -263,11 +255,14 @@ export class GamesService {
 
     // GameMap
     async createGameMap(room: Room): Promise<void> {
+        const keywords = await this.keywordsService.generateRandomKeyword(room.players.length);
+
         gameMap[room.roomId] = {
             currentTurn: { turnId: null, turn: 0 },
             currentPlayers: room.players.length,
             remainingTurns: [], // pop으로 사용
             gameResultIdMap: {},
+            keywords,
         };
 
         // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
@@ -280,11 +275,21 @@ export class GamesService {
         return;
     }
 
-    getGameMapCurrentTurn(roomId: number) {
+    popGameMapKeywords(roomId: number): Keyword {
+        return gameMap[roomId].keywords.pop();
+    }
+    getGameMapKeywordsCount(roomId: number): number {
+        return gameMap[roomId].keywords.length;
+    }
+    getGameMapRemainingTurns(roomId: number): number {
+        return gameMap[roomId].remainingTurns.length;
+    }
+
+    getGameMapCurrentTurn(roomId: number): number {
         return gameMap[roomId].currentTurn.turn;
     }
 
-    getGameMapCurrentPlayers(roomId: number) {
+    getGameMapCurrentPlayers(roomId: number): number {
         return gameMap[roomId].currentPlayers;
     }
 
@@ -320,8 +325,8 @@ export class GamesService {
 
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
-    createTurnMap(roomId: number): void {
-        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0 };
+    createTurnMap(roomId: number, keyword: Keyword): void {
+        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0, keyword };
     }
 
     updateTurnMapSpeechScore(roomId: number, score: number): number {

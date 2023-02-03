@@ -2,7 +2,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/entities/user.entity';
@@ -63,7 +62,6 @@ import { LoggerMiddleware } from './logger/logger.middleware';
         PassportModule.register({ session: true }),
         AdminModule,
     ],
-    controllers: [AppController],
     providers: [ConfigService],
 })
 export class AppModule implements NestModule {

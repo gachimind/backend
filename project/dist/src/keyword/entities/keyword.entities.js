@@ -18,15 +18,15 @@ __decorate([
     __metadata("design:type", Number)
 ], Keyword.prototype, "keywordId", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)('varchar'),
     __metadata("design:type", String)
 ], Keyword.prototype, "keywordKor", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Keyword.prototype, "keywordEng", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Keyword.prototype, "hint", void 0);
 Keyword = __decorate([

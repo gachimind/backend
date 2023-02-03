@@ -2,7 +2,7 @@ import { utilities, WinstonModule } from 'nest-winston';
 import * as winstonDaily from 'winston-daily-rotate-file';
 import * as winston from 'winston';
 
-const logDir = __dirname + '../../logs';
+const logDir = __dirname + '/../../../../logs';
 const { simple, combine, timestamp, colorize } = winston.format;
 
 // TODO : printf 함수 사용해서 원하는대로 로깅 하기

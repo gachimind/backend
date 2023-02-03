@@ -72,8 +72,18 @@ export class RoomService {
         }
 
         // 비밀방에 true인데, 방 비밀번호가 없는 경우
-        if (room.isSecretRoom && !room.roomPassword) {
-            throw new SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
+        if (room.isSecretRoom) {
+            if (!room.roomPassword) {
+                throw new SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
+            }
+
+            if (isNaN(room.roomPassword) || room.roomPassword.toString().length !== 4) {
+                throw new SocketException(
+                    '방 비밀번호를 생성 규칙을 확인해주세요.',
+                    400,
+                    'create-room',
+                );
+            }
         }
         // 비밀번호가 있다면, 비밀방 여부를 무조건 true로 만들기
         if (room.roomPassword) {
@@ -100,6 +110,10 @@ export class RoomService {
 
         if (!room) {
             throw new SocketException('요청하신 방을 찾을 수 없습니다.', 404, 'enter-room');
+        }
+        // 1. 게임 중인지 확인
+        if (room.isGameOn) {
+            throw new SocketException('이미 게임이 시작된 방입니다.', 400, 'enter-room');
         }
 
         // 2. 정원 초과 확인
