@@ -60,11 +60,9 @@ let GamesGateway = class GamesGateway {
         }
         const prevLogInInfo = await this.playersService.getUserByUserID(requestUser.userId);
         if (prevLogInInfo) {
-            await this.playersService.removeSocketBySocketId(prevLogInInfo.socketId, prevLogInInfo.userInfo);
             const prevSockets = await this.server
                 .in(prevLogInInfo.socketId)
                 .fetchSockets();
-            await this.handleLeaveRoomRequest(prevSockets[0], prevLogInInfo);
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
                     error: {

@@ -100,15 +100,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         );
 
         if (prevLogInInfo) {
-            await this.playersService.removeSocketBySocketId(
-                prevLogInInfo.socketId,
-                prevLogInInfo.userInfo,
-            );
-
             const prevSockets: RemoteSocket<any, any>[] = await this.server
                 .in(prevLogInInfo.socketId)
                 .fetchSockets();
-            await this.handleLeaveRoomRequest(prevSockets[0], prevLogInInfo);
             if (prevSockets.length) {
                 prevSockets[0].emit('error', {
                     error: {
