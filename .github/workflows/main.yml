@@ -1,9 +1,9 @@
 name: Our CI
 on:
   push:
-    branches: [release]
+    branches: [main]
   pull_request:
-    branches: [release]
+    branches: [main]
 env:
   AWS_REGION: ap-northeast-2
   S3_BUCKET_NAME: gachimindbucket
