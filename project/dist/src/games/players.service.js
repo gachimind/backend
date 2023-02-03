@@ -69,7 +69,8 @@ let PlayersService = class PlayersService {
     async updateAllPlayerStatusByUserId(users) {
         return await this.playerRepository.save(users);
     }
-    async removeSocketBySocketId(socketId) {
+    async removeSocketBySocketId(socketId, userId) {
+        await this.removePlayerByUserId(userId);
         return await this.socketIdMapRepository.softDelete(socketId);
     }
     async removePlayerByUserId(userId) {

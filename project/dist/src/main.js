@@ -7,8 +7,11 @@ const common_1 = require("@nestjs/common");
 const http_exception_filter_1 = require("./common/exceptionFilters/http-exception.filter");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
+const winston_util_1 = require("./logger/winston.util");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: winston_util_1.winstonLogger,
+    });
     const port = process.env.PORT || 3000;
     app.enableCors({ origin: '*' });
     app.use(cookieParser());

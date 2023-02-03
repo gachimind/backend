@@ -21,7 +21,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Player.prototype, "userInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { eager: true, onDelete: 'CASCADE' }),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.User, { eager: true }),
     (0, typeorm_1.JoinColumn)({ name: 'userInfo' }),
     __metadata("design:type", user_entity_1.User)
 ], Player.prototype, "user", void 0);
@@ -30,7 +30,7 @@ __decorate([
     __metadata("design:type", String)
 ], Player.prototype, "socketInfo", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap, { onDelete: 'CASCADE', eager: true }),
+    (0, typeorm_1.OneToOne)(() => socketIdMap_entity_1.SocketIdMap, { eager: true }),
     (0, typeorm_1.JoinColumn)({ name: 'socketInfo' }),
     __metadata("design:type", socketIdMap_entity_1.SocketIdMap)
 ], Player.prototype, "socket", void 0);
@@ -39,9 +39,7 @@ __decorate([
     __metadata("design:type", Number)
 ], Player.prototype, "roomInfo", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId, {
-        onDelete: 'CASCADE',
-    }),
+    (0, typeorm_1.ManyToOne)(() => room_entity_1.Room, (room) => room.roomId),
     (0, typeorm_1.JoinColumn)({ name: 'roomInfo' }),
     __metadata("design:type", room_entity_1.Room)
 ], Player.prototype, "room", void 0);

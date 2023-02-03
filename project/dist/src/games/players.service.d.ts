@@ -21,7 +21,7 @@ export declare class PlayersService {
         userInfo: number;
         isReady: boolean;
     }[]): Promise<Player[]>;
-    removeSocketBySocketId(socketId: string): Promise<number | any>;
+    removeSocketBySocketId(socketId: string, userId: number): Promise<number | any>;
     removePlayerByUserId(userId: number | User): Promise<number | any>;
     socketIdMapToLoginUser(userInfo: number, socketId: string): Promise<LoginUserToSocketIdMapDto & SocketIdMap>;
     createTodayResult(userInfo: number): Promise<void>;

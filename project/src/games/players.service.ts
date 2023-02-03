@@ -74,7 +74,8 @@ export class PlayersService {
         return await this.playerRepository.save(users);
     }
 
-    async removeSocketBySocketId(socketId: string): Promise<number | any> {
+    async removeSocketBySocketId(socketId: string, userId: number): Promise<number | any> {
+        await this.removePlayerByUserId(userId);
         return await this.socketIdMapRepository.softDelete(socketId);
     }
 

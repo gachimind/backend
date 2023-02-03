@@ -26,7 +26,7 @@ let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)
         const user = {
             kakaoUserId: profile._json.id,
             email: profile._json.kakao_account.email || `email${profile._json.id}@gachimind.com`,
-            nickname: profile._json.properties.nickname,
+            nickname: profile._json.properties.nickname.substr(0, 9),
             profileImg: 'white-red',
         };
         done(null, user);
