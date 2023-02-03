@@ -23,6 +23,7 @@ export declare class GamesService {
     constructor(roomService: RoomService, playersService: PlayersService, keywordsService: KeywordService, playersRepository: Repository<Player>, turnRepository: Repository<Turn>, turnResultRepository: Repository<TurnResult>, gameResultRepository: Repository<GameResult>, todayResultRepository: Repository<TodayResult>);
     getTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
     getAllTurnsByRoomId(roomInfo: number): Promise<Turn[]>;
+    getTurnByTurnId(turnId: number): Promise<Turn>;
     createTurn(roomId: number): Promise<Turn>;
     updateTurn(turn: Turn, timer: string): Promise<Turn>;
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
@@ -43,6 +44,7 @@ export declare class GamesService {
     popGameMapKeywords(roomId: number): Keyword;
     getGameMapKeywordsCount(roomId: number): number;
     getGameMapRemainingTurns(roomId: number): number;
+    getGameMapCurrentTurnId(roomId: number): any;
     getGameMapCurrentTurn(roomId: number): number;
     getGameMapCurrentPlayers(roomId: number): number;
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void;
@@ -50,7 +52,8 @@ export declare class GamesService {
     popPlayerFromGameMapRemainingTurns(roomId: number): number;
     removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void>;
     mapGameResultIdWithUserId(roomId: number, gameResults: any): Promise<void>;
-    createTurnMap(roomId: number, keyword: Keyword): void;
+    createTurnMap(roomId: number, turnId: number, keyword: Keyword): void;
+    getTurnMapKeyword(roomId: number): Keyword;
     updateTurnMapSpeechScore(roomId: number, score: number): number;
     updateTurnMapTurnQuizRank(roomId: number): void;
     updateTurnMapNumberOfEvaluators(roomInfo: any): Promise<void>;

@@ -11,14 +11,16 @@ const common_1 = require("@nestjs/common");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 let ChatService = class ChatService {
     checkAnswer(turn, message) {
-        if (message != turn.keyword) {
+        message = message.replace(/ /g, '').toLowerCase();
+        const keyword = turn.keyword.replace(/ /g, '').toLowerCase();
+        if (message != keyword) {
             return false;
         }
         return true;
     }
     FilterAnswer(turn, userId, message) {
         if (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime') {
-            if (turn.speechPlayer !== userId && turn.currentEvent === 'readyTime')
+            if (turn.speechPlayer !== userId && turn.currentEvent !== 'speechTime')
                 return false;
             const isAnswer = this.checkAnswer(turn, message);
             if (isAnswer) {
