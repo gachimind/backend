@@ -272,15 +272,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         let type = 'chat';
         const room: Room = requestUser.player.room;
         const turn = await this.gamesService.getTurnByTurnId(
-            this.gamesService.getGameMapCurrentTurn(room.roomId),
+            this.gamesService.getGameMapCurrentTurnId(room.roomId),
         );
-        const keyword = this.gamesService.getTurnMapKeyword(room.roomId);
+        console.log(turn, this.gamesService.getGameMapCurrentTurnId(room.roomId));
 
         // room이 game상태일때만 정답 검사
         if (room.isGameOn && turn) {
             const isAnswer: boolean = this.chatService.FilterAnswer(
                 turn,
-                keyword,
                 requestUser.userInfo,
                 data.message,
             );
@@ -417,7 +416,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             }
             // 발표자가 발표 타임에 나간 경우 : 턴 종료 -> 게임 종료?
             const turn = await this.gamesService.getTurnByTurnId(
-                this.gamesService.getGameMapCurrentTurn(roomId),
+                this.gamesService.getGameMapCurrentTurnId(roomId),
             );
             if (
                 turn &&
