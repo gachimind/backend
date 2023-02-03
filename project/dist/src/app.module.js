@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const users_module_1 = require("./users/users.module");
 const games_module_1 = require("./games/games.module");
 const config_1 = require("@nestjs/config");
-const app_controller_1 = require("./app.controller");
 const passport_1 = require("@nestjs/passport");
 const typeorm_1 = require("@nestjs/typeorm");
 const user_entity_1 = require("./users/entities/user.entity");
@@ -68,7 +67,6 @@ AppModule = __decorate([
             passport_1.PassportModule.register({ session: true }),
             admin_module_1.AdminModule,
         ],
-        controllers: [app_controller_1.AppController],
         providers: [config_1.ConfigService],
     })
 ], AppModule);

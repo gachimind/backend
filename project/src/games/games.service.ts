@@ -59,7 +59,6 @@ export class GamesService {
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
         const keyword: Keyword = this.popGameMapKeywords(roomId);
-        console.log('createTurn :', keyword);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
@@ -118,10 +117,6 @@ export class GamesService {
                 where: { userInfo: player.userInfo, createdAt: MoreThan(today) },
                 select: { todayResultId: true, createdAt: true },
             });
-            console.log('find TodayResult to make gameResult :', {
-                id: todayResult.todayResultId,
-                createdAt: todayResult.createdAt,
-            });
 
             data.push({
                 roomId,
@@ -179,13 +174,9 @@ export class GamesService {
     }
 
     async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
-        console.log('createSpeechPlayerTurnResult', 'speechPlayer :', turn.speechPlayer);
-
         // 평가하지 않은 인원 수
         const unevaluatedNum: number =
             turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
-        console.log('speechPlayer unevaluatedNum :', unevaluatedNum);
-        console.log('number of evaluators :', turnMap[roomId].numberOfEvaluators);
 
         // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
         let sum: number = 0;
@@ -193,12 +184,10 @@ export class GamesService {
             const pop = turnMap[roomId].speechScore.pop();
             sum += pop;
         }
-        console.log('speechPlayer sum :', sum);
         // 최종 점수 합계
         let score: number = 0;
         if (turnMap[roomId].numberOfEvaluators) {
             score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
-            console.log('speechPlayer score :', score);
         }
 
         const turnResult: TurnResultDataInsertDto = {
@@ -283,20 +272,24 @@ export class GamesService {
             }
             resolve;
         });
-        console.log(gameMap[room.roomId]);
-
         return;
     }
 
     popGameMapKeywords(roomId: number): Keyword {
         return gameMap[roomId].keywords.pop();
     }
+    getGameMapKeywordsCount(roomId: number): number {
+        return gameMap[roomId].keywords.length;
+    }
+    getGameMapRemainingTurns(roomId: number): number {
+        return gameMap[roomId].remainingTurns.length;
+    }
 
-    getGameMapCurrentTurn(roomId: number) {
+    getGameMapCurrentTurn(roomId: number): number {
         return gameMap[roomId].currentTurn.turn;
     }
 
-    getGameMapCurrentPlayers(roomId: number) {
+    getGameMapCurrentPlayers(roomId: number): number {
         return gameMap[roomId].currentPlayers;
     }
 

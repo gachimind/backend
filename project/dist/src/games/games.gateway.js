@@ -166,7 +166,6 @@ let GamesGateway = class GamesGateway {
                 data.message = `${requestUser.user.nickname}님이 정답을 맞추셨습니다!`;
             }
         }
-        console.log('채팅 내보낼 내용:', data.message, type);
         return this.emitReceiveChatEvent(room.roomId, requestUser, data.message, type);
     }
     async handleTurnEvaluation(socket, { data }) {
@@ -238,11 +237,14 @@ let GamesGateway = class GamesGateway {
         if (requestUser.player.room.isGameOn) {
             await this.gamesService.removePlayerFromGameMapRemainingTurns(roomId, requestUser.userInfo);
             this.gamesService.reduceGameMapCurrentPlayers(roomId);
-            this.gamesService.popGameMapKeywords(roomId);
+            if (this.gamesService.getGameMapKeywordsCount(roomId) >
+                this.gamesService.getGameMapRemainingTurns(roomId)) {
+                this.gamesService.popGameMapKeywords(roomId);
+            }
             const turn = requestUser.player.room.turns.at(-1);
             if (turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
-                turn.currentEvent === ('readyTime' || 'speechTime')) {
+                (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')) {
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
                 if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
                     this.emitCannotStartError(roomId);
@@ -273,7 +275,6 @@ let GamesGateway = class GamesGateway {
         return false;
     }
     async updateRoomAfterEnterOrLeave(roomId) {
-        console.log('updateAfterEnterOrLeave');
         const room = await this.roomService.getOneRoomByRoomId(roomId);
         if (!room.players.length) {
             await this.roomService.removeRoomByRoomId(roomId);
@@ -286,11 +287,7 @@ let GamesGateway = class GamesGateway {
         return { room: updateRoom, state: 'updated' };
     }
     async announceUpdateRoomInfo(roomUpdate, requestUser, event) {
-        if (event === 'game-end') {
-            console.log('game-end announcement');
-        }
         if (roomUpdate.state === 'updated') {
-            console.log('update state');
             this.updateRoomInfoToRoom(roomUpdate.room, requestUser, event);
         }
         await this.updateRoomListToMain();
@@ -339,7 +336,6 @@ let GamesGateway = class GamesGateway {
         await this.gamesService.createTimer(timer, roomId);
         if (event === 'discussionTimer') {
             const extraScore = await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
-            console.log('controlTurnTimer, discussionTime end, 발표자 추가 점수 :', extraScore);
             this.emitScoreEvent(roomId, turn.speechPlayer, extraScore);
         }
         this.emitTimeEndEvent(roomId, timer, event, currentTurn);
@@ -409,7 +405,6 @@ let GamesGateway = class GamesGateway {
         if (event === 'discussionTimer') {
             turn = game_map_1.gameMap[roomId].remainingTurns.length ? turn + 1 : 0;
             key = 'nextTurn';
-            console.log('timeEndEvent, discussionTimer turn :', turn);
         }
         const data = {
             [key]: turn || turn === 0 ? turn : 1,
@@ -419,7 +414,6 @@ let GamesGateway = class GamesGateway {
         this.server.to(`${roomId}`).emit('time-end', { data });
     }
     emitReceiveChatEvent(roomId, requestUser, message, type) {
-        console.log('emit-chat');
         const eventUserInfo = (0, event_user_info_constructor_1.eventUserInfoConstructor)(requestUser);
         this.server
             .to(`${roomId}`)

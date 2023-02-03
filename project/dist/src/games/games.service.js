@@ -55,7 +55,6 @@ let GamesService = class GamesService {
         const speechPlayer = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
         const keyword = this.popGameMapKeywords(roomId);
-        console.log('createTurn :', keyword);
         const newTurnData = {
             roomInfo: roomId,
             turn: turnIndex + 1,
@@ -101,10 +100,6 @@ let GamesService = class GamesService {
                 where: { userInfo: player.userInfo, createdAt: (0, typeorm_2.MoreThan)(today) },
                 select: { todayResultId: true, createdAt: true },
             });
-            console.log('find TodayResult to make gameResult :', {
-                id: todayResult.todayResultId,
-                createdAt: todayResult.createdAt,
-            });
             data.push({
                 roomId,
                 userInfo: player.userInfo,
@@ -144,20 +139,15 @@ let GamesService = class GamesService {
         return await this.createTurnResult(turnResult);
     }
     async createSpeechPlayerTurnResult(roomId, turn) {
-        console.log('createSpeechPlayerTurnResult', 'speechPlayer :', turn.speechPlayer);
         const unevaluatedNum = turn_map_1.turnMap[roomId].numberOfEvaluators - turn_map_1.turnMap[roomId].speechScore.length;
-        console.log('speechPlayer unevaluatedNum :', unevaluatedNum);
-        console.log('number of evaluators :', turn_map_1.turnMap[roomId].numberOfEvaluators);
         let sum = 0;
         while (turn_map_1.turnMap[roomId].speechScore.length) {
             const pop = turn_map_1.turnMap[roomId].speechScore.pop();
             sum += pop;
         }
-        console.log('speechPlayer sum :', sum);
         let score = 0;
         if (turn_map_1.turnMap[roomId].numberOfEvaluators) {
             score = ((sum + unevaluatedNum * 5) * 20) / turn_map_1.turnMap[roomId].numberOfEvaluators;
-            console.log('speechPlayer score :', score);
         }
         const turnResult = {
             gameResultInfo: game_map_1.gameMap[roomId].gameResultIdMap[turn.speechPlayer],
@@ -218,11 +208,16 @@ let GamesService = class GamesService {
             }
             resolve;
         });
-        console.log(game_map_1.gameMap[room.roomId]);
         return;
     }
     popGameMapKeywords(roomId) {
         return game_map_1.gameMap[roomId].keywords.pop();
+    }
+    getGameMapKeywordsCount(roomId) {
+        return game_map_1.gameMap[roomId].keywords.length;
+    }
+    getGameMapRemainingTurns(roomId) {
+        return game_map_1.gameMap[roomId].remainingTurns.length;
     }
     getGameMapCurrentTurn(roomId) {
         return game_map_1.gameMap[roomId].currentTurn.turn;

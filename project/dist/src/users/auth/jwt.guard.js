@@ -20,7 +20,6 @@ let JwtAuthGuard = class JwtAuthGuard {
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
         const authorization = request.headers.authorization;
-        console.log(authorization);
         if (!authorization) {
             throw new common_2.HttpException('확인되지 않는 유저입니다.', common_1.HttpStatus.UNAUTHORIZED);
         }

@@ -41,8 +41,10 @@ export declare class GamesService {
     handleGameEndEvent(room: Room): Promise<Room>;
     createGameMap(room: Room): Promise<void>;
     popGameMapKeywords(roomId: number): Keyword;
-    getGameMapCurrentTurn(roomId: number): any;
-    getGameMapCurrentPlayers(roomId: number): any;
+    getGameMapKeywordsCount(roomId: number): number;
+    getGameMapRemainingTurns(roomId: number): number;
+    getGameMapCurrentTurn(roomId: number): number;
+    getGameMapCurrentPlayers(roomId: number): number;
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void;
     reduceGameMapCurrentPlayers(roomId: number): void;
     popPlayerFromGameMapRemainingTurns(roomId: number): number;
