@@ -1,13 +1,7 @@
-// export function getTodayDate() {
-//     const date = new Date();
-//     const dateString = date.toDateString();
-//     const newDate = new Date(`${dateString} 0:00:00`);
-//     return newDate;
-// }
-
 export function getDate() {
     const date = new Date();
-    const dateString = date.toISOString();
+    const kDate = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    const dateString = kDate.toISOString();
     dateString.split('T')[0];
     return new Date(`${dateString.split('T')[0]}`);
 }
