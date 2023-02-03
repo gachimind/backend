@@ -5,6 +5,7 @@ seeding.ts
 /node_modules
 
 # Logs
+/logs
 logs
 *.log
 npm-debug.log*

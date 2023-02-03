@@ -2,7 +2,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { GamesModule } from './games/games.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppController } from './app.controller';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -16,7 +15,9 @@ import { Keyword } from './keyword/entities/keyword.entities';
 import { Turn } from './games/entities/turn.entity';
 import { TurnResult } from './games/entities/turnResult.entity';
 import { GameResult } from './games/entities/gameResult.entity';
+import { AdminModule } from './admin/admin.module';
 import { TodayResult } from './games/entities/todayResult.entity';
+import { LoggerMiddleware } from './logger/logger.middleware';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -60,6 +61,7 @@ import { TodayResult } from './games/entities/todayResult.entity';
         GamesModule,
         KeywordModule,
         PassportModule.register({ session: true }),
+        AdminModule,
     ],
     controllers: [AppController],
     providers: [ConfigService],

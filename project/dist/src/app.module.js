@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const users_module_1 = require("./users/users.module");
 const games_module_1 = require("./games/games.module");
 const config_1 = require("@nestjs/config");
-const logger_middleware_1 = require("./middlewares/logger.middleware");
 const app_controller_1 = require("./app.controller");
 const passport_1 = require("@nestjs/passport");
 const typeorm_1 = require("@nestjs/typeorm");
@@ -25,7 +24,9 @@ const keyword_entities_1 = require("./keyword/entities/keyword.entities");
 const turn_entity_1 = require("./games/entities/turn.entity");
 const turnResult_entity_1 = require("./games/entities/turnResult.entity");
 const gameResult_entity_1 = require("./games/entities/gameResult.entity");
+const admin_module_1 = require("./admin/admin.module");
 const todayResult_entity_1 = require("./games/entities/todayResult.entity");
+const logger_middleware_1 = require("./logger/logger.middleware");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -65,6 +66,7 @@ AppModule = __decorate([
             games_module_1.GamesModule,
             keyword_module_1.KeywordModule,
             passport_1.PassportModule.register({ session: true }),
+            admin_module_1.AdminModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [config_1.ConfigService],
