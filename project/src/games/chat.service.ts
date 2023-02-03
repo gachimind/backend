@@ -24,8 +24,6 @@ export class ChatService {
             const isAnswer: boolean = this.checkAnswer(turn, message);
             // 정답을 맞췄는데, 발표자라면 에러 던지기
             if (isAnswer) {
-                console.log('정답이다!');
-
                 if (userId === turn.speechPlayer) {
                     throw new SocketException(
                         '발표자는 정답을 채팅으로 알릴 수 없습니다.',

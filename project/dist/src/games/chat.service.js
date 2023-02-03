@@ -24,7 +24,6 @@ let ChatService = class ChatService {
                 return false;
             const isAnswer = this.checkAnswer(turn, message);
             if (isAnswer) {
-                console.log('정답이다!');
                 if (userId === turn.speechPlayer) {
                     throw new ws_exception_filter_1.SocketException('발표자는 정답을 채팅으로 알릴 수 없습니다.', 400, 'send-chat');
                 }
