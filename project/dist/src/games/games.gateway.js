@@ -251,7 +251,13 @@ let GamesGateway = class GamesGateway {
                     const room = await this.gamesService.handleGameEndEvent(requestUser.player.room);
                     return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
                 }
-                return this.controlGameTurns(updateRoom.room);
+                if (!this.gamesService.getGameMapRemainingTurns(roomId)) {
+                    const room = await this.gamesService.handleGameEndEvent(requestUser.player.room);
+                    return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
+                }
+                if (this.gamesService.getGameMapRemainingTurns(roomId)) {
+                    return this.controlGameTurns(updateRoom.room);
+                }
             }
             if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
                 if (turn && turn.speechPlayer === requestUser.userInfo) {

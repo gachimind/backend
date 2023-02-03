@@ -59,7 +59,7 @@ AppModule = __decorate([
                 keepConnectionAlive: true,
                 charset: 'utf8mb4_general_ci',
                 timezone: 'Z',
-                cache: true,
+                cache: false,
             }),
             users_module_1.UsersModule,
             games_module_1.GamesModule,

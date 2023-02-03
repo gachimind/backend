@@ -54,7 +54,7 @@ import { LoggerMiddleware } from './logger/logger.middleware';
             keepConnectionAlive: true,
             charset: 'utf8mb4_general_ci',
             timezone: 'Z',
-            cache: true,
+            cache: false,
         }),
         UsersModule,
         GamesModule,
