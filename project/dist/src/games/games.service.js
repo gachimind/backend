@@ -55,6 +55,7 @@ let GamesService = class GamesService {
         const speechPlayer = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
         const keyword = this.popGameMapKeywords(roomId);
+        console.log('createTurn :', keyword);
         const newTurnData = {
             roomInfo: roomId,
             turn: turnIndex + 1,

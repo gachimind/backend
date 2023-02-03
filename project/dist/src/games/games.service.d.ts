@@ -29,7 +29,7 @@ export declare class GamesService {
     deleteTurnByTurnId(turnId: number): Promise<void>;
     createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
     sumTurnScorePerPlayerByUserId(roomId: number, gameResultId: number): Promise<number>;
-    createGameResultPerPlayer(roomId: any): Promise<GameResult[]>;
+    createGameResultPerPlayer(roomId: number): Promise<GameResult[]>;
     updateGameResult(gameResultId: number, gameScore: number): Promise<{
         gameResultId: number;
         gameScore: number;

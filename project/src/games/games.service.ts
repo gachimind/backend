@@ -59,6 +59,7 @@ export class GamesService {
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
         const keyword: Keyword = this.popGameMapKeywords(roomId);
+        console.log('createTurn :', keyword);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
@@ -107,7 +108,7 @@ export class GamesService {
     }
 
     // ######################### GameResult ##################################
-    async createGameResultPerPlayer(roomId): Promise<GameResult[]> {
+    async createGameResultPerPlayer(roomId: number): Promise<GameResult[]> {
         const allPlayersInRoom = await this.playersService.getAllPlayersUserIdByRoomID(roomId);
 
         let data = [];
