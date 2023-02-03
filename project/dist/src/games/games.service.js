@@ -61,8 +61,8 @@ let GamesService = class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keyword.keywordKor,
-            hint: keyword.keywordEng,
+            keyword: keyword.keywordEng ? keyword.keywordEng : keyword.keywordKor,
+            hint: keyword.keywordEng ? keyword.keywordKor : keyword.keywordEng,
         };
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);

@@ -6,13 +6,11 @@ import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter
 import { KeywordService } from 'src/keyword/keyword.service';
 import { PlayersService } from './players.service';
 import { RoomService } from './room.service';
-import { User } from 'src/users/entities/user.entity';
 import { GameResult } from './entities/gameResult.entity';
 import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
 import { gameTimerMap } from './util/game-timer.map';
@@ -20,7 +18,6 @@ import { gameMap } from './util/game.map';
 import { turnMap } from './util/turn.map';
 import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
-import { nextTick } from 'process';
 import { NextFunction } from 'express';
 import { Keyword } from 'src/keyword/entities/keyword.entities';
 
@@ -67,8 +64,8 @@ export class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keyword.keywordKor,
-            hint: keyword.keywordEng,
+            keyword: keyword.keywordEng ? keyword.keywordEng : keyword.keywordKor,
+            hint: keyword.keywordEng ? keyword.keywordKor : keyword.keywordEng,
         };
 
         const turn = await this.turnRepository.save(newTurnData);

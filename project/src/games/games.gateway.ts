@@ -33,11 +33,8 @@ import { EventUserInfoDto } from './dto/evnet-user.info.dto';
 import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { eventUserInfoConstructor } from './util/event.user.info.constructor';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
-import { gameTimerMap } from './util/game-timer.map';
-import { NextFunction } from 'express';
 import { GameResult } from './entities/gameResult.entity';
 import { gameMap } from './util/game.map';
-import { turnMap } from './util/turn.map';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })

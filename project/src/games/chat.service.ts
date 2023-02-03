@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { SocketException } from 'src/common/exceptionFilters/ws-exception.filter';
-import { Repository } from 'typeorm';
-import { GameResult } from './entities/gameResult.entity';
-import { Room } from './entities/room.entity';
 import { Turn } from './entities/turn.entity';
-import { TurnResult } from './entities/turnResult.entity';
-import { gameMap } from './util/game.map';
 
 @Injectable()
 export class ChatService {
