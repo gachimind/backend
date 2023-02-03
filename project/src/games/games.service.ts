@@ -51,6 +51,18 @@ export class GamesService {
         });
     }
 
+    async getTurnByTurnId(turnId: number): Promise<Turn> {
+        return await this.turnRepository.findOne({
+            where: { turnId },
+            select: {
+                turn: true,
+                currentEvent: true,
+                speechPlayer: true,
+                keyword: true,
+            },
+        });
+    }
+
     async createTurn(roomId: number): Promise<Turn> {
         const turnIndex: number = gameMap[roomId].currentTurn.turn;
         const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
@@ -70,7 +82,7 @@ export class GamesService {
 
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId, keyword);
+        this.createTurnMap(roomId, turn.turnId, keyword);
 
         return turn;
     }
@@ -145,7 +157,9 @@ export class GamesService {
     // ######################### [logic] ##################################
     async recordPlayerScore(userId: number, room: Room): Promise<TurnResult> {
         const roomId = room.roomId;
-        const turn = room.turns.at(-1);
+        const turn = await this.turnRepository.findOneBy({
+            turnId: this.getGameMapCurrentTurnId(roomId),
+        });
         const gameResultInfo = gameMap[roomId].gameResultIdMap[userId];
 
         // turnResult를 검색해서 있으면 예외 처리
@@ -282,6 +296,10 @@ export class GamesService {
         return gameMap[roomId].remainingTurns.length;
     }
 
+    getGameMapCurrentTurnId(roomId: number) {
+        return gameMap[roomId].currentTurn.turnId;
+    }
+
     getGameMapCurrentTurn(roomId: number): number {
         return gameMap[roomId].currentTurn.turn;
     }
@@ -322,8 +340,18 @@ export class GamesService {
 
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
-    createTurnMap(roomId: number, keyword: Keyword): void {
-        turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0, keyword };
+    createTurnMap(roomId: number, turnId: number, keyword: Keyword): void {
+        turnMap[roomId] = {
+            turnId,
+            speechScore: [],
+            turnQuizRank: 0,
+            numberOfEvaluators: 0,
+            keyword,
+        };
+    }
+
+    getTurnMapKeyword(roomId: number): Keyword {
+        return turnMap[roomId].keyword;
     }
 
     updateTurnMapSpeechScore(roomId: number, score: number): number {

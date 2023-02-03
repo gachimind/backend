@@ -27,7 +27,7 @@ export class ChatService {
         return true;
     }
 
-    FilterAnswer(turn: Turn, userId: number, message: string): boolean {
+    FilterAnswer(turn: Turn, keyword: Keyword, userId: number, message: string): boolean {
         // 참여자가 발표 시간이 아니라면 정답을 맞출 수 없다
         // 발표자가 준비/발표 시간이 아니라면 정답을 알 수 없다
         if (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime') {

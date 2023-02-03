@@ -271,12 +271,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         let type = 'chat';
         const room: Room = requestUser.player.room;
-        const turn = room.turns.at(-1);
+        const turn = await this.gamesService.getTurnByTurnId(
+            this.gamesService.getGameMapCurrentTurn(room.roomId),
+        );
+        const keyword = this.gamesService.getTurnMapKeyword(room.roomId);
 
         // room이 game상태일때만 정답 검사
         if (room.isGameOn && turn) {
             const isAnswer: boolean = this.chatService.FilterAnswer(
                 turn,
+                keyword,
                 requestUser.userInfo,
                 data.message,
             );
@@ -306,15 +310,17 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         if (!requestUser.player) {
             throw new SocketException('잘못된 요청입니다.', 400, event);
         }
-        if (requestUser.player.room.turns.at(-1).currentEvent !== 'discussionTime') {
+        const turn = await this.gamesService.getTurnByTurnId(
+            this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo),
+        );
+        if (turn.currentEvent !== 'discussionTime') {
             throw new SocketException('지금은 발표자를 평가할 수 없습니다.', 400, event);
         }
         const score = this.gamesService.updateTurnMapSpeechScore(
             requestUser.player.roomInfo,
             data.score,
         );
-        const speechPlayerId = requestUser.player.room.turns.at(-1).speechPlayer;
-        this.emitScoreEvent(requestUser.player.roomInfo, speechPlayerId, score);
+        this.emitScoreEvent(requestUser.player.roomInfo, turn.speechPlayer, score);
     }
 
     @SubscribeMessage('webrtc-ice')
@@ -410,7 +416,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 this.gamesService.popGameMapKeywords(roomId);
             }
             // 발표자가 발표 타임에 나간 경우 : 턴 종료 -> 게임 종료?
-            const turn = requestUser.player.room.turns.at(-1);
+            const turn = await this.gamesService.getTurnByTurnId(
+                this.gamesService.getGameMapCurrentTurn(roomId),
+            );
             if (
                 turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
