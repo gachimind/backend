@@ -156,7 +156,8 @@ let GamesGateway = class GamesGateway {
         }
         let type = 'chat';
         const room = requestUser.player.room;
-        const turn = room.turns.at(-1);
+        const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(room.roomId));
+        console.log(turn, this.gamesService.getGameMapCurrentTurnId(room.roomId));
         if (room.isGameOn && turn) {
             const isAnswer = this.chatService.FilterAnswer(turn, requestUser.userInfo, data.message);
             if (isAnswer && requestUser.player.userInfo != turn.speechPlayer) {
@@ -174,12 +175,12 @@ let GamesGateway = class GamesGateway {
         if (!requestUser.player) {
             throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, event);
         }
-        if (requestUser.player.room.turns.at(-1).currentEvent !== 'discussionTime') {
+        const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo));
+        if (turn.currentEvent !== 'discussionTime') {
             throw new ws_exception_filter_1.SocketException('지금은 발표자를 평가할 수 없습니다.', 400, event);
         }
         const score = this.gamesService.updateTurnMapSpeechScore(requestUser.player.roomInfo, data.score);
-        const speechPlayerId = requestUser.player.room.turns.at(-1).speechPlayer;
-        this.emitScoreEvent(requestUser.player.roomInfo, speechPlayerId, score);
+        this.emitScoreEvent(requestUser.player.roomInfo, turn.speechPlayer, score);
     }
     async handleIce(socket, { data }) {
         const event = 'webrtc-ice';
@@ -241,7 +242,7 @@ let GamesGateway = class GamesGateway {
                 this.gamesService.getGameMapRemainingTurns(roomId)) {
                 this.gamesService.popGameMapKeywords(roomId);
             }
-            const turn = requestUser.player.room.turns.at(-1);
+            const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(roomId));
             if (turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
                 (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')) {
