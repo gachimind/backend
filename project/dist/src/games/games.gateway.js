@@ -244,7 +244,10 @@ let GamesGateway = class GamesGateway {
                 this.gamesService.getGameMapRemainingTurns(roomId)) {
                 this.gamesService.popGameMapKeywords(roomId);
             }
-            const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(roomId));
+            let turn;
+            if (requestUser.player.room.turns.length) {
+                turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(roomId));
+            }
             if (turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
                 (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')) {
