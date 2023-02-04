@@ -9,16 +9,13 @@ const { simple, combine, timestamp, colorize } = winston.format;
 export const consoleOptions = {
     level: process.env.NODE_ENV === 'production' ? 'http' : 'silly',
     exceptionHandlers: true,
-    format:
-        process.env.NODE_ENV === 'production'
-            ? combine(colorize({ all: true }), simple())
-            : combine(
-                  colorize({ all: true }),
-                  timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-                  utilities.format.nestLike('가치마인드', {
-                      prettyPrint: true,
-                  }),
-              ),
+    format: combine(
+        colorize({ all: true }),
+        timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+        utilities.format.nestLike('가치마인드', {
+            prettyPrint: true,
+        }),
+    ),
 };
 
 export const dailyOptions = (level: string, maxFiles: number) => {
