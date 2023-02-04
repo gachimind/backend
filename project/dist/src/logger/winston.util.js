@@ -9,11 +9,9 @@ const { simple, combine, timestamp, colorize } = winston.format;
 exports.consoleOptions = {
     level: process.env.NODE_ENV === 'production' ? 'http' : 'silly',
     exceptionHandlers: true,
-    format: process.env.NODE_ENV === 'production'
-        ? combine(colorize({ all: true }), simple())
-        : combine(colorize({ all: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }), nest_winston_1.utilities.format.nestLike('가치마인드', {
-            prettyPrint: true,
-        })),
+    format: combine(colorize({ all: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }), nest_winston_1.utilities.format.nestLike('가치마인드', {
+        prettyPrint: true,
+    })),
 };
 const dailyOptions = (level, maxFiles) => {
     return {
