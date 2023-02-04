@@ -419,9 +419,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 this.gamesService.popGameMapKeywords(roomId);
             }
             // 발표자가 발표 타임에 나간 경우 : 턴 종료 -> 게임 종료?
-            const turn = await this.gamesService.getTurnByTurnId(
-                this.gamesService.getGameMapCurrentTurnId(roomId),
-            );
+            let turn: Turn;
+            if (requestUser.player.room.turns.length) {
+                turn = await this.gamesService.getTurnByTurnId(
+                    this.gamesService.getGameMapCurrentTurnId(roomId),
+                );
+            }
             if (
                 turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&

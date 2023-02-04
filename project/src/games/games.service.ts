@@ -213,7 +213,7 @@ export class GamesService {
         await this.createTurnResult(turnResult);
 
         if (unevaluatedNum) {
-            return (unevaluatedNum * 5 * 20) / unevaluatedNum;
+            return (unevaluatedNum * 5 * 20) / turnMap[roomId].numberOfEvaluators;
         }
         return 0;
     }
