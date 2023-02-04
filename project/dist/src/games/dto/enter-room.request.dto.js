@@ -24,14 +24,15 @@ __decorate([
     __metadata("design:type", Number)
 ], EnterRoomRequestDto.prototype, "roomId", void 0);
 __decorate([
-    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Length)(4),
     (0, class_validator_1.IsOptional)(),
     (0, swagger_1.ApiProperty)({
         example: 8282,
         required: false,
         description: '비밀방 비밀번호 - 숫자 4자리',
     }),
-    __metadata("design:type", Number)
+    __metadata("design:type", String)
 ], EnterRoomRequestDto.prototype, "roomPassword", void 0);
 exports.EnterRoomRequestDto = EnterRoomRequestDto;
 //# sourceMappingURL=enter-room.request.dto.js.map

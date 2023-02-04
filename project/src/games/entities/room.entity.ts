@@ -33,8 +33,8 @@ export class Room {
     @Column()
     isSecretRoom: boolean;
 
-    @Column({ type: 'int', width: 4 })
-    roomPassword: number;
+    @Column({ type: 'varchar', width: 4 })
+    roomPassword: string;
 
     @Column()
     isGameOn: boolean;

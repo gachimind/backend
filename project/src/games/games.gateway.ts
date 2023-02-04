@@ -187,7 +187,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @SubscribeMessage('valid-room-password')
     async handleValidRoomPassword(
         @ConnectedSocket() socket: Socket,
-        @MessageBody() { data: { password, roomId } },
+        @MessageBody()
+        { data: { password, roomId } }: { data: { password: string; roomId: number } },
     ) {
         await this.socketAuthentication(socket.id, 'valid-room-password');
         await this.roomService.validateRoomPassword(password, roomId);

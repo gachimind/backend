@@ -44,8 +44,8 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Room.prototype, "isSecretRoom", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int', width: 4 }),
-    __metadata("design:type", Number)
+    (0, typeorm_1.Column)({ type: 'varchar', width: 4 }),
+    __metadata("design:type", String)
 ], Room.prototype, "roomPassword", void 0);
 __decorate([
     (0, typeorm_1.Column)(),

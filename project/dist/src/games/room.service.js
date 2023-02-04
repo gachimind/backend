@@ -68,15 +68,14 @@ let RoomService = class RoomService {
         if (!room.roomTitle) {
             room.roomTitle = '같이 가치마인드 한 판 해요!';
         }
-        if (room.isSecretRoom) {
+        if (room.isSecretRoom || room.roomPassword) {
             if (!room.roomPassword) {
                 throw new ws_exception_filter_1.SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
             }
-            if (isNaN(room.roomPassword) || room.roomPassword.toString().length !== 4) {
+            const numberCheckReg = /^[0-9]+$/g;
+            if (!numberCheckReg.test(room.roomPassword) || room.roomPassword.length !== 4) {
                 throw new ws_exception_filter_1.SocketException('방 비밀번호를 생성 규칙을 확인해주세요.', 400, 'create-room');
             }
-        }
-        if (room.roomPassword) {
             room.isSecretRoom = true;
         }
         const newRoom = Object.assign(Object.assign({}, room), { isGameOn: false, isGameReadyToStart: false });
