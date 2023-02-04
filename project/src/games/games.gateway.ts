@@ -35,6 +35,7 @@ import { eventUserInfoConstructor } from './util/event.user.info.constructor';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { GameResult } from './entities/gameResult.entity';
 import { gameMap } from './util/game.map';
+import { request } from 'http';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -271,10 +272,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
         let type = 'chat';
         const room: Room = requestUser.player.room;
-        const turn = await this.gamesService.getTurnByTurnId(
-            this.gamesService.getGameMapCurrentTurnId(room.roomId),
-        );
-        console.log(turn, this.gamesService.getGameMapCurrentTurnId(room.roomId));
+
+        let turn: Turn;
+        if (requestUser.player.room.turns.length) {
+            turn = await this.gamesService.getTurnByTurnId(
+                this.gamesService.getGameMapCurrentTurnId(room.roomId),
+            );
+        }
 
         // room이 game상태일때만 정답 검사
         if (room.isGameOn && turn) {

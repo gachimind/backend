@@ -156,8 +156,10 @@ let GamesGateway = class GamesGateway {
         }
         let type = 'chat';
         const room = requestUser.player.room;
-        const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(room.roomId));
-        console.log(turn, this.gamesService.getGameMapCurrentTurnId(room.roomId));
+        let turn;
+        if (requestUser.player.room.turns.length) {
+            turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(room.roomId));
+        }
         if (room.isGameOn && turn) {
             const isAnswer = this.chatService.FilterAnswer(turn, requestUser.userInfo, data.message);
             if (isAnswer && requestUser.player.userInfo != turn.speechPlayer) {
