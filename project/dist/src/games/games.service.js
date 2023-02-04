@@ -50,6 +50,17 @@ let GamesService = class GamesService {
             order: { turn: 'ASC' },
         });
     }
+    async getTurnByTurnId(turnId) {
+        return await this.turnRepository.findOne({
+            where: { turnId },
+            select: {
+                turn: true,
+                currentEvent: true,
+                speechPlayer: true,
+                keyword: true,
+            },
+        });
+    }
     async createTurn(roomId) {
         const turnIndex = game_map_1.gameMap[roomId].currentTurn.turn;
         const speechPlayer = this.popPlayerFromGameMapRemainingTurns(roomId);
@@ -61,12 +72,12 @@ let GamesService = class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keyword.keywordKor,
-            hint: keyword.keywordEng,
+            keyword: keyword.keywordEng ? keyword.keywordEng : keyword.keywordKor,
+            hint: keyword.keywordEng ? keyword.keywordKor : keyword.keywordEng,
         };
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId, keyword);
+        this.createTurnMap(roomId, turn.turnId, keyword);
         return turn;
     }
     async updateTurn(turn, timer) {
@@ -119,7 +130,9 @@ let GamesService = class GamesService {
     }
     async recordPlayerScore(userId, room) {
         const roomId = room.roomId;
-        const turn = room.turns.at(-1);
+        const turn = await this.turnRepository.findOneBy({
+            turnId: this.getGameMapCurrentTurnId(roomId),
+        });
         const gameResultInfo = game_map_1.gameMap[roomId].gameResultIdMap[userId];
         if (await this.turnResultRepository.findOne({
             where: { userId, turnId: turn.turnId },
@@ -219,6 +232,9 @@ let GamesService = class GamesService {
     getGameMapRemainingTurns(roomId) {
         return game_map_1.gameMap[roomId].remainingTurns.length;
     }
+    getGameMapCurrentTurnId(roomId) {
+        return game_map_1.gameMap[roomId].currentTurn.turnId;
+    }
     getGameMapCurrentTurn(roomId) {
         return game_map_1.gameMap[roomId].currentTurn.turn;
     }
@@ -251,8 +267,17 @@ let GamesService = class GamesService {
             resolve;
         });
     }
-    createTurnMap(roomId, keyword) {
-        turn_map_1.turnMap[roomId] = { speechScore: [], turnQuizRank: 0, numberOfEvaluators: 0, keyword };
+    createTurnMap(roomId, turnId, keyword) {
+        turn_map_1.turnMap[roomId] = {
+            turnId,
+            speechScore: [],
+            turnQuizRank: 0,
+            numberOfEvaluators: 0,
+            keyword,
+        };
+    }
+    getTurnMapKeyword(roomId) {
+        return turn_map_1.turnMap[roomId].keyword;
     }
     updateTurnMapSpeechScore(roomId, score) {
         turn_map_1.turnMap[roomId].speechScore.push(score);
