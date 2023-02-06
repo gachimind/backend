@@ -130,8 +130,8 @@
 <br>
 
 ## 🛠 개발일지 & 트러블 슈팅
-> ![개발일지 보러 가기](https://summer-driver-168.notion.site/0d4daa637a7245a89952ea75f4a51973)
-> ![트러블 슈팅 보러 가기](https://github.com/gachimind/backend/wiki/BE-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
+> ✏️[개발일지 보러 가기](https://summer-driver-168.notion.site/0d4daa637a7245a89952ea75f4a51973)</br>
+> 🛠[트러블 슈팅 보러 가기](https://github.com/gachimind/backend/wiki/BE-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
 
 <br>
 
