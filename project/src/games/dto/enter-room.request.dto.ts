@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class EnterRoomRequestDto {
@@ -10,12 +10,13 @@ export class EnterRoomRequestDto {
     })
     readonly roomId: number;
 
-    @IsNumber()
+    @IsString()
+    @Length(4)
     @IsOptional()
     @ApiProperty({
         example: 8282,
         required: false,
         description: '비밀방 비밀번호 - 숫자 4자리',
     })
-    readonly roomPassword: number;
+    readonly roomPassword: string;
 }
