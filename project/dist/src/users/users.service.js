@@ -38,15 +38,21 @@ let UsersService = class UsersService {
     async findUserByNickname(nickname) {
         return await this.usersRepository.findBy({ nickname: (0, typeorm_2.Like)(`${nickname}%`) });
     }
-    async findUser(kakaoUserId, email) {
-        let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+    async findUser(kakaoUserId, githubUserId, email) {
+        let user;
+        if (!githubUserId) {
+            user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+        }
+        if (!kakaoUserId) {
+            user = await this.usersRepository.findOne({ where: { githubUserId } });
+        }
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
         }
         return user;
     }
     async validateUser(userData) {
-        let user = await this.findUser(userData.kakaoUserId, userData.email);
+        let user = await this.findUser(userData.kakaoUserId, userData.githubUserId, userData.email);
         if (!user) {
             const sameNickname = await this.findUserByNickname(userData.nickname);
             if (sameNickname.length) {

@@ -9,33 +9,35 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KakaoStrategy = void 0;
+exports.GithubStrategy = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const passport_1 = require("@nestjs/passport");
-const passport_kakao_oauth2_1 = require("passport-kakao-oauth2");
-let KakaoStrategy = class KakaoStrategy extends (0, passport_1.PassportStrategy)(passport_kakao_oauth2_1.Strategy) {
+const passport_github2_1 = require("passport-github2");
+let GithubStrategy = class GithubStrategy extends (0, passport_1.PassportStrategy)(passport_github2_1.Strategy) {
     constructor(configService) {
         super({
-            clientID: configService.get('CLIENT_ID_KAKAO'),
-            clientSecret: configService.get('SECRET_KEY_KAKAO'),
-            callbackURL: configService.get('CALLBACK_KAKAO'),
+            clientID: configService.get('CLIENT_ID_GITHUB'),
+            clientSecret: configService.get('SECRET_KEY_GITHUB'),
+            callbackURL: configService.get('CALLBACK_GITHUB'),
         });
     }
     async validate(accessToken, refreshToken, profile, done) {
+        console.log('github strategy');
         const user = {
-            kakaoUserId: profile._json.id,
-            githubUserId: null,
-            email: profile._json.kakao_account.email || `email${profile._json.id}@gachimind.com`,
-            nickname: profile._json.properties.nickname.substr(0, 9).replace(/ /g, ''),
+            githubUserId: profile._json.id,
+            kakaoUserId: null,
+            email: profile._json.email || `email${profile._json.id}@gachimind.com`,
+            nickname: profile.username.toString().replace(/ /g, '').substr(0, 9),
             profileImg: 'white-red',
         };
+        console.log(user);
         done(null, user);
     }
 };
-KakaoStrategy = __decorate([
+GithubStrategy = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
-], KakaoStrategy);
-exports.KakaoStrategy = KakaoStrategy;
-//# sourceMappingURL=kakao.strategy.js.map
+], GithubStrategy);
+exports.GithubStrategy = GithubStrategy;
+//# sourceMappingURL=github.strategy.js.map

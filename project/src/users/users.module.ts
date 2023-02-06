@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './auth/jwt.guard';
 import { TodayResult } from 'src/games/entities/todayResult.entity';
 import { GameResult } from 'src/games/entities/gameResult.entity';
 import { TurnResult } from 'src/games/entities/turnResult.entity';
+import { GithubStrategy } from './auth/github.strategy';
 
 @Module({
     imports: [
@@ -27,7 +28,7 @@ import { TurnResult } from 'src/games/entities/turnResult.entity';
         PassportModule,
     ],
     controllers: [UsersController],
-    providers: [UsersService, SessionSerializer, KakaoStrategy, JwtAuthGuard],
+    providers: [UsersService, KakaoStrategy, SessionSerializer, GithubStrategy, JwtAuthGuard],
     exports: [TypeOrmModule],
 })
 export class UsersModule {}
