@@ -8,10 +8,19 @@ export class CreateUserDto {
     @IsOptional()
     @ApiProperty({
         example: '12345678',
-        required: true,
+        required: false,
         description: 'OAuth 서버에서 받아온 회원의 userId을 게임 서버 db에 저장',
     })
-    public kakaoUserId: number;
+    public kakaoUserId: number | null;
+
+    @IsNumber()
+    @IsOptional()
+    @ApiProperty({
+        example: '12345678',
+        required: false,
+        description: 'OAuth 서버에서 받아온 회원의 userId을 게임 서버 db에 저장',
+    })
+    public githubUserId: number | null;
 
     @IsString()
     @IsEmail()

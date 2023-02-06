@@ -34,8 +34,8 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     }): Promise<void>;
     handleValidRoomPassword(socket: Socket, { data: { password, roomId } }: {
         data: {
-            password: any;
-            roomId: any;
+            password: string;
+            roomId: number;
         };
     }): Promise<void>;
     handleLeaveRoomEvent(socket: Socket): Promise<void | Room>;

@@ -36,8 +36,15 @@ export class UsersService {
         return await this.usersRepository.findBy({ nickname: Like(`${nickname}%`) });
     }
 
-    async findUser(kakaoUserId: number, email: string): Promise<User> {
-        let user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+    async findUser(kakaoUserId: number, githubUserId: number, email: string): Promise<User> {
+        let user: User;
+        if (!githubUserId) {
+            user = await this.usersRepository.findOne({ where: { kakaoUserId } });
+        }
+
+        if (!kakaoUserId) {
+            user = await this.usersRepository.findOne({ where: { githubUserId } });
+        }
 
         if (!user && email) {
             user = await this.usersRepository.findOne({ where: { email } });
@@ -46,7 +53,11 @@ export class UsersService {
     }
 
     async validateUser(userData: CreateUserDto): Promise<User> {
-        let user: User = await this.findUser(userData.kakaoUserId, userData.email);
+        let user: User = await this.findUser(
+            userData.kakaoUserId,
+            userData.githubUserId,
+            userData.email,
+        );
 
         // db에 유저 정보가 없는 경우 처리
         if (!user) {

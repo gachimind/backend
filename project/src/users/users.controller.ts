@@ -52,6 +52,32 @@ export class UsersController {
         // .redirect(this.configService.get('REDIRECT'));
     }
 
+    @UseGuards(AuthGuard('github'))
+    @Get('login/github')
+    handleLoginGithub() {
+        return { msg: 'Github Authentication' };
+    }
+
+    @UseGuards(AuthGuard('github'))
+    @Get('login/github/redirect')
+    @Redirect('redirectUrl', 302)
+    async githubLoginRedirect(
+        @Param('code') code: string,
+        @Req() req: { user: CreateUserDto },
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        if (!req.user) {
+            throw new HttpException('회원 인증에 실패하였습니다.', 401);
+        }
+        const user: User = await this.usersService.validateUser(req.user);
+        const token: string = await this.usersService.createToken(user);
+
+        return { url: this.configService.get('REDIRECT') + token };
+        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        // .status(301)
+        // .redirect(this.configService.get('REDIRECT'));
+    }
+
     // 로그아웃 API
     @UseGuards(JwtAuthGuard)
     @Get('/logout')

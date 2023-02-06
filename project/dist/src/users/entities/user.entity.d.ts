@@ -2,8 +2,9 @@ import { TodayResult } from '../../games/entities/todayResult.entity';
 import { GameResult } from '../../games/entities/gameResult.entity';
 export declare class User {
     userId: number;
-    kakaoUserId: number;
-    email: string | null;
+    kakaoUserId: number | null;
+    githubUserId: number | null;
+    email: string;
     nickname: string;
     profileImg: string;
     isFirstLogin: boolean;

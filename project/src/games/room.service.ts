@@ -72,21 +72,19 @@ export class RoomService {
         }
 
         // 비밀방에 true인데, 방 비밀번호가 없는 경우
-        if (room.isSecretRoom) {
+        if (room.isSecretRoom || room.roomPassword) {
             if (!room.roomPassword) {
                 throw new SocketException('방 비밀번호를 입력해주세요.', 400, 'create-room');
             }
 
-            if (isNaN(room.roomPassword) || room.roomPassword.toString().length !== 4) {
+            const numberCheckReg = /^[0-9]+$/g;
+            if (!numberCheckReg.test(room.roomPassword) || room.roomPassword.length !== 4) {
                 throw new SocketException(
                     '방 비밀번호를 생성 규칙을 확인해주세요.',
                     400,
                     'create-room',
                 );
             }
-        }
-        // 비밀번호가 있다면, 비밀방 여부를 무조건 true로 만들기
-        if (room.roomPassword) {
             room.isSecretRoom = true;
         }
 
@@ -142,7 +140,7 @@ export class RoomService {
         });
     }
 
-    async validateRoomPassword(password: number, roomId: number): Promise<void> {
+    async validateRoomPassword(password: string, roomId: number): Promise<void> {
         const room: Room = await this.getOneRoomByRoomId(roomId);
 
         if (!room) {

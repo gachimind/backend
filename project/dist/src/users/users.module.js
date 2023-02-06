@@ -22,6 +22,7 @@ const jwt_guard_1 = require("./auth/jwt.guard");
 const todayResult_entity_1 = require("../games/entities/todayResult.entity");
 const gameResult_entity_1 = require("../games/entities/gameResult.entity");
 const turnResult_entity_1 = require("../games/entities/turnResult.entity");
+const github_strategy_1 = require("./auth/github.strategy");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
@@ -38,7 +39,7 @@ UsersModule = __decorate([
             passport_1.PassportModule,
         ],
         controllers: [users_controller_1.UsersController],
-        providers: [users_service_1.UsersService, kakao_serializer_1.SessionSerializer, kakao_strategy_1.KakaoStrategy, jwt_guard_1.JwtAuthGuard],
+        providers: [users_service_1.UsersService, kakao_strategy_1.KakaoStrategy, kakao_serializer_1.SessionSerializer, github_strategy_1.GithubStrategy, jwt_guard_1.JwtAuthGuard],
         exports: [typeorm_1.TypeOrmModule],
     })
 ], UsersModule);
