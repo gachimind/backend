@@ -23,7 +23,6 @@ let GithubStrategy = class GithubStrategy extends (0, passport_1.PassportStrateg
         });
     }
     async validate(accessToken, refreshToken, profile, done) {
-        console.log('github strategy');
         const user = {
             githubUserId: profile._json.id,
             kakaoUserId: null,
@@ -31,7 +30,6 @@ let GithubStrategy = class GithubStrategy extends (0, passport_1.PassportStrateg
             nickname: profile.username.toString().replace(/ /g, '').substr(0, 9),
             profileImg: 'white-red',
         };
-        console.log(user);
         done(null, user);
     }
 };

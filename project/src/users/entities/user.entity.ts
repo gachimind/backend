@@ -18,10 +18,10 @@ export class User {
     @PrimaryGeneratedColumn()
     userId: number; // 자동 생성
 
-    @Column({ nullable: true, unique: true })
+    @Column({ nullable: true })
     kakaoUserId: number | null;
 
-    @Column({ nullable: true, unique: true })
+    @Column({ nullable: true })
     githubUserId: number | null;
 
     @Column()

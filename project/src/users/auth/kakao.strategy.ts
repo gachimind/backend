@@ -23,6 +23,7 @@ export class KakaoStrategy extends PassportStrategy(Strategy) {
             nickname: profile._json.properties.nickname.substr(0, 9).replace(/ /g, ''),
             profileImg: 'white-red',
         };
+
         done(null, user);
     }
 }

@@ -16,7 +16,6 @@ export class GithubStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(accessToken: string, refreshToken: string, profile: any, done: any) {
-        console.log('github strategy');
         const user: CreateUserDto = {
             githubUserId: profile._json.id,
             kakaoUserId: null,
@@ -24,7 +23,6 @@ export class GithubStrategy extends PassportStrategy(Strategy) {
             nickname: profile.username.toString().replace(/ /g, '').substr(0, 9),
             profileImg: 'white-red',
         };
-        console.log(user);
         done(null, user);
     }
 }
