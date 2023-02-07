@@ -35,6 +35,9 @@ export class TurnResult {
     @Column()
     keyword: string;
 
+    @Column('text')
+    link: string;
+
     @Column()
     isSpeech: boolean;
 

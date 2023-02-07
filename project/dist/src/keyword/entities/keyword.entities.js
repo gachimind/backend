@@ -20,11 +20,11 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)('varchar'),
     __metadata("design:type", String)
-], Keyword.prototype, "keywordKor", void 0);
+], Keyword.prototype, "keyword", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Keyword.prototype, "keywordEng", void 0);
+], Keyword.prototype, "link", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

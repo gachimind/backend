@@ -20,6 +20,9 @@ export class TurnResultDataInsertDto {
     keyword: string;
 
     @IsString()
+    link: string;
+
+    @IsString()
     @IsOptional()
     isSpeech: boolean;
 }

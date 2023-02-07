@@ -200,16 +200,16 @@ export class UsersService {
         // 전체 키워드 찾아오기
         const findTotalkeyword = await this.TurnResultRepository.find({
             where: { userId: user.userInfo },
-            select: { keyword: true, isSpeech: true, createdAt: true },
+            select: { keyword: true, link: true, isSpeech: true, createdAt: true },
         });
 
         const speechKeywordArray = [];
         const quizKeywordArray = [];
         for (const result of findTotalkeyword) {
             if (result.isSpeech) {
-                speechKeywordArray.push(result.keyword);
+                speechKeywordArray.push({ keyword: result.keyword, link: result.link });
             } else {
-                quizKeywordArray.push(result.keyword);
+                quizKeywordArray.push({ keyword: result.keyword, link: result.link });
             }
         }
 
@@ -223,16 +223,16 @@ export class UsersService {
                 userId: user.userInfo,
                 createdAt: MoreThan(today),
             },
-            select: { keyword: true, isSpeech: true },
+            select: { keyword: true, link: true, isSpeech: true },
         });
 
         const todaySpeechKeywordArray = [];
         const todayQuizKeywordArray = [];
         for (const result of findTodaykeyword) {
             if (result.isSpeech) {
-                todaySpeechKeywordArray.push(result.keyword);
+                todaySpeechKeywordArray.push({ keyword: result.keyword, link: result.link });
             } else {
-                todayQuizKeywordArray.push(result.keyword);
+                todayQuizKeywordArray.push({ keyword: result.keyword, link: result.link });
             }
         }
         const todaySpeechKeyword = [...new Set(todaySpeechKeywordArray)];
