@@ -48,6 +48,10 @@ __decorate([
     __metadata("design:type", String)
 ], TurnResult.prototype, "keyword", void 0);
 __decorate([
+    (0, typeorm_1.Column)('text'),
+    __metadata("design:type", String)
+], TurnResult.prototype, "link", void 0);
+__decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", Boolean)
 ], TurnResult.prototype, "isSpeech", void 0);

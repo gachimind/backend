@@ -8,7 +8,8 @@ export declare class Turn {
     speechPlayer: number;
     speechPlayerNickname: string;
     keyword: string;
-    hint: string | null;
+    hint: string;
+    link: string;
     createdAt: Date;
     updatedAt: Date;
 }

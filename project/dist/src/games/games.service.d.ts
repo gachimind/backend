@@ -7,7 +7,6 @@ import { Room } from './entities/room.entity';
 import { TodayResult } from './entities/todayResult.entity';
 import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
-import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { Player } from './entities/player.entity';
 import { NextFunction } from 'express';
 import { Keyword } from 'src/keyword/entities/keyword.entities';
@@ -28,7 +27,7 @@ export declare class GamesService {
     updateTurn(turn: Turn, timer: string): Promise<Turn>;
     deleteTurnByRoomId(roomInfo: number): Promise<void>;
     deleteTurnByTurnId(turnId: number): Promise<void>;
-    createTurnResult(turnResult: TurnResultDataInsertDto): Promise<TurnResultDataInsertDto & TurnResult>;
+    createTurnResult(turnResult: any): Promise<any>;
     sumTurnScorePerPlayerByUserId(roomId: number, gameResultId: number): Promise<number>;
     createGameResultPerPlayer(roomId: number): Promise<GameResult[]>;
     updateGameResult(gameResultId: number, gameScore: number): Promise<{
@@ -38,6 +37,7 @@ export declare class GamesService {
     softDeleteGameResult(gameResultId: number): Promise<import("typeorm").UpdateResult>;
     updateTodayResultByIncrement(todayResultId: number, gameScore: number): Promise<import("typeorm").UpdateResult>;
     recordPlayerScore(userId: number, room: Room): Promise<TurnResult>;
+    createPlayerTurnResult(roomId: number, turn: Turn): Promise<void>;
     createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number>;
     handleGameEndEvent(room: Room): Promise<Room>;
     createGameMap(room: Room): Promise<void>;
@@ -47,15 +47,20 @@ export declare class GamesService {
     getGameMapCurrentTurnId(roomId: number): any;
     getGameMapCurrentTurn(roomId: number): number;
     getGameMapCurrentPlayers(roomId: number): number;
+    getPlayerGameMapGameResultIdMap(roomId: number, userId: number): any;
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void;
     reduceGameMapCurrentPlayers(roomId: number): void;
     popPlayerFromGameMapRemainingTurns(roomId: number): number;
     removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void>;
-    mapGameResultIdWithUserId(roomId: number, gameResults: any): Promise<void>;
-    createTurnMap(roomId: number, turnId: number, keyword: Keyword): void;
+    mapGameResultIdWithUserId(roomId: number, gameResults: GameResult[]): Promise<void>;
+    createTurnMap(roomId: number, turnId: number, keyword: Keyword): Promise<void>;
     getTurnMapKeyword(roomId: number): Keyword;
+    getTurnMapTurnQuizRank(roomId: number): any;
+    getTurnMapNumberOfEvaluators(roomId: number): any;
+    getTurnMapTurnAnswerPlayers(roomId: number): any;
     updateTurnMapSpeechScore(roomId: number, score: number): number;
     updateTurnMapTurnQuizRank(roomId: number): void;
+    updateTurnMapTurnAnswerPlayersTrue(roomId: number, userId: number): void;
     updateTurnMapNumberOfEvaluators(roomInfo: any): Promise<void>;
     createTimer(time: number, roomId: number): Promise<any>;
     breakTimer(roomId: number, next: NextFunction): void;
