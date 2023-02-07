@@ -83,7 +83,7 @@ export class GamesService {
 
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        await this.createTurnMap(roomId, turn.turnId, keyword);
+        this.createTurnMap(roomId, turn.turnId, keyword);
 
         return turn;
     }
@@ -102,7 +102,7 @@ export class GamesService {
     }
 
     // ######################### TurnResults ##################################
-    async createTurnResult(turnResult: any) {
+    async createTurnResult(turnResult: TurnResultDataInsertDto) {
         return await this.turnResultRepository.save(turnResult);
     }
 
@@ -183,41 +183,41 @@ export class GamesService {
             isSpeech: false,
         };
         this.updateTurnMapTurnQuizRank(roomId);
-        this.updateTurnMapTurnAnswerPlayersTrue(roomId, userId);
+        // this.updateTurnMapTurnAnswerPlayersTrue(roomId, userId);
         return await this.createTurnResult(turnResult);
     }
 
-    async createPlayerTurnResult(roomId: number, turn: Turn) {
-        if (this.getTurnMapNumberOfEvaluators(roomId) > this.getTurnMapTurnQuizRank(roomId)) {
-            const players: Player[] = await this.playersRepository.find({
-                where: { roomInfo: roomId },
-            });
-            const answeredPlayers = this.getTurnMapTurnAnswerPlayers(roomId);
-            const turnResultData: TurnResultDataInsertDto[] = [];
-            for (let player of players) {
-                console.log('createPlayerTurnResult');
+    // async createPlayerTurnResult(roomId: number, turn: Turn) {
+    //     if (this.getTurnMapNumberOfEvaluators(roomId) > this.getTurnMapTurnQuizRank(roomId)) {
+    //         const players: Player[] = await this.playersRepository.find({
+    //             where: { roomInfo: roomId },
+    //         });
+    //         const answeredPlayers = this.getTurnMapTurnAnswerPlayers(roomId);
+    //         const turnResultData: TurnResultDataInsertDto[] = [];
+    //         for (let player of players) {
+    //             console.log('createPlayerTurnResult');
 
-                if (!answeredPlayers[player.userInfo]) {
-                    const turnResult: TurnResultDataInsertDto = {
-                        gameResultInfo: this.getPlayerGameMapGameResultIdMap(
-                            roomId,
-                            player.userInfo,
-                        ),
-                        roomId,
-                        turnId: turn.turnId,
-                        userId: player.userInfo,
-                        score: 0,
-                        keyword: turn.keyword,
-                        link: turn.link,
-                        isSpeech: false,
-                    };
-                    turnResultData.push(turnResult);
-                    this.updateTurnMapTurnAnswerPlayersTrue(roomId, player.userInfo);
-                }
-            }
-            await this.createTurnResult(turnResultData);
-        }
-    }
+    //             if (!answeredPlayers[player.userInfo]) {
+    //                 const turnResult: TurnResultDataInsertDto = {
+    //                     gameResultInfo: this.getPlayerGameMapGameResultIdMap(
+    //                         roomId,
+    //                         player.userInfo,
+    //                     ),
+    //                     roomId,
+    //                     turnId: turn.turnId,
+    //                     userId: player.userInfo,
+    //                     score: 0,
+    //                     keyword: turn.keyword,
+    //                     link: turn.link,
+    //                     isSpeech: false,
+    //                 };
+    //                 turnResultData.push(turnResult);
+    //                 this.updateTurnMapTurnAnswerPlayersTrue(roomId, player.userInfo);
+    //             }
+    //         }
+    //         await this.createTurnResult(turnResultData);
+    //     }
+    // }
 
     async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
         // 평가하지 않은 인원 수
@@ -247,7 +247,7 @@ export class GamesService {
             isSpeech: true,
         };
         await this.createTurnResult(turnResult);
-        this.updateTurnMapTurnAnswerPlayersTrue(roomId, turn.speechPlayer);
+        // this.updateTurnMapTurnAnswerPlayersTrue(roomId, turn.speechPlayer);
 
         if (unevaluatedNum) {
             return (unevaluatedNum * 5 * 20) / turnMap[roomId].numberOfEvaluators;
@@ -345,9 +345,9 @@ export class GamesService {
         return gameMap[roomId].currentPlayers;
     }
 
-    getPlayerGameMapGameResultIdMap(roomId: number, userId: number) {
-        return gameMap[roomId].gameResultId[userId];
-    }
+    // getPlayerGameMapGameResultIdMap(roomId: number, userId: number) {
+    //     return gameMap[roomId].gameResultId[userId];
+    // }
 
     updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void {
         gameMap[roomId].currentTurn = { turnId, turn };
@@ -381,40 +381,40 @@ export class GamesService {
 
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
-    async createTurnMap(roomId: number, turnId: number, keyword: Keyword): Promise<void> {
+    createTurnMap(roomId: number, turnId: number, keyword: Keyword): void {
         turnMap[roomId] = {
             turnId,
             speechScore: [],
             turnQuizRank: 0,
-            turnAnswerPlayers: {},
+            // turnAnswerPlayers: {},
             numberOfEvaluators: 0,
             keyword,
         };
 
-        const players: Player[] = await this.playersRepository.find({
-            where: { roomInfo: roomId },
-        });
+        // const players: Player[] = await this.playersRepository.find({
+        //     where: { roomInfo: roomId },
+        // });
 
-        for (let player of players) {
-            turnMap[roomId].turnAnswerPlayers[player.userInfo] = false;
-        }
+        // for (let player of players) {
+        //     turnMap[roomId].turnAnswerPlayers[player.userInfo] = false;
+        // }
     }
 
     getTurnMapKeyword(roomId: number): Keyword {
         return turnMap[roomId].keyword;
     }
 
-    getTurnMapTurnQuizRank(roomId: number) {
-        return turnMap[roomId].turnQuizRank;
-    }
+    // getTurnMapTurnQuizRank(roomId: number) {
+    //     return turnMap[roomId].turnQuizRank;
+    // }
 
-    getTurnMapNumberOfEvaluators(roomId: number) {
-        return turnMap[roomId].numberOfEvaluators;
-    }
+    // getTurnMapNumberOfEvaluators(roomId: number) {
+    //     return turnMap[roomId].numberOfEvaluators;
+    // }
 
-    getTurnMapTurnAnswerPlayers(roomId: number) {
-        return turnMap[roomId].turnAnswerPlayers;
-    }
+    // getTurnMapTurnAnswerPlayers(roomId: number) {
+    //     return turnMap[roomId].turnAnswerPlayers;
+    // }
 
     updateTurnMapSpeechScore(roomId: number, score: number): number {
         turnMap[roomId].speechScore.push(score);
@@ -425,9 +425,9 @@ export class GamesService {
         turnMap[roomId].turnQuizRank++;
     }
 
-    updateTurnMapTurnAnswerPlayersTrue(roomId: number, userId: number) {
-        turnMap[roomId].turnAnswerPlayers[userId] = true;
-    }
+    // updateTurnMapTurnAnswerPlayersTrue(roomId: number, userId: number) {
+    //     turnMap[roomId].turnAnswerPlayers[userId] = true;
+    // }
 
     async updateTurnMapNumberOfEvaluators(roomInfo) {
         const numberOfPlayers: number = await this.playersRepository.countBy({ roomInfo });

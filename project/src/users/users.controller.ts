@@ -103,7 +103,6 @@ export class UsersController {
     async userKeyword(@Headers() headers) {
         const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.userKeyword(token);
-        console.log(data);
 
         return { data };
     }

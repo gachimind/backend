@@ -349,8 +349,6 @@ let GamesGateway = class GamesGateway {
         if (event === 'discussionTimer') {
             const extraScore = await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
             this.emitScoreEvent(roomId, turn.speechPlayer, extraScore);
-            const turnResults = await this.gamesService.createPlayerTurnResult(roomId, turn);
-            console.log(turnResults);
         }
         this.emitTimeEndEvent(roomId, timer, event, currentTurn);
         return;
