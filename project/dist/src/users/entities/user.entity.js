@@ -20,11 +20,15 @@ __decorate([
     __metadata("design:type", Number)
 ], User.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true, type: 'bigint' }),
     __metadata("design:type", Number)
 ], User.prototype, "kakaoUserId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true, length: 50 }),
+    (0, typeorm_1.Column)({ nullable: true, type: 'bigint' }),
+    __metadata("design:type", Number)
+], User.prototype, "githubUserId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([

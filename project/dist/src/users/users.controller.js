@@ -34,6 +34,17 @@ let UsersController = class UsersController {
         const token = await this.usersService.createToken(user);
         return { url: this.configService.get('REDIRECT') + token };
     }
+    handleLoginGithub() {
+        return { msg: 'Github Authentication' };
+    }
+    async githubLoginRedirect(code, req, res) {
+        if (!req.user) {
+            throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
+        }
+        const user = await this.usersService.validateUser(req.user);
+        const token = await this.usersService.createToken(user);
+        return { url: this.configService.get('REDIRECT') + token };
+    }
     async logout(headers) {
         const token = headers.authorization.replace('Bearer ', '');
         await this.usersService.logout(token);
@@ -78,6 +89,24 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "kakaoLoginRedirect", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('github')),
+    (0, common_1.Get)('login/github'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "handleLoginGithub", null);
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('github')),
+    (0, common_1.Get)('login/github/redirect'),
+    (0, common_1.Redirect)('redirectUrl', 302),
+    __param(0, (0, common_1.Param)('code')),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "githubLoginRedirect", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     (0, common_1.Get)('/logout'),
