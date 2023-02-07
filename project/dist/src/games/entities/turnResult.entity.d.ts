@@ -8,6 +8,7 @@ export declare class TurnResult {
     userId: number;
     score: number;
     keyword: string;
+    link: string;
     isSpeech: boolean;
     createdAt: Date;
     updatedAt: Date;

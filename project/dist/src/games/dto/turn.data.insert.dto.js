@@ -39,8 +39,11 @@ __decorate([
 ], TurnDataInsertDto.prototype, "keyword", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], TurnDataInsertDto.prototype, "hint", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TurnDataInsertDto.prototype, "link", void 0);
 exports.TurnDataInsertDto = TurnDataInsertDto;
 //# sourceMappingURL=turn.data.insert.dto.js.map

@@ -611,6 +611,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 turn,
             );
             this.emitScoreEvent(roomId, turn.speechPlayer, extraScore);
+            const turnResults = await this.gamesService.createPlayerTurnResult(roomId, turn);
+            console.log(turnResults);
         }
         // time-end event 처리
         this.emitTimeEndEvent(roomId, timer, event, currentTurn);

@@ -5,5 +5,6 @@ export declare class TurnResultDataInsertDto {
     userId: number;
     score: number;
     keyword: string;
+    link: string;
     isSpeech: boolean;
 }

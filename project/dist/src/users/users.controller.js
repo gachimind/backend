@@ -59,6 +59,7 @@ let UsersController = class UsersController {
     async userKeyword(headers) {
         const token = headers.authorization.replace('Bearer ', '');
         const data = await this.usersService.userKeyword(token);
+        console.log(data);
         return { data };
     }
     async overlapCheck(nickname) {

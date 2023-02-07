@@ -6,13 +6,13 @@ import { NotionService } from './notion.service';
 export class CronService {
     constructor(private readonly notionService: NotionService) {}
 
-    @Cron(CronExpression.EVERY_MINUTE)
+    //@Cron(CronExpression.EVERY_MINUTE)
     async actionPerMin() {
         await this.notionService.updateCurrentStat();
         await this.notionService.updateAccumulatedStat();
     }
 
-    @Cron(CronExpression.EVERY_HOUR)
+    //@Cron(CronExpression.EVERY_HOUR)
     async actionPerHour() {
         await this.notionService.createCurrentStat();
         await this.notionService.createAccumulatedStat();

@@ -1,6 +1,6 @@
 export declare class Keyword {
     keywordId: number;
-    keywordKor: string;
-    keywordEng?: string;
-    hint?: string;
+    keyword: string;
+    link: string;
+    hint: string;
 }

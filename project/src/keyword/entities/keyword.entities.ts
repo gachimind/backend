@@ -6,11 +6,11 @@ export class Keyword {
     keywordId: number;
 
     @Column('varchar')
-    keywordKor: string;
+    keyword: string;
+
+    @Column()
+    link: string;
 
     @Column({ nullable: true })
-    keywordEng?: string;
-
-    @Column({ nullable: true })
-    hint?: string;
+    hint: string;
 }

@@ -5,5 +5,6 @@ export declare class TurnDataInsertDto {
     speechPlayer: number;
     speechPlayerNickname: string;
     keyword: string;
-    hint?: string;
+    hint: string;
+    link: string;
 }

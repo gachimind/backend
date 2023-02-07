@@ -50,9 +50,13 @@ __decorate([
     __metadata("design:type", String)
 ], Turn.prototype, "keyword", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'text' }),
     __metadata("design:type", String)
 ], Turn.prototype, "hint", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text' }),
+    __metadata("design:type", String)
+], Turn.prototype, "link", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ select: false }),
     __metadata("design:type", Date)
