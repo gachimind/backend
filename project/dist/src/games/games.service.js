@@ -78,7 +78,7 @@ let GamesService = class GamesService {
         };
         const turn = await this.turnRepository.save(newTurnData);
         this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        await this.createTurnMap(roomId, turn.turnId, keyword);
+        this.createTurnMap(roomId, turn.turnId, keyword);
         return turn;
     }
     async updateTurn(turn, timer) {
