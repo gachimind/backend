@@ -20,6 +20,8 @@ export class TurnDataInsertDto {
     keyword: string;
 
     @IsString()
-    @IsOptional()
-    hint?: string;
+    hint: string;
+
+    @IsString()
+    link: string;
 }

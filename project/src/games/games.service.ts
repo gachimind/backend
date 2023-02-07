@@ -76,8 +76,9 @@ export class GamesService {
             currentEvent: 'start',
             speechPlayer,
             speechPlayerNickname: nickname.user.nickname,
-            keyword: keyword.keywordEng ? keyword.keywordEng : keyword.keywordKor,
-            hint: keyword.keywordEng ? keyword.keywordKor : keyword.keywordEng,
+            keyword: keyword.keyword,
+            hint: keyword.hint,
+            link: keyword.link,
         };
 
         const turn = await this.turnRepository.save(newTurnData);
@@ -178,6 +179,7 @@ export class GamesService {
             userId,
             score: 100 - turnMap[roomId].turnQuizRank * 20,
             keyword: turn.keyword,
+            link: turn.link,
             isSpeech: false,
         };
         this.updateTurnMapTurnQuizRank(roomId);
@@ -208,6 +210,7 @@ export class GamesService {
             userId: turn.speechPlayer,
             score,
             keyword: turn.keyword,
+            link: turn.link,
             isSpeech: true,
         };
         await this.createTurnResult(turnResult);

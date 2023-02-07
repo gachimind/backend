@@ -38,8 +38,11 @@ export class Turn {
     @Column()
     keyword: string;
 
-    @Column({ type: 'text', nullable: true })
-    hint: string | null;
+    @Column({ type: 'text' })
+    hint: string;
+
+    @Column({ type: 'text' })
+    link: string;
 
     @CreateDateColumn({ select: false })
     createdAt: Date;
