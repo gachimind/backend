@@ -563,7 +563,7 @@ __decorate([
 ], GamesGateway.prototype, "handleChangeStream", null);
 GamesGateway = __decorate([
     (0, common_1.UseFilters)(new ws_exception_filter_1.SocketExceptionFilter()),
-    (0, websockets_1.WebSocketGateway)({ cors: { origin: '*', transports: ['websocket'], upgrade: false } }),
+    (0, websockets_1.WebSocketGateway)({ cors: { origin: '*' }, transports: ['websocket'], upgrade: false }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,
         chat_service_1.ChatService,
