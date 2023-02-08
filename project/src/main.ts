@@ -6,6 +6,7 @@ import { HttpExceptionFilter } from './common/exceptionFilters/http-exception.fi
 import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
 import { winstonLogger } from './logger/winston.util';
+import { RedisIoAdapter } from './redis/redis.adaptor';
 
 declare const module: any;
 
@@ -13,7 +14,10 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
         logger: winstonLogger,
     });
+    const redisIoAdapter = new RedisIoAdapter(app);
+    await redisIoAdapter.connectToRedis();
     const port = process.env.PORT || 3000;
+    app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({ origin: '*' });
     app.use(cookieParser());
     app.useGlobalFilters(new HttpExceptionFilter());

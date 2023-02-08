@@ -8,11 +8,15 @@ const http_exception_filter_1 = require("./common/exceptionFilters/http-exceptio
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
 const winston_util_1 = require("./logger/winston.util");
+const redis_adaptor_1 = require("./redis/redis.adaptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: winston_util_1.winstonLogger,
     });
+    const redisIoAdapter = new redis_adaptor_1.RedisIoAdapter(app);
+    await redisIoAdapter.connectToRedis();
     const port = process.env.PORT || 3000;
+    app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({ origin: '*' });
     app.use(cookieParser());
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());

@@ -10,6 +10,7 @@
         "build": "npx cross-env NODE_ENV=production nest start",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "format:all": "prettier --write ./*.*",
+        "redis": "redis-server",
         "start": "nest start",
         "start:dev-backup": "nest start --watch",
         "start:dev": "nest build --webpack --webpackPath webpack-hmr.config.js --watch",
