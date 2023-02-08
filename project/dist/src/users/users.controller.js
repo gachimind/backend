@@ -27,11 +27,14 @@ let UsersController = class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
     async kakaoLoginRedirect(code, req, res) {
+        console.log('로그인 블럭');
         if (!req.user) {
             throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
         }
         const user = await this.usersService.validateUser(req.user);
+        console.log('validate user :', user);
         const token = await this.usersService.createToken(user);
+        console.log('create token:', token);
         return { url: this.configService.get('REDIRECT') + token };
     }
     handleLoginGithub() {
