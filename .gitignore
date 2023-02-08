@@ -1,1 +1,3 @@
 logs/
+nginx.config
+load-balance.nginx.config
