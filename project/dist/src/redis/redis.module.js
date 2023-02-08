@@ -24,7 +24,9 @@ RedisModule = __decorate([
                             host: configService.get('REDIS_HOST'),
                             port: Number(configService.get('REDIS_PORT')),
                         },
-                        ttl: 60 * 60 * 24,
+                        username: configService.get('REDIS_USERNAME'),
+                        password: configService.get('REDIS_PASSWORD'),
+                        ttl: 30 + 60 + 30 + 5,
                     });
                     return { store: () => store };
                 },

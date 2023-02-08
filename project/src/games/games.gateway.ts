@@ -34,8 +34,6 @@ import { TurnEvaluateRequestDto } from './dto/evaluate.request.dto';
 import { eventUserInfoConstructor } from './util/event.user.info.constructor';
 import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { GameResult } from './entities/gameResult.entity';
-import { gameMap } from './util/game.map';
-import { request } from 'http';
 
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -243,13 +241,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.updateRoomListToMain();
 
         // 게임 정보 매핑
-        // TODO : gameMap interface 만들기
-        await this.gamesService.createGameMap(room);
         // player별 gameResult 만들기
         const gameResults: GameResult[] = await this.gamesService.createGameResultPerPlayer(
             room.roomId,
         );
-        await this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
+        // TODO : gameMap interface 만들기
+        await this.gamesService.createGameMap(room, gameResults);
 
         // 게임 시작
         room = await this.controlGameTurns(room);
@@ -277,7 +274,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         let turn: Turn;
         if (requestUser.player.room.turns.length) {
             turn = await this.gamesService.getTurnByTurnId(
-                this.gamesService.getGameMapCurrentTurnId(room.roomId),
+                await this.gamesService.getGameMapCurrentTurnId(room.roomId),
             );
         }
 
@@ -315,12 +312,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             throw new SocketException('잘못된 요청입니다.', 400, event);
         }
         const turn = await this.gamesService.getTurnByTurnId(
-            this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo),
+            await this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo),
         );
         if (turn.currentEvent !== 'discussionTime') {
             throw new SocketException('지금은 발표자를 평가할 수 없습니다.', 400, event);
         }
-        const score = this.gamesService.updateTurnMapSpeechScore(
+        const score = await this.gamesService.updateTurnMapSpeechScore(
             requestUser.player.roomInfo,
             data.score,
         );
@@ -411,19 +408,19 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 roomId,
                 requestUser.userInfo,
             );
-            this.gamesService.reduceGameMapCurrentPlayers(roomId);
+            await this.gamesService.reduceGameMapCurrentPlayers(roomId);
 
             if (
-                this.gamesService.getGameMapKeywordsCount(roomId) >
-                this.gamesService.getGameMapRemainingTurns(roomId)
+                (await this.gamesService.getGameMapKeywordsCount(roomId)) >
+                (await this.gamesService.getGameMapRemainingTurns(roomId))
             ) {
-                this.gamesService.popGameMapKeywords(roomId);
+                await this.gamesService.popGameMapKeywords(roomId);
             }
             // 발표자가 발표 타임에 나간 경우 : 턴 종료 -> 게임 종료?
             let turn: Turn;
             if (requestUser.player.room.turns.length) {
                 turn = await this.gamesService.getTurnByTurnId(
-                    this.gamesService.getGameMapCurrentTurnId(roomId),
+                    await this.gamesService.getGameMapCurrentTurnId(roomId),
                 );
             }
             if (
@@ -434,8 +431,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                 // 턴 종료 처리(타이머/턴 삭제, error 에밋)
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
                 // 발표자가 나가고 남은 인원 1명이면 게임 종료
-                if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
-                    this.emitCannotStartError(roomId);
+                if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) === 1) {
+                    await this.emitCannotStartError(roomId);
                     const room = await this.gamesService.handleGameEndEvent(
                         requestUser.player.room,
                     );
@@ -446,7 +443,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     );
                 }
                 // 방에 여러명이 남은 상태에서 마지막 발표자가 나가면 게임 종료
-                if (!this.gamesService.getGameMapRemainingTurns(roomId)) {
+                if (!(await this.gamesService.getGameMapRemainingTurns(roomId))) {
                     const room = await this.gamesService.handleGameEndEvent(
                         requestUser.player.room,
                     );
@@ -457,13 +454,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
                     );
                 }
                 // 다음 턴을 생성하여 게임을 지속
-                if (this.gamesService.getGameMapRemainingTurns(roomId)) {
+                if (await this.gamesService.getGameMapRemainingTurns(roomId)) {
                     return this.controlGameTurns(updateRoom.room);
                 }
             }
 
             // 발표 타임이 아닐때 발표자가 나가거나, 참여자가 나간 경우 : 게임 종료?
-            if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
+            if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) === 1) {
                 // 턴 중 requestUser가 나감으로 게임이 종료됐다면, 남아있던 발표자의 점수 올리기
                 if (turn && turn.speechPlayer === requestUser.userInfo) {
                     await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
@@ -558,10 +555,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         await this.controlTurnTimer(room, 'startCount');
 
         // remainingTurns만큼 턴을 반복
-        while (gameMap[room.roomId].remainingTurns.length) {
+        while (await this.gamesService.getGameMapRemainingTurns(room.roomId)) {
             // create turn -> createTurnMap 포함
             // 턴 생성 전, 방 안에 남은 인원 검사 -> 1명이면 throw error로 게임 진행 막기
-            this.throwCannotStartError(room.roomId);
+            await this.throwCannotStartError(room.roomId);
             let turn = await this.gamesService.createTurn(room.roomId);
 
             // readyTimer 시작
@@ -614,14 +611,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             // const turnResults = await this.gamesService.createPlayerTurnResult(roomId, turn);
         }
         // time-end event 처리
-        this.emitTimeEndEvent(roomId, timer, event, currentTurn);
+        await this.emitTimeEndEvent(roomId, timer, event, currentTurn);
         return;
     }
 
     // TODO : 게임 중 탈주자 처리 로직 수정할 것!!! (깃헙 이슈 확인!!)
     // [logic] 발표자가 퇴장한 경우,
     async handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket) {
-        this.gamesService.breakTimer(turn.roomInfo, Next);
+        await this.gamesService.breakTimer(turn.roomInfo, Next);
         // 방안에 남은 player에게 에러 메세지 emit
         socket.to(`${turn.roomInfo}`).emit('error', {
             error: {
@@ -636,16 +633,16 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     // [logic] 게임 중 플레이어가 퇴장하여 게임을 종료해야 하는 경우
     async handleEndGameByPlayerLeaveEvent(room: Room) {
-        this.emitCannotStartError(room.roomId);
+        await this.emitCannotStartError(room.roomId);
         room = await this.gamesService.handleGameEndEvent(room);
         const updateRoom: UpdateRoomDto = await this.updateRoomAfterEnterOrLeave(room.roomId);
         return this.announceUpdateRoomInfo(updateRoom, null, 'game-end');
     }
 
     // emit events
-    emitCannotStartError(roomId: number) {
-        if (gameMap[roomId].currentPlayers < 2) {
-            this.gamesService.breakTimer(roomId, Next);
+    async emitCannotStartError(roomId: number) {
+        if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) < 2) {
+            await this.gamesService.breakTimer(roomId, Next);
             this.server.to(`${roomId}`).emit('error', {
                 errorMessage: '게임을 시작할 수 없습니다.',
                 status: 400,
@@ -655,9 +652,9 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         }
     }
 
-    throwCannotStartError(roomId: number) {
-        if (gameMap[roomId].currentPlayers < 2) {
-            this.gamesService.breakTimer(roomId, Next);
+    async throwCannotStartError(roomId: number) {
+        if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) < 2) {
+            await this.gamesService.breakTimer(roomId, Next);
             this.server.to(`${roomId}`).emit('error', {
                 errorMessage: '게임을 시작할 수 없습니다.',
                 status: 400,
@@ -687,14 +684,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         });
     }
 
-    async emitScoreEvent(roomId: number, userId: number, score: number) {
+    emitScoreEvent(roomId: number, userId: number, score: number) {
         this.server.to(`${roomId}`).emit('score', { data: { userId, score } });
     }
 
-    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: number) {
+    async emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: number) {
         let key = 'currentTurn';
         if (event === 'discussionTimer') {
-            turn = gameMap[roomId].remainingTurns.length ? turn + 1 : 0;
+            turn = (await this.gamesService.getGameMapRemainingTurns(roomId)) ? turn + 1 : 0;
             key = 'nextTurn';
         }
 

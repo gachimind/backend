@@ -15,7 +15,7 @@ async function bootstrap() {
     });
     const redisIoAdapter = new redis_adaptor_1.RedisIoAdapter(app);
     await redisIoAdapter.connectToRedis();
-    const port = process.env.PORT || 3000;
+    const port = process.env.PORT || 3001;
     app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({ origin: '*' });
     app.use(cookieParser());

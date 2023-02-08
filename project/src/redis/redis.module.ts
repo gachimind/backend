@@ -16,7 +16,7 @@ import { redisStore } from 'cache-manager-redis-store';
                     },
                     username: configService.get('REDIS_USERNAME'),
                     password: configService.get('REDIS_PASSWORD'),
-                    ttl: 0,
+                    ttl: 30 + 60 + 30 + 5,
                 });
                 return { store: () => store };
             },

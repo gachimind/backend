@@ -13,8 +13,8 @@ import { TurnResult } from './entities/turnResult.entity';
 import { GameResult } from './entities/gameResult.entity';
 import { GamesService } from './games.service';
 import { TodayResult } from './entities/todayResult.entity';
-import { Keyword } from 'src/keyword/entities/keyword.entities';
 import { KeywordModule } from 'src/keyword/keyword.module';
+import { GamesRepository } from './games.repository';
 
 @Module({
     imports: [
@@ -30,7 +30,14 @@ import { KeywordModule } from 'src/keyword/keyword.module';
         ]),
         KeywordModule,
     ],
-    providers: [GamesGateway, RoomService, ChatService, PlayersService, GamesService],
+    providers: [
+        GamesGateway,
+        RoomService,
+        ChatService,
+        PlayersService,
+        GamesService,
+        GamesRepository,
+    ],
     exports: [GamesGateway, TypeOrmModule],
 })
 export class GamesModule {}

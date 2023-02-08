@@ -7,7 +7,7 @@ const redis_1 = require("redis");
 class RedisIoAdapter extends platform_socket_io_1.IoAdapter {
     async connectToRedis() {
         const pubClient = (0, redis_1.createClient)({
-            url: process.env.REDIS_URL,
+            url: `redis://${process.env.REDIS_USERNAME}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}/0`,
         });
         const subClient = pubClient.duplicate();
         await Promise.all([pubClient.connect(), subClient.connect()]);

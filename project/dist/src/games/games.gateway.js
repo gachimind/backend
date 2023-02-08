@@ -23,7 +23,6 @@ const chat_service_1 = require("./chat.service");
 const games_service_1 = require("./games.service");
 const event_user_info_constructor_1 = require("./util/event.user.info.constructor");
 const update_room_info_constructor_1 = require("./util/update-room.info.constructor");
-const game_map_1 = require("./util/game.map");
 let GamesGateway = class GamesGateway {
     constructor(roomService, playersService, chatService, gamesService) {
         this.roomService = roomService;
@@ -141,9 +140,8 @@ let GamesGateway = class GamesGateway {
         let room = requestUser.player.room;
         room = await this.roomService.updateIsGameOn(room.roomId);
         await this.updateRoomListToMain();
-        await this.gamesService.createGameMap(room);
         const gameResults = await this.gamesService.createGameResultPerPlayer(room.roomId);
-        await this.gamesService.mapGameResultIdWithUserId(room.roomId, gameResults);
+        await this.gamesService.createGameMap(room, gameResults);
         room = await this.controlGameTurns(room);
         room = await this.gamesService.handleGameEndEvent(room);
         this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
@@ -158,7 +156,7 @@ let GamesGateway = class GamesGateway {
         const room = requestUser.player.room;
         let turn;
         if (requestUser.player.room.turns.length) {
-            turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(room.roomId));
+            turn = await this.gamesService.getTurnByTurnId(await this.gamesService.getGameMapCurrentTurnId(room.roomId));
         }
         if (room.isGameOn && turn) {
             const isAnswer = this.chatService.FilterAnswer(turn, requestUser.userInfo, data.message);
@@ -177,11 +175,11 @@ let GamesGateway = class GamesGateway {
         if (!requestUser.player) {
             throw new ws_exception_filter_1.SocketException('잘못된 요청입니다.', 400, event);
         }
-        const turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo));
+        const turn = await this.gamesService.getTurnByTurnId(await this.gamesService.getGameMapCurrentTurnId(requestUser.player.roomInfo));
         if (turn.currentEvent !== 'discussionTime') {
             throw new ws_exception_filter_1.SocketException('지금은 발표자를 평가할 수 없습니다.', 400, event);
         }
-        const score = this.gamesService.updateTurnMapSpeechScore(requestUser.player.roomInfo, data.score);
+        const score = await this.gamesService.updateTurnMapSpeechScore(requestUser.player.roomInfo, data.score);
         this.emitScoreEvent(requestUser.player.roomInfo, turn.speechPlayer, score);
     }
     async handleIce(socket, { data }) {
@@ -239,33 +237,33 @@ let GamesGateway = class GamesGateway {
         this.announceUpdateRoomInfo(updateRoom, requestUser, 'leave');
         if (requestUser.player.room.isGameOn) {
             await this.gamesService.removePlayerFromGameMapRemainingTurns(roomId, requestUser.userInfo);
-            this.gamesService.reduceGameMapCurrentPlayers(roomId);
-            if (this.gamesService.getGameMapKeywordsCount(roomId) >
-                this.gamesService.getGameMapRemainingTurns(roomId)) {
-                this.gamesService.popGameMapKeywords(roomId);
+            await this.gamesService.reduceGameMapCurrentPlayers(roomId);
+            if ((await this.gamesService.getGameMapKeywordsCount(roomId)) >
+                (await this.gamesService.getGameMapRemainingTurns(roomId))) {
+                await this.gamesService.popGameMapKeywords(roomId);
             }
             let turn;
             if (requestUser.player.room.turns.length) {
-                turn = await this.gamesService.getTurnByTurnId(this.gamesService.getGameMapCurrentTurnId(roomId));
+                turn = await this.gamesService.getTurnByTurnId(await this.gamesService.getGameMapCurrentTurnId(roomId));
             }
             if (turn &&
                 requestUser.player.userInfo === turn.speechPlayer &&
                 (turn.currentEvent === 'readyTime' || turn.currentEvent === 'speechTime')) {
                 await this.handleEndTurnBySpeechPlayerLeaveEvent(turn, socket);
-                if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
-                    this.emitCannotStartError(roomId);
+                if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) === 1) {
+                    await this.emitCannotStartError(roomId);
                     const room = await this.gamesService.handleGameEndEvent(requestUser.player.room);
                     return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
                 }
-                if (!this.gamesService.getGameMapRemainingTurns(roomId)) {
+                if (!(await this.gamesService.getGameMapRemainingTurns(roomId))) {
                     const room = await this.gamesService.handleGameEndEvent(requestUser.player.room);
                     return this.announceUpdateRoomInfo({ room, state: 'updated' }, null, 'game-end');
                 }
-                if (this.gamesService.getGameMapRemainingTurns(roomId)) {
+                if (await this.gamesService.getGameMapRemainingTurns(roomId)) {
                     return this.controlGameTurns(updateRoom.room);
                 }
             }
-            if (this.gamesService.getGameMapCurrentPlayers(roomId) === 1) {
+            if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) === 1) {
                 if (turn && turn.speechPlayer === requestUser.userInfo) {
                     await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
                 }
@@ -322,8 +320,8 @@ let GamesGateway = class GamesGateway {
     }
     async controlGameTurns(room) {
         await this.controlTurnTimer(room, 'startCount');
-        while (game_map_1.gameMap[room.roomId].remainingTurns.length) {
-            this.throwCannotStartError(room.roomId);
+        while (await this.gamesService.getGameMapRemainingTurns(room.roomId)) {
+            await this.throwCannotStartError(room.roomId);
             let turn = await this.gamesService.createTurn(room.roomId);
             await this.controlTurnTimer(room, 'readyTime', turn);
             await this.controlTurnTimer(room, 'speechTime', turn);
@@ -350,11 +348,11 @@ let GamesGateway = class GamesGateway {
             const extraScore = await this.gamesService.createSpeechPlayerTurnResult(roomId, turn);
             this.emitScoreEvent(roomId, turn.speechPlayer, extraScore);
         }
-        this.emitTimeEndEvent(roomId, timer, event, currentTurn);
+        await this.emitTimeEndEvent(roomId, timer, event, currentTurn);
         return;
     }
     async handleEndTurnBySpeechPlayerLeaveEvent(turn, socket) {
-        this.gamesService.breakTimer(turn.roomInfo, common_1.Next);
+        await this.gamesService.breakTimer(turn.roomInfo, common_1.Next);
         socket.to(`${turn.roomInfo}`).emit('error', {
             error: {
                 errorMessage: '발표자가 나갔어요!',
@@ -365,14 +363,14 @@ let GamesGateway = class GamesGateway {
         await this.gamesService.deleteTurnByTurnId(turn.turnId);
     }
     async handleEndGameByPlayerLeaveEvent(room) {
-        this.emitCannotStartError(room.roomId);
+        await this.emitCannotStartError(room.roomId);
         room = await this.gamesService.handleGameEndEvent(room);
         const updateRoom = await this.updateRoomAfterEnterOrLeave(room.roomId);
         return this.announceUpdateRoomInfo(updateRoom, null, 'game-end');
     }
-    emitCannotStartError(roomId) {
-        if (game_map_1.gameMap[roomId].currentPlayers < 2) {
-            this.gamesService.breakTimer(roomId, common_1.Next);
+    async emitCannotStartError(roomId) {
+        if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) < 2) {
+            await this.gamesService.breakTimer(roomId, common_1.Next);
             this.server.to(`${roomId}`).emit('error', {
                 errorMessage: '게임을 시작할 수 없습니다.',
                 status: 400,
@@ -380,9 +378,9 @@ let GamesGateway = class GamesGateway {
             });
         }
     }
-    throwCannotStartError(roomId) {
-        if (game_map_1.gameMap[roomId].currentPlayers < 2) {
-            this.gamesService.breakTimer(roomId, common_1.Next);
+    async throwCannotStartError(roomId) {
+        if ((await this.gamesService.getGameMapCurrentPlayers(roomId)) < 2) {
+            await this.gamesService.breakTimer(roomId, common_1.Next);
             this.server.to(`${roomId}`).emit('error', {
                 errorMessage: '게임을 시작할 수 없습니다.',
                 status: 400,
@@ -409,13 +407,13 @@ let GamesGateway = class GamesGateway {
             },
         });
     }
-    async emitScoreEvent(roomId, userId, score) {
+    emitScoreEvent(roomId, userId, score) {
         this.server.to(`${roomId}`).emit('score', { data: { userId, score } });
     }
-    emitTimeEndEvent(roomId, timer, event, turn) {
+    async emitTimeEndEvent(roomId, timer, event, turn) {
         let key = 'currentTurn';
         if (event === 'discussionTimer') {
-            turn = game_map_1.gameMap[roomId].remainingTurns.length ? turn + 1 : 0;
+            turn = (await this.gamesService.getGameMapRemainingTurns(roomId)) ? turn + 1 : 0;
             key = 'nextTurn';
         }
         const data = {

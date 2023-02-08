@@ -19,11 +19,11 @@ const typeorm_2 = require("typeorm");
 const room_entity_1 = require("./entities/room.entity");
 const ws_exception_filter_1 = require("../common/exceptionFilters/ws-exception.filter");
 const player_entity_1 = require("./entities/player.entity");
-const game_map_1 = require("./util/game.map");
-const turn_map_1 = require("./util/turn.map");
 const game_timer_map_1 = require("./util/game-timer.map");
+const games_repository_1 = require("./games.repository");
 let RoomService = class RoomService {
-    constructor(roomRepository, playerRepository) {
+    constructor(gamesRepository, roomRepository, playerRepository) {
+        this.gamesRepository = gamesRepository;
         this.roomRepository = roomRepository;
         this.playerRepository = playerRepository;
     }
@@ -55,8 +55,8 @@ let RoomService = class RoomService {
         });
     }
     async removeRoomByRoomId(roomId) {
-        delete game_map_1.gameMap[roomId];
-        delete turn_map_1.turnMap[roomId];
+        await this.gamesRepository.deleteGameMap(roomId);
+        await this.gamesRepository.deleteTurnMap(roomId);
         delete game_timer_map_1.gameTimerMap[roomId];
         await this.playerRepository.delete({ roomInfo: roomId });
         return await this.roomRepository.softDelete(roomId);
@@ -166,9 +166,10 @@ let RoomService = class RoomService {
 };
 RoomService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(room_entity_1.Room)),
-    __param(1, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
+    __param(1, (0, typeorm_1.InjectRepository)(room_entity_1.Room)),
+    __param(2, (0, typeorm_1.InjectRepository)(player_entity_1.Player)),
+    __metadata("design:paramtypes", [games_repository_1.GamesRepository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], RoomService);
 exports.RoomService = RoomService;
