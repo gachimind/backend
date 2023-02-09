@@ -13,17 +13,17 @@ declare const module: any;
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
         logger: winstonLogger,
-        cors: {
-            origin: 'https://localhost:3001',
-            methods: ['GET', 'POST', 'PATCH'],
-            credentials: true,
-        },
     });
     const redisIoAdapter = new RedisIoAdapter(app);
     await redisIoAdapter.connectToRedis();
     const port = process.env.PORT || 3001;
     app.useWebSocketAdapter(redisIoAdapter);
-    app.enableCors({ origin: '*' });
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+    });
     app.use(cookieParser());
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalPipes(

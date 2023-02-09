@@ -12,17 +12,17 @@ const redis_adaptor_1 = require("./redis/redis.adaptor");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: winston_util_1.winstonLogger,
-        cors: {
-            origin: 'https://localhost:3001',
-            methods: ['GET', 'POST', 'PATCH'],
-            credentials: true,
-        },
     });
     const redisIoAdapter = new redis_adaptor_1.RedisIoAdapter(app);
     await redisIoAdapter.connectToRedis();
     const port = process.env.PORT || 3001;
     app.useWebSocketAdapter(redisIoAdapter);
-    app.enableCors({ origin: '*' });
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+    });
     app.use(cookieParser());
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
