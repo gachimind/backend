@@ -34,7 +34,7 @@ export class UsersController {
 
     @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao/redirect')
-    //@Redirect('redirectUrl', 302)
+    @Redirect('redirectUrl', 302)
     async kakaoLoginRedirect(
         @Param('code') code: string,
         @Req() req: { user: CreateUserDto },
@@ -46,10 +46,10 @@ export class UsersController {
         const user: User = await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user);
 
-        //return { url: this.configService.get('REDIRECT') + token };
-        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-            .status(301)
-            .redirect(this.configService.get('REDIRECT'));
+        return { url: this.configService.get('REDIRECT') + token };
+        // res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        //     .status(301)
+        //     .redirect(this.configService.get('REDIRECT'));
     }
 
     @UseGuards(AuthGuard('github'))
@@ -60,7 +60,7 @@ export class UsersController {
 
     @UseGuards(AuthGuard('github'))
     @Get('login/github/redirect')
-    //@Redirect('redirectUrl', 302)
+    @Redirect('redirectUrl', 302)
     async githubLoginRedirect(
         @Param('code') code: string,
         @Req() req: { user: CreateUserDto },
@@ -72,10 +72,10 @@ export class UsersController {
         const user: User = await this.usersService.validateUser(req.user);
         const token: string = await this.usersService.createToken(user);
 
-        //return { url: this.configService.get('REDIRECT') + token };
-        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-            .status(301)
-            .redirect(this.configService.get('REDIRECT'));
+        return { url: this.configService.get('REDIRECT') + token };
+        // res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        //     .status(301)
+        //     .redirect(this.configService.get('REDIRECT'));
     }
 
     // 로그아웃 API
