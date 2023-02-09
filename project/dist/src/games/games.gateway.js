@@ -567,6 +567,7 @@ GamesGateway = __decorate([
         cors: {
             origin: '*',
             credentials: true,
+            allowedHeaders: ['my-custom-header'],
             methods: ['GET', 'POST'],
         },
     }),

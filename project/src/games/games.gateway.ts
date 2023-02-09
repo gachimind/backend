@@ -40,6 +40,7 @@ import { GameResult } from './entities/gameResult.entity';
     cors: {
         origin: '*',
         credentials: true,
+        allowedHeaders: ['my-custom-header'],
         methods: ['GET', 'POST'],
     },
 })

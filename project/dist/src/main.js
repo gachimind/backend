@@ -19,7 +19,7 @@ async function bootstrap() {
     app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({
         origin: 'http://localhost:3001',
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'PATCH'],
         credentials: true,
     });
     app.use(cookieParser());
