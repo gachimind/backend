@@ -40,11 +40,10 @@ import { GameResult } from './entities/gameResult.entity';
     cors: {
         origin: 'https://localhost:3001',
         methods: ['GET', 'POST'],
-        allowedHeaders: ['*'],
         credentials: true,
     },
     transports: ['websocket'],
-    upgrade: false,
+    //upgrade: false,
 })
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
