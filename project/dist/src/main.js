@@ -18,7 +18,7 @@ async function bootstrap() {
     const port = process.env.PORT || 3001;
     app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({
-        origin: 'http://localhost:3001',
+        origin: ['https://gachimind.com', 'http://localhost:3001'],
         methods: ['GET', 'POST', 'PATCH'],
         credentials: true,
     });
