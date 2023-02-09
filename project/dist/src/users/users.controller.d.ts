@@ -11,9 +11,7 @@ export declare class UsersController {
     };
     kakaoLoginRedirect(code: string, req: {
         user: CreateUserDto;
-    }, res: Response): Promise<{
-        url: string;
-    }>;
+    }, res: Response): Promise<void>;
     handleLoginGithub(): {
         msg: string;
     };

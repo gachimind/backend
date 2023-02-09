@@ -27,15 +27,14 @@ let UsersController = class UsersController {
         return { msg: 'Kakao-Talk Authentication' };
     }
     async kakaoLoginRedirect(code, req, res) {
-        console.log('로그인 블럭');
         if (!req.user) {
             throw new common_1.HttpException('회원 인증에 실패하였습니다.', 401);
         }
         const user = await this.usersService.validateUser(req.user);
-        console.log('validate user :', user);
         const token = await this.usersService.createToken(user);
-        console.log('create token:', token);
-        return { url: this.configService.get('REDIRECT') + token };
+        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
     handleLoginGithub() {
         return { msg: 'Github Authentication' };
@@ -84,7 +83,6 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('kakao')),
     (0, common_1.Get)('login/kakao/redirect'),
-    (0, common_1.Redirect)('redirectUrl', 302),
     __param(0, (0, common_1.Param)('code')),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),

@@ -34,27 +34,22 @@ export class UsersController {
 
     @UseGuards(AuthGuard('kakao'))
     @Get('login/kakao/redirect')
-    @Redirect('redirectUrl', 302)
+    //@Redirect('redirectUrl', 302)
     async kakaoLoginRedirect(
         @Param('code') code: string,
         @Req() req: { user: CreateUserDto },
         @Res({ passthrough: true }) res: Response,
     ) {
-        console.log('로그인 블럭');
-
         if (!req.user) {
             throw new HttpException('회원 인증에 실패하였습니다.', 401);
         }
         const user: User = await this.usersService.validateUser(req.user);
-        console.log('validate user :', user);
-
         const token: string = await this.usersService.createToken(user);
-        console.log('create token:', token);
 
-        return { url: this.configService.get('REDIRECT') + token };
-        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-        // .status(301)
-        // .redirect(this.configService.get('REDIRECT'));
+        //return { url: this.configService.get('REDIRECT') + token };
+        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
 
     @UseGuards(AuthGuard('github'))

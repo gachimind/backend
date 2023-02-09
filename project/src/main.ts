@@ -20,9 +20,6 @@ async function bootstrap() {
     app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({
         origin: '*',
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-        preflightContinue: false,
-        optionsSuccessStatus: 204,
     });
     app.use(cookieParser());
     app.useGlobalFilters(new HttpExceptionFilter());
