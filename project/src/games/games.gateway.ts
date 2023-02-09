@@ -38,7 +38,7 @@ import { GameResult } from './entities/gameResult.entity';
 @UseFilters(new SocketExceptionFilter())
 @WebSocketGateway({
     cors: {
-        origin: '*',
+        origin: 'http://localhost:3001',
         credentials: true,
         allowedHeaders: ['my-custom-header'],
         methods: ['GET', 'POST'],
