@@ -8,10 +8,12 @@
       <a href="https://gachimind.com" target="_blank">플레이하기</a>
     </p>
     <a href="https://www.notion.so/54cfdfd05cd64f8c8e09ef1b471bc41c" target="_blank">가치마인드 팀 노션</a> &nbsp; &nbsp; |&nbsp; &nbsp; 
-    <a href="" target="_blank">시연영상(준비중)</a> &nbsp; &nbsp; |&nbsp; &nbsp;
+    <a href="https://www.youtube.com/watch?v=VNoWMh-u5dk" target="_blank">발표영상</a> &nbsp; &nbsp; |&nbsp; &nbsp;
     <a href="https://www.figma.com/file/G3t7s1x1skqg8UPWzfHvHO/%ED%95%AD%ED%95%B499-E%EB%B0%98-2%EC%A1%B0?node-id=0%3A1&t=7JFV1T7g4C9qwIBy-0" target="_blank">Figma 디자인</a> &nbsp; &nbsp; |&nbsp; &nbsp;
-    <a href="https://github.com/gachimind/backend/wiki" target="_blank">Backend 위키</a> &nbsp; &nbsp;
+    <a href="https://github.com/gachimind/backend/wiki" target="_blank">Backend 위키</a> &nbsp; &nbsp; |&nbsp; &nbsp; 
+    <a href="https://github.com/gachimind/frontend" target="_blank">Frontend Repo</a> &nbsp; &nbsp;
     <br /><br />
+     <img src="https://github.com/gachimind/backend/actions/workflows/main.yml/badge.svg"><br /><br />
     <img src="https://user-images.githubusercontent.com/76927397/216833354-793872ed-15e8-43ea-a68a-bd162fe5870f.jpg" width="600"/>
     <br /><br />
     <p>
@@ -35,36 +37,29 @@
 - 발표자 외 참가자는 채팅창에 키워드를 입력해 정답을 맞춥니다.
 - 토론 시간 자유롭게 대화하는 동안 채팅창에서 발표자를 평가할 수 있습니다.
 
+<br>
+
+## 😸 Frontend 프로젝트 개발 기간
+
+- 2023.01.04 ~ 2023.02.XX
+
 
 <br>
 
 ## 😻 주요 기능
 
-- 공개방 비밀방 선택을 통해 만들 수 있는 룸 시스템!
-<br /><br />
-    <img src="https://user-images.githubusercontent.com/102890891/216918198-bc413c06-3bdf-4558-afc9-4f4f0dc83f64.png" width="600"/>
-<br /><br />
+|<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217137613-07ad0f3d-fd94-45f1-b626-481aa655809e.gif" width=60%/></p> |<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217138252-87c4f5cf-cb4b-4f5d-8c18-de482caee515.gif" width=60%/></p> |
+|------|------|
+|<p align="center">방 생성</p>|<p align="center">내 정보 수정</p>|
 
-- 게임 READY / CANCEL / START 버튼으로 모든 유저가 준비됐을 때 시작하는 게임!
-<br /><br />
-    <img src="https://user-images.githubusercontent.com/102890891/216918367-ca20cb02-d5c7-43c3-adc4-e2cee9a21502.png" width="600"/>
-<br /><br />
+|<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217138796-b8f37196-95f8-4ccd-a3a0-f45886a81105.gif" width=100%/></p> |<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217139055-2f0450e7-7ed7-4aa2-a6d0-57274e385372.gif" width=100%/></p> | <p align="center"><img src="https://user-images.githubusercontent.com/76927397/217140081-131b3d44-b2e3-4b1d-b889-24a548a39437.gif" width=100%/></p>|
+|------|------|----
+|<p align="center">게임 플레이</p>|<p align="center">게임 플레이</p>|<p align="center">게임 플레이</p>|
 
-- 게임 중 채팅을 통해 정답을 맞추고, 맞출때마다 올라가는 스코어 시스템!
-<br /><br />
-    <img src="https://user-images.githubusercontent.com/102890891/216922630-725e16f6-6376-4443-bfe4-9b51efeb5662.png" width="600"/>
-<br /><br />
+|<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217139726-6550832b-92fa-4659-b8df-96a32c2c685b.JPG" width=100%/></p> |<p align="center"><img src="https://user-images.githubusercontent.com/76927397/217140628-33a13c2c-af47-4e43-9a4e-d47897785250.png" width=90%/></p> |
+|------|------|
+|<p align="center">게임 결과</p>|<p align="center">마이 페이지</p>|
 
-- 게임 종료 후 바로 공개되는 전체 유저의 스코어 보드
-<br /><br />
-    <img src="https://user-images.githubusercontent.com/102890891/216918456-cb94ef0a-67ba-4e2b-9582-74cf83c6b1c2.png" width="600"/>
-<br /><br />
-
-- 내가 풀어본 문제와 발표한 문제를 확인할 수 있는 마이페이지
-- 매일 매일 성장하는 나의 캣타워와 오늘의 랭킹 시스템까지!
-<br /><br />
-    <img src="https://user-images.githubusercontent.com/102890891/216921646-230b70ce-9e97-4c1a-bfb4-e6827837367c.png" width="1200"/>
-<br /><br />
 
 
 <br>
@@ -74,7 +69,8 @@
 
 > 추가 예정
 
-![아키텍처_중간 JPG](https://user-images.githubusercontent.com/76927397/216836966-8ed55066-d42e-472c-88c4-e04718981dd4.jpg)
+![아키텍처_최종 JPG](https://user-images.githubusercontent.com/102890891/217815357-0021a947-c0e7-4191-be70-bf587dc1d0db.png)
+
 
 <br>
 
@@ -93,12 +89,14 @@
   <img src="https://img.shields.io/badge/Passport-34E27A?style=for-the-badge&logo=Passport&logoColor=ffffff"/>&nbsp
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=ffffff"/>&nbsp
   <img src="https://img.shields.io/badge/Typeorm-DB7093?style=for-the-badge&logo=Typeorm&logoColor=ffffff"/>&nbsp
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=Redis&logoColor=ffffff"/>&nbsp
  </td>
 </tr>
 <tr>
  <td>
    <img src="https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=ESLint&logoColor=ffffff"/> &nbsp
    <img src="https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=Prettier&logoColor=ffffff"/>&nbsp
+   <img src="https://img.shields.io/badge/Webpack-8DD6F9?style=for-the-badge&logo=Webpack&logoColor=ffffff"/>&nbsp
   </td>
 </tr>
 <tr>
@@ -108,6 +106,7 @@
     <img src="https://img.shields.io/badge/Amazon RDS-527FFF?style=for-the-badge&logo=Amazon RDS&logoColor=white"/>&nbsp
     <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=for-the-badge&logo=GitHub Actions&logoColor=white"/>&nbsp
     <img src="https://img.shields.io/badge/Amazon S3-569A31?style=for-the-badge&logo=Amazon S3&logoColor=white"/>&nbsp
+    <img src="https://img.shields.io/badge/AWS ELB-FF9900?style=for-the-badge&logo=Amazib ELB&logoColor=ffffff"/>&nbsp
  </td>
 </tr>
 <tr>
@@ -123,7 +122,7 @@
 
 <br>
 
-##  ERD
+## :globe_with_meridians:  ERD
 
 ![image](https://user-images.githubusercontent.com/102890891/216917600-5fb98479-4145-4472-86f4-2423169d5ecc.png)
 
@@ -132,6 +131,72 @@
 ## 🛠 개발일지 & 트러블 슈팅
 > ✏️[개발일지 보러 가기](https://summer-driver-168.notion.site/0d4daa637a7245a89952ea75f4a51973)</br>
 > 🛠[트러블 슈팅 보러 가기](https://github.com/gachimind/backend/wiki/BE-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)
+
+<br>
+
+## 🧑‍🤝‍🧑 [Backend] 유저 피드백 개선사항
+
+
+<details>
+<summary><h4>:scream_cat: 처음 카카오로 로그인하면 흰 화면이 나와 게임 페이지로 갈 수 없어요! :crying_cat_face:</h4></summary>
+<div markdown="1">
+
+<br>
+
+처음 배포 후 받았던 유저 피드백이에요.
+최초 피드백을 받고 바로 nginx 설정을 통해 해결했어요!
+
+...
+
+그러나, 해결된게 아니었어요ㅠㅠ
+저희 서버는 로드밸런서를 붙여 오트 스케일링을 구축하기 전 싱글 서버로 운영했는데, 그때, nginx 설정에서 http_referer에 지정된 도메인 이외의 요청에 대해서는 444 에러를 반환하게 해뒀어요.
+그런데, 로그를 확인해보니 카카오 오어스 서버는 하나의 도메인을 사용하지 않고, 사용자 접속 환경에 따라 여러 도메인으로 요청이 들어왔어요 :joy_cat:
+
+결국, 로그에 찍힌 모든 도메인을 허용 도메인으로 추가하고, alias 설정을 추가해서 문제를 해결했어요!
+
+더 자세한 내용은 🛠[트러블 슈팅 보러 가기](https://github.com/gachimind/backend/wiki/BE-%ED%8A%B8%EB%9F%AC%EB%B8%94-%EC%8A%88%ED%8C%85)를 클릭해주세요!
+		
+</div>
+</details>
+
+<details>
+<summary><h4>:scream_cat: 키워드가 너무 어려워요ㅠㅠ 힌트가 있었으면 좋겠어요! </h4></summary>
+<div markdown="1">
+
+<br>
+
+설문에 참여한 대다수의 분들이 키워드를 지적해 주셨어요.
+대부분 난이도가 너무 높거나, 카테고리 분류가 되어 있지 않아서 어렵다는 의견이었어요.
+
+아직 카테고리 나누기는 해결하지 못했지만, 참여자 분들의 의견을 적극 반영해서, 개발팀에서 한땀한땀 손으로 직접 db를 구축했어요.
+
+게임 중에는 말풍선 한 줄 힌트를 추가했고, 마이페이지에서는 풀었던 키워드를 클릭하면 백과사전 링크로 이동할 수 있어요!
+		
+</div>
+</details>
+
+<details>
+<summary><h4>:wrench: 밤 12시 전에 접속해서 12시가 넘으면 게임을 시작할 수 없어요! :wrench:</h4></summary>
+<div markdown="1">
+
+<br>
+
+이 문제는 아직 해결 중이에요
+		
+</div>
+</details>
+
+<details>
+<summary><h4>:wrench: 마이페이지에서 맞추지 못한 키워드는 볼 수 없어요ㅠㅠ :wrench:</h4></summary>
+<div markdown="1">
+
+<br>
+
+이 문제는 아직 해결 중이에요
+		
+</div>
+</details>
+
 
 <br>
 
