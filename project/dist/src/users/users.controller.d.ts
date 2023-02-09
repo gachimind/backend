@@ -17,9 +17,7 @@ export declare class UsersController {
     };
     githubLoginRedirect(code: string, req: {
         user: CreateUserDto;
-    }, res: Response): Promise<{
-        url: string;
-    }>;
+    }, res: Response): Promise<void>;
     logout(headers: any): Promise<{
         data: string;
     }>;

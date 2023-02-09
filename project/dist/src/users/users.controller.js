@@ -45,7 +45,9 @@ let UsersController = class UsersController {
         }
         const user = await this.usersService.validateUser(req.user);
         const token = await this.usersService.createToken(user);
-        return { url: this.configService.get('REDIRECT') + token };
+        res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 })
+            .status(301)
+            .redirect(this.configService.get('REDIRECT'));
     }
     async logout(headers) {
         const token = headers.authorization.replace('Bearer ', '');
@@ -100,7 +102,6 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('github')),
     (0, common_1.Get)('login/github/redirect'),
-    (0, common_1.Redirect)('redirectUrl', 302),
     __param(0, (0, common_1.Param)('code')),
     __param(1, (0, common_1.Req)()),
     __param(2, (0, common_1.Res)({ passthrough: true })),
