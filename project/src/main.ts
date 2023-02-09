@@ -13,6 +13,12 @@ declare const module: any;
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
         logger: winstonLogger,
+        cors: {
+            origin: 'https://localhost:3001',
+            methods: ['GET', 'POST', 'PATCH'],
+            allowedHeaders: ['*'],
+            credentials: true,
+        },
     });
     const redisIoAdapter = new RedisIoAdapter(app);
     await redisIoAdapter.connectToRedis();

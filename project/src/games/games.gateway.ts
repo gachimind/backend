@@ -36,7 +36,16 @@ import { updateRoomInfoConstructor } from './util/update-room.info.constructor';
 import { GameResult } from './entities/gameResult.entity';
 
 @UseFilters(new SocketExceptionFilter())
-@WebSocketGateway({ cors: { origin: '*' }, transports: ['websocket'], upgrade: false })
+@WebSocketGateway({
+    cors: {
+        origin: 'https://localhost:3001',
+        methods: ['GET', 'POST'],
+        allowedHeaders: ['*'],
+        credentials: true,
+    },
+    transports: ['websocket'],
+    upgrade: false,
+})
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
         private readonly roomService: RoomService,
