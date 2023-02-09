@@ -567,7 +567,6 @@ GamesGateway = __decorate([
         cors: {
             origin: '*',
         },
-        transports: ['websocket'],
     }),
     __metadata("design:paramtypes", [room_service_1.RoomService,
         players_service_1.PlayersService,

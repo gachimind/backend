@@ -40,8 +40,6 @@ import { GameResult } from './entities/gameResult.entity';
     cors: {
         origin: '*',
     },
-    transports: ['websocket'],
-    //upgrade: false,
 })
 export class GamesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     constructor(
