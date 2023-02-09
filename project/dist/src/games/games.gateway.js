@@ -565,7 +565,9 @@ GamesGateway = __decorate([
     (0, common_1.UseFilters)(new ws_exception_filter_1.SocketExceptionFilter()),
     (0, websockets_1.WebSocketGateway)({
         cors: {
-            origin: '*',
+            origin: 'http://localhost:3001',
+            methods: ['GET', 'POST'],
+            credentials: true,
         },
     }),
     __metadata("design:paramtypes", [room_service_1.RoomService,

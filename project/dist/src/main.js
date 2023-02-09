@@ -18,7 +18,9 @@ async function bootstrap() {
     const port = process.env.PORT || 3001;
     app.useWebSocketAdapter(redisIoAdapter);
     app.enableCors({
-        origin: '*',
+        origin: 'http://localhost:3001',
+        methods: ['GET', 'POST'],
+        credentials: true,
     });
     app.use(cookieParser());
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
