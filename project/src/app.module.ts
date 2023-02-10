@@ -17,6 +17,8 @@ import { GameResult } from './games/entities/gameResult.entity';
 import { AdminModule } from './admin/admin.module';
 import { TodayResult } from './games/entities/todayResult.entity';
 import { LoggerMiddleware } from './logger/logger.middleware';
+import { RedisModule } from './redis/redis.module';
+import { AppController } from './app.controller';
 
 // .env를 루트에 저장하지 않고 db에 저장해서 불러올때 사용
 // const getEnv = () => {
@@ -61,8 +63,10 @@ import { LoggerMiddleware } from './logger/logger.middleware';
         KeywordModule,
         PassportModule.register({ session: true }),
         AdminModule,
+        RedisModule,
     ],
     providers: [ConfigService],
+    controllers: [AppController],
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): any {

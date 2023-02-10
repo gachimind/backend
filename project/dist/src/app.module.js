@@ -26,6 +26,8 @@ const gameResult_entity_1 = require("./games/entities/gameResult.entity");
 const admin_module_1 = require("./admin/admin.module");
 const todayResult_entity_1 = require("./games/entities/todayResult.entity");
 const logger_middleware_1 = require("./logger/logger.middleware");
+const redis_module_1 = require("./redis/redis.module");
+const app_controller_1 = require("./app.controller");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -66,8 +68,10 @@ AppModule = __decorate([
             keyword_module_1.KeywordModule,
             passport_1.PassportModule.register({ session: true }),
             admin_module_1.AdminModule,
+            redis_module_1.RedisModule,
         ],
         providers: [config_1.ConfigService],
+        controllers: [app_controller_1.AppController],
     })
 ], AppModule);
 exports.AppModule = AppModule;

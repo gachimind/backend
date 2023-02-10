@@ -13,13 +13,14 @@ import { Turn } from './entities/turn.entity';
 import { TurnResult } from './entities/turnResult.entity';
 import { TurnResultDataInsertDto } from './dto/turn-result.data.insert.dto';
 import { TurnDataInsertDto } from './dto/turn.data.insert.dto';
-import { gameTimerMap } from './util/game-timer.map';
-import { gameMap } from './util/game.map';
-import { turnMap } from './util/turn.map';
 import { getDate } from './util/today.date.constructor';
 import { Player } from './entities/player.entity';
 import { NextFunction } from 'express';
 import { Keyword } from 'src/keyword/entities/keyword.entities';
+import { GamesRepository } from './games.repository';
+import { GameMap } from './dto/game.map.dto';
+import { TurnMap } from './dto/turn.map.dto';
+import { gameTimerMap } from './util/game-timer.map';
 
 @Injectable()
 export class GamesService {
@@ -27,6 +28,7 @@ export class GamesService {
         private readonly roomService: RoomService,
         private readonly playersService: PlayersService,
         private readonly keywordsService: KeywordService,
+        private readonly gamesRepository: GamesRepository,
         @InjectRepository(Player)
         private readonly playersRepository: Repository<Player>,
         @InjectRepository(Turn)
@@ -64,10 +66,10 @@ export class GamesService {
     }
 
     async createTurn(roomId: number): Promise<Turn> {
-        const turnIndex: number = gameMap[roomId].currentTurn.turn;
-        const speechPlayer: number = this.popPlayerFromGameMapRemainingTurns(roomId);
+        const turnIndex: number = await this.getGameMapCurrentTurn(roomId);
+        const speechPlayer: number = await this.popPlayerFromGameMapRemainingTurns(roomId);
         const nickname = await this.playersService.getPlayerByUserId(speechPlayer);
-        const keyword: Keyword = this.popGameMapKeywords(roomId);
+        const keyword: Keyword = await this.popGameMapKeywords(roomId);
 
         // TODO : keyword random으로 가져오기
         const newTurnData: TurnDataInsertDto = {
@@ -82,8 +84,8 @@ export class GamesService {
         };
 
         const turn = await this.turnRepository.save(newTurnData);
-        this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
-        this.createTurnMap(roomId, turn.turnId, keyword);
+        await this.updateGameMapCurrentTurn(roomId, turn.turnId, turn.turn);
+        await this.createTurnMap(roomId, turn.turnId, keyword);
 
         return turn;
     }
@@ -159,9 +161,9 @@ export class GamesService {
     async recordPlayerScore(userId: number, room: Room): Promise<TurnResult> {
         const roomId = room.roomId;
         const turn = await this.turnRepository.findOneBy({
-            turnId: this.getGameMapCurrentTurnId(roomId),
+            turnId: await this.getGameMapCurrentTurnId(roomId),
         });
-        const gameResultInfo = gameMap[roomId].gameResultIdMap[userId];
+        const gameResultInfo = await this.getGameMapGameResultIdByUserId(roomId, userId);
 
         // turnResult를 검색해서 있으면 예외 처리
         if (
@@ -177,12 +179,12 @@ export class GamesService {
             roomId,
             turnId: turn.turnId,
             userId,
-            score: 100 - turnMap[roomId].turnQuizRank * 20,
+            score: 100 - (await this.getTurnMapTurnQuizRank(roomId)) * 20,
             keyword: turn.keyword,
             link: turn.link,
             isSpeech: false,
         };
-        this.updateTurnMapTurnQuizRank(roomId);
+        await this.updateTurnMapTurnQuizRank(roomId);
         // this.updateTurnMapTurnAnswerPlayersTrue(roomId, userId);
         return await this.createTurnResult(turnResult);
     }
@@ -221,23 +223,23 @@ export class GamesService {
 
     async createSpeechPlayerTurnResult(roomId: number, turn: Turn): Promise<number> {
         // 평가하지 않은 인원 수
-        const unevaluatedNum: number =
-            turnMap[roomId].numberOfEvaluators - turnMap[roomId].speechScore.length;
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomId);
+        const unevaluatedNum: number = turnMap.numberOfEvaluators - turnMap.speechScore.length;
 
         // 평가 받은 점수 합계 -> speechScore arr pop으로 비워줌
         let sum: number = 0;
-        while (turnMap[roomId].speechScore.length) {
-            const pop = turnMap[roomId].speechScore.pop();
+        while (turnMap.speechScore.length) {
+            const pop = turnMap.speechScore.pop();
             sum += pop;
         }
         // 최종 점수 합계
         let score: number = 0;
-        if (turnMap[roomId].numberOfEvaluators) {
-            score = ((sum + unevaluatedNum * 5) * 20) / turnMap[roomId].numberOfEvaluators;
+        if (turnMap.numberOfEvaluators) {
+            score = ((sum + unevaluatedNum * 5) * 20) / turnMap.numberOfEvaluators;
         }
 
         const turnResult: TurnResultDataInsertDto = {
-            gameResultInfo: gameMap[roomId].gameResultIdMap[turn.speechPlayer],
+            gameResultInfo: await this.getGameMapGameResultIdByUserId(roomId, turn.speechPlayer),
             roomId,
             turnId: turn.turnId,
             userId: turn.speechPlayer,
@@ -250,14 +252,15 @@ export class GamesService {
         // this.updateTurnMapTurnAnswerPlayersTrue(roomId, turn.speechPlayer);
 
         if (unevaluatedNum) {
-            return (unevaluatedNum * 5 * 20) / turnMap[roomId].numberOfEvaluators;
+            return (unevaluatedNum * 5 * 20) / turnMap.numberOfEvaluators;
         }
         return 0;
     }
 
     async handleGameEndEvent(room: Room): Promise<Room> {
         // 게임에 참여한 모든 플레이어의 gameResult 업데이트
-        const playerGameResultIds: number[] = Object.values(gameMap[room.roomId].gameResultIdMap);
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(room.roomId);
+        const playerGameResultIds: number[] = Object.values(gameMap.gameResultIdMap);
 
         for (let gameResultId of playerGameResultIds) {
             // 1. roomId로 gameResult 조회
@@ -302,87 +305,111 @@ export class GamesService {
     // ############################## MAPs #################################
 
     // GameMap
-    async createGameMap(room: Room): Promise<void> {
+    async createGameMap(room: Room, gameResults: GameResult[]): Promise<void> {
         const keywords = await this.keywordsService.generateRandomKeyword(room.players.length);
 
-        gameMap[room.roomId] = {
+        let gameMap: GameMap = {
             currentTurn: { turnId: null, turn: 0 },
             currentPlayers: room.players.length,
             remainingTurns: [], // pop으로 사용
             gameResultIdMap: {},
             keywords,
         };
-
         // 시작할때, remainingTurns 생성 -> 나가거나 turn 생성할때 삭제
         new Promise((resolve) => {
             for (let i = room.players.length - 1; i >= 0; i--) {
-                gameMap[room.roomId].remainingTurns.push(room.players[i].user.userId);
+                gameMap.remainingTurns.push(room.players[i].user.userId);
             }
             resolve;
         });
+        gameMap = await this.mapGameResultIdWithUserId(gameResults, gameMap);
+        await this.gamesRepository.setGameMap(room.roomId, gameMap);
         return;
     }
 
-    popGameMapKeywords(roomId: number): Keyword {
-        return gameMap[roomId].keywords.pop();
+    async popGameMapKeywords(roomId: number): Promise<Keyword> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        const keyword = gameMap.keywords.pop();
+        await this.gamesRepository.setGameMap(roomId, gameMap);
+        return keyword;
     }
-    getGameMapKeywordsCount(roomId: number): number {
-        return gameMap[roomId].keywords.length;
+    async getGameMapKeywordsCount(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.keywords.length;
     }
-    getGameMapRemainingTurns(roomId: number): number {
-        return gameMap[roomId].remainingTurns.length;
-    }
-
-    getGameMapCurrentTurnId(roomId: number) {
-        return gameMap[roomId].currentTurn.turnId;
-    }
-
-    getGameMapCurrentTurn(roomId: number): number {
-        return gameMap[roomId].currentTurn.turn;
+    async getGameMapRemainingTurns(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.remainingTurns.length;
     }
 
-    getGameMapCurrentPlayers(roomId: number): number {
-        return gameMap[roomId].currentPlayers;
+    async getGameMapCurrentTurnId(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.currentTurn.turnId;
+    }
+
+    async getGameMapCurrentTurn(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.currentTurn.turn;
+    }
+
+    async getGameMapCurrentPlayers(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.currentPlayers;
+    }
+
+    async getGameMapGameResultIdByUserId(roomId: number, userId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        return gameMap.gameResultIdMap[userId];
     }
 
     // getPlayerGameMapGameResultIdMap(roomId: number, userId: number) {
     //     return gameMap[roomId].gameResultId[userId];
     // }
 
-    updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): void {
-        gameMap[roomId].currentTurn = { turnId, turn };
+    async updateGameMapCurrentTurn(roomId: number, turnId: number, turn: number): Promise<void> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        gameMap.currentTurn = { turnId, turn };
+        await this.gamesRepository.setGameMap(roomId, gameMap);
     }
 
-    reduceGameMapCurrentPlayers(roomId: number): void {
-        gameMap[roomId].currentPlayers--;
+    async reduceGameMapCurrentPlayers(roomId: number): Promise<void> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        gameMap.currentPlayers--;
+        await this.gamesRepository.setGameMap(roomId, gameMap);
     }
 
-    popPlayerFromGameMapRemainingTurns(roomId: number): number {
-        return gameMap[roomId].remainingTurns.pop();
+    async popPlayerFromGameMapRemainingTurns(roomId: number): Promise<number> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
+        const turn = gameMap.remainingTurns.pop();
+        await this.gamesRepository.setGameMap(roomId, gameMap);
+        return turn;
     }
 
     async removePlayerFromGameMapRemainingTurns(roomId: number, userId: number): Promise<void> {
+        const gameMap: GameMap = await this.gamesRepository.getGameMap(roomId);
         new Promise((resolve) => {
-            gameMap[roomId].remainingTurns = gameMap[roomId].remainingTurns.filter((e: number) => {
+            gameMap.remainingTurns = gameMap.remainingTurns.filter((e: number) => {
                 if (e !== userId) return e;
             });
             resolve;
         });
+        await this.gamesRepository.setGameMap(roomId, gameMap);
     }
 
-    async mapGameResultIdWithUserId(roomId: number, gameResults: GameResult[]): Promise<void> {
+    async mapGameResultIdWithUserId(gameResults: GameResult[], gameMap: GameMap): Promise<GameMap> {
         new Promise((resolve) => {
             for (let result of gameResults) {
-                gameMap[roomId].gameResultIdMap[result.userInfo] = result.gameResultId;
+                gameMap.gameResultIdMap[result.userInfo] = result.gameResultId;
             }
             resolve;
         });
+        return gameMap;
     }
 
     // TurnMap
     // 매 턴이 새로 생성될때, 초기화
-    createTurnMap(roomId: number, turnId: number, keyword: Keyword): void {
-        turnMap[roomId] = {
+    async createTurnMap(roomId: number, turnId: number, keyword: Keyword): Promise<void> {
+        const turnMap: TurnMap = {
             turnId,
             speechScore: [],
             turnQuizRank: 0,
@@ -398,15 +425,19 @@ export class GamesService {
         // for (let player of players) {
         //     turnMap[roomId].turnAnswerPlayers[player.userInfo] = false;
         // }
+
+        await this.gamesRepository.setTurnMap(roomId, turnMap);
     }
 
-    getTurnMapKeyword(roomId: number): Keyword {
-        return turnMap[roomId].keyword;
+    async getTurnMapKeyword(roomId: number): Promise<Keyword> {
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomId);
+        return turnMap.keyword;
     }
 
-    // getTurnMapTurnQuizRank(roomId: number) {
-    //     return turnMap[roomId].turnQuizRank;
-    // }
+    async getTurnMapTurnQuizRank(roomId: number): Promise<number> {
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomId);
+        return turnMap.turnQuizRank;
+    }
 
     // getTurnMapNumberOfEvaluators(roomId: number) {
     //     return turnMap[roomId].numberOfEvaluators;
@@ -416,23 +447,28 @@ export class GamesService {
     //     return turnMap[roomId].turnAnswerPlayers;
     // }
 
-    updateTurnMapSpeechScore(roomId: number, score: number): number {
-        turnMap[roomId].speechScore.push(score);
-        return (score * 20) / turnMap[roomId].numberOfEvaluators;
+    async updateTurnMapSpeechScore(roomId: number, score: number): Promise<number> {
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomId);
+        turnMap.speechScore.push(score);
+        await this.gamesRepository.setTurnMap(roomId, turnMap);
+        return (score * 20) / turnMap.numberOfEvaluators;
     }
 
-    updateTurnMapTurnQuizRank(roomId: number): void {
-        turnMap[roomId].turnQuizRank++;
+    async updateTurnMapTurnQuizRank(roomId: number): Promise<void> {
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomId);
+        turnMap.turnQuizRank++;
+        await this.gamesRepository.setTurnMap(roomId, turnMap);
     }
 
     // updateTurnMapTurnAnswerPlayersTrue(roomId: number, userId: number) {
     //     turnMap[roomId].turnAnswerPlayers[userId] = true;
     // }
 
-    async updateTurnMapNumberOfEvaluators(roomInfo) {
+    async updateTurnMapNumberOfEvaluators(roomInfo: number): Promise<void> {
         const numberOfPlayers: number = await this.playersRepository.countBy({ roomInfo });
-
-        turnMap[roomInfo].numberOfEvaluators = numberOfPlayers - 1;
+        const turnMap: TurnMap = await this.gamesRepository.getTurnMap(roomInfo);
+        turnMap.numberOfEvaluators = numberOfPlayers - 1;
+        await this.gamesRepository.setTurnMap(roomInfo, turnMap);
     }
 
     // TimerMap & set timer
@@ -442,16 +478,15 @@ export class GamesService {
             ac,
         };
         gameTimerMap[roomId].ac;
-        gameTimerMap[roomId].timer = await setTimeout(time, 'timer-end', {
+        return await setTimeout(time, 'timer-end', {
             signal: gameTimerMap[roomId].ac.signal,
         });
-        return gameTimerMap[roomId].timer;
     }
 
-    breakTimer(roomId: number, next: NextFunction) {
+    async breakTimer(roomId: number, next: NextFunction): Promise<void> {
         try {
             gameTimerMap[roomId].ac.abort();
-        } catch (ett) {
+        } catch (err) {
             next();
         }
     }
