@@ -74,11 +74,11 @@ export declare class GamesGateway implements OnGatewayInit, OnGatewayConnection,
     controlTurnTimer(room: Room, eventName: string, turn?: Turn): Promise<void>;
     handleEndTurnBySpeechPlayerLeaveEvent(turn: Turn, socket: Socket): Promise<void>;
     handleEndGameByPlayerLeaveEvent(room: Room): Promise<void>;
-    emitCannotStartError(roomId: number): void;
-    throwCannotStartError(roomId: number): void;
+    emitCannotStartError(roomId: number): Promise<void>;
+    throwCannotStartError(roomId: number): Promise<void>;
     emitGameInfo(turn: Turn, roomId: number): void;
     emitTimeStartEvent(roomId: number, timer: number, event: string, turn?: number): void;
-    emitScoreEvent(roomId: number, userId: number, score: number): Promise<void>;
-    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: number): void;
+    emitScoreEvent(roomId: number, userId: number, score: number): void;
+    emitTimeEndEvent(roomId: number, timer: number, event: string, turn?: number): Promise<void>;
     emitReceiveChatEvent(roomId: number, requestUser: SocketIdMap, message: string, type: string): void;
 }

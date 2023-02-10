@@ -47,9 +47,9 @@ export class UsersController {
         const token: string = await this.usersService.createToken(user);
 
         return { url: this.configService.get('REDIRECT') + token };
-        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-        // .status(301)
-        // .redirect(this.configService.get('REDIRECT'));
+        // res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        //     .status(301)
+        //     .redirect(this.configService.get('REDIRECT'));
     }
 
     @UseGuards(AuthGuard('github'))
@@ -73,9 +73,9 @@ export class UsersController {
         const token: string = await this.usersService.createToken(user);
 
         return { url: this.configService.get('REDIRECT') + token };
-        // .cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
-        // .status(301)
-        // .redirect(this.configService.get('REDIRECT'));
+        // res.cookie('jwt', `Bearer ${token}`, { maxAge: 24 * 60 * 60 * 1000 /**1day*/ })
+        //     .status(301)
+        //     .redirect(this.configService.get('REDIRECT'));
     }
 
     // 로그아웃 API
